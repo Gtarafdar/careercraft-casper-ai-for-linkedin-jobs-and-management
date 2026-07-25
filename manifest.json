@@ -15,7 +15,8 @@
   "host_permissions": [
     "https://www.linkedin.com/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://openrouter.ai/*"
   ],
   "options_page": "options.html",
   "background": {
@@ -26,6 +27,8 @@
       "matches": ["https://www.linkedin.com/*"],
       "js": [
         "lib/saved-search-utils.js",
+        "content/feature-flags.js",
+        "content/linkedin-dom.js",
         "content/saved-searches-manager.js",
         "content/cache-manager.js",
         "content/ai-service.js",

@@ -3780,6 +3780,12 @@ class LinkedInFormatter {
    * Inject custom "Last 1 hour" filter option
    */
   injectCustomTimeFilter() {
+    if (
+      typeof FeatureFlags !== "undefined" &&
+      !FeatureFlags.isEnabledSync("filterPill")
+    ) {
+      return;
+    }
     if (!window.location.pathname.includes("/jobs/")) {
       return;
     }
@@ -3790,7 +3796,11 @@ class LinkedInFormatter {
 
     // Already present — re-home if misplaced, then sync selected state
     if (existing) {
-      const dateBtn = this.findDatePostedFilterButton();
+      const dateBtn =
+        this.findDatePostedFilterButton() ||
+        (typeof LinkedInDOM !== "undefined"
+          ? LinkedInDOM.getDatePostedFilterButton()
+          : null);
       if (dateBtn) {
         const anchor = dateBtn.closest("li") || dateBtn;
         const ourWrap = existing.closest("li") || existing;
@@ -3822,7 +3832,11 @@ class LinkedInFormatter {
       return;
     }
 
-    const dateBtn = this.findDatePostedFilterButton();
+    const dateBtn =
+      this.findDatePostedFilterButton() ||
+      (typeof LinkedInDOM !== "undefined"
+        ? LinkedInDOM.getDatePostedFilterButton()
+        : null);
     if (!dateBtn) {
       // Wait — injecting before LinkedIn filters exist breaks alignment
       return;
@@ -3972,6 +3986,11 @@ class LinkedInFormatter {
    * Check if current page is a job detail page (not just listing)
    */
   isJobDetailPage() {
+    if (typeof LinkedInDOM !== "undefined" && LinkedInDOM.isJobDetailPage) {
+      return LinkedInDOM.safeRun("isJobDetailPage", () =>
+        LinkedInDOM.isJobDetailPage()
+      );
+    }
     const url = window.location.href;
     // Must have job identifier in URL AND have the detail view container
     const hasJobUrl =
@@ -4128,6 +4147,13 @@ class LinkedInFormatter {
   }
 
   async displayJobStats(retryCount = 0) {
+    if (
+      typeof FeatureFlags !== "undefined" &&
+      !(await FeatureFlags.isEnabled("ats"))
+    ) {
+      return;
+    }
+
     // Check if we're on the right page
     if (!this.isJobDetailPage()) {
       console.log("LinkedIn Formatter: Not on job detail page, skipping");
@@ -4169,12 +4195,19 @@ class LinkedInFormatter {
       'div[class*="jobs-details"]',
     ];
 
-    let jobContainer = null;
-    for (const selector of containerSelectors) {
-      jobContainer = document.querySelector(selector);
-      if (jobContainer) {
-        console.log("LinkedIn Formatter: Found container:", selector);
-        break;
+    let jobContainer =
+      (typeof LinkedInDOM !== "undefined" &&
+        LinkedInDOM.getJobDetailContainer()) ||
+      null;
+    if (jobContainer) {
+      console.log("LinkedIn Formatter: Found container via LinkedInDOM");
+    } else {
+      for (const selector of containerSelectors) {
+        jobContainer = document.querySelector(selector);
+        if (jobContainer) {
+          console.log("LinkedIn Formatter: Found container:", selector);
+          break;
+        }
       }
     }
 

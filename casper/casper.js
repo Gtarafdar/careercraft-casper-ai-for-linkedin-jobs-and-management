@@ -55,6 +55,12 @@ class CasperManager {
    */
   async checkEnabled() {
     try {
+      if (
+        typeof FeatureFlags !== "undefined" &&
+        !(await FeatureFlags.isEnabled("casper"))
+      ) {
+        return false;
+      }
       const result = await chrome.storage.local.get(["casper_enabled"]);
       // Default to false if not set (opt-in feature)
       const enabled = result.casper_enabled === true;

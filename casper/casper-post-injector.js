@@ -29,6 +29,14 @@ class CasperPostInjector {
   init() {
     console.log("Casper Injector: Initializing...");
 
+    if (
+      typeof FeatureFlags !== "undefined" &&
+      !FeatureFlags.isEnabledSync("casper")
+    ) {
+      console.log("Casper Injector: Disabled via feature flag");
+      return;
+    }
+
     const currentPath = window.location.pathname;
     const isFeedPage =
       currentPath === "/feed/" ||
@@ -40,6 +48,10 @@ class CasperPostInjector {
         "Casper Injector: Not a feed page, post analysis disabled (chat still available)"
       );
       return;
+    }
+
+    if (typeof LinkedInDOM !== "undefined" && LinkedInDOM.SELECTORS?.feedPosts) {
+      this.postSelector = LinkedInDOM.SELECTORS.feedPosts.join(", ");
     }
 
     this.setupScrollObserver();
