@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   await loadToolbarSettings();
   await loadCasperStatus();
+  await loadPopupAiStatus();
 
   // Casper chat button
   const openChatBtn = document.getElementById("openCasperChat");
@@ -20,6 +21,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Setup CSP-compliant hover effects
   setupCasperSettingsLinkHover();
 });
+
+/**
+ * Compact AI status line for popup header
+ */
+async function loadPopupAiStatus() {
+  const el = document.getElementById("popupAiStatus");
+  if (!el) return;
+  try {
+    const data = await chrome.storage.local.get([
+      "active_provider",
+      "gemini_api_key",
+      "openai_api_key",
+      "openrouter_api_key",
+    ]);
+    const provider = data.active_provider || null;
+    const ready =
+      (provider === "gemini" && data.gemini_api_key) ||
+      (provider === "openai" && data.openai_api_key) ||
+      (provider === "openrouter" && data.openrouter_api_key);
+    el.textContent = ready
+      ? `AI: ${provider} · ready`
+      : "AI: not configured — open AI Keys";
+  } catch (e) {
+    el.textContent = "AI: —";
+  }
+}
 
 /**
  * Load and display saved searches

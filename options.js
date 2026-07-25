@@ -1592,6 +1592,14 @@ async function handleClearAllCache() {
 
 // Load saved searches on page load
 document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (window.CCOptionsShell && typeof window.CCOptionsShell.build === "function") {
+      window.CCOptionsShell.build();
+    }
+  } catch (e) {
+    console.warn("Options shell build failed; using classic layout", e);
+  }
+
   await loadSavedSettings();
   setupEventListeners();
   await checkProfileStatus();
@@ -1605,6 +1613,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load Casper settings
   await loadCasperSettings();
   setupCasperListeners();
+
+  try {
+    if (window.CCOptionsShell && window.CCOptionsShell.refreshDashboard) {
+      await window.CCOptionsShell.refreshDashboard();
+    }
+  } catch (e) {
+    console.warn("Dashboard refresh failed", e);
+  }
 });
 
 /**

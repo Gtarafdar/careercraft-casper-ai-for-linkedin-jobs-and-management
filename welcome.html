@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome · CareerCraft AI</title>
+    <link rel="stylesheet" href="styles/design-system.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--cc-font);
+        background: var(--cc-bg);
+        color: var(--cc-text);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 40px 20px 60px;
+      }
+      .hero {
+        background: linear-gradient(
+          135deg,
+          var(--cc-primary) 0%,
+          var(--cc-primary-dark) 100%
+        );
+        color: #fff;
+        border-radius: 16px;
+        padding: 32px 28px;
+        margin-bottom: 20px;
+      }
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+      .hero p {
+        margin: 0;
+        opacity: 0.92;
+        line-height: 1.45;
+      }
+      .step {
+        background: var(--cc-surface);
+        border: 1px solid var(--cc-border);
+        border-radius: var(--cc-radius);
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        box-shadow: var(--cc-shadow);
+      }
+      .step h2 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--cc-text-secondary);
+        line-height: 1.45;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      a.cc-btn {
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <h1>Welcome to CareerCraft AI</h1>
+        <p>
+          Casper-powered tools for LinkedIn jobs, ATS scoring, formatting, and
+          saved searches — stored locally on your device.
+        </p>
+      </div>
+
+      <div class="step">
+        <h2>1. Add an AI key (optional)</h2>
+        <p>
+          Open Settings → AI API Keys to connect Gemini, OpenAI, or OpenRouter.
+          Keys stay in your browser; never uploaded to CareerCraft servers.
+        </p>
+      </div>
+      <div class="step">
+        <h2>2. Use LinkedIn as usual</h2>
+        <p>
+          Format posts, paste images, analyze jobs with ATS, and use the Last 1
+          hour filter on job search.
+        </p>
+      </div>
+      <div class="step">
+        <h2>3. Save searches &amp; alerts</h2>
+        <p>
+          Save up to 5 job searches and optionally enable desktop notifications
+          for new matches.
+        </p>
+      </div>
+      <div class="step">
+        <h2>4. Enable Casper when ready</h2>
+        <p>
+          Turn on Casper in Settings for in-page chat and post analysis icons.
+        </p>
+      </div>
+
+      <div class="actions">
+        <a class="cc-btn" href="options.html#ai-keys" id="goSettings"
+          >Open Settings</a
+        >
+        <a
+          class="cc-btn cc-btn-secondary"
+          href="https://www.linkedin.com/feed/"
+          target="_blank"
+          rel="noopener"
+          >Go to LinkedIn</a
+        >
+        <button type="button" class="cc-btn cc-btn-secondary" id="skipWelcome">
+          Done
+        </button>
+      </div>
+    </div>
+    <script>
+      (async function () {
+        try {
+          await chrome.storage.local.set({ onboarding_completed: true });
+        } catch (e) {}
+        document.getElementById("skipWelcome").addEventListener("click", () => {
+          window.close();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -86,12 +86,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Log when extension is installed or updated
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
-    console.log("LinkedIn Formatter & AI ATS Analyzer installed successfully!");
-    // Optionally open options page on first install
-    chrome.runtime.openOptionsPage();
+    console.log("CareerCraft AI installed successfully!");
+    try {
+      const existing = await chrome.storage.local.get(["onboarding_completed"]);
+      if (!existing.onboarding_completed) {
+        await chrome.tabs.create({
+          url: chrome.runtime.getURL("welcome.html"),
+        });
+      }
+    } catch (e) {
+      console.warn("Could not open welcome page", e);
+      chrome.runtime.openOptionsPage();
+    }
   } else if (details.reason === "update") {
     console.log(
-      "LinkedIn Formatter & AI ATS Analyzer updated to version",
+      "CareerCraft AI updated to version",
       chrome.runtime.getManifest().version
     );
   }

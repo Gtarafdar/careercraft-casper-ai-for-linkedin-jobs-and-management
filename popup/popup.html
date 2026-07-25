@@ -12,42 +12,44 @@
       }
 
       body {
-        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
-          Roboto, sans-serif;
-        width: 320px;
-        padding: 16px;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+          sans-serif;
+        width: 360px;
+        padding: 14px;
         background: #f3f6f8;
+        color: #191919;
       }
 
       .header {
-        text-align: center;
-        margin-bottom: 20px;
+        text-align: left;
+        margin-bottom: 12px;
       }
 
       h1 {
-        font-size: 18px;
+        font-size: 17px;
         color: #0a66c2;
-        margin-bottom: 8px;
+        margin-bottom: 2px;
       }
 
       .version {
-        font-size: 12px;
-        color: #666;
+        font-size: 11px;
+        color: #8b8b8b;
       }
 
       .section {
-        background: white;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
       }
 
       .section-title {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        color: #333;
-        margin-bottom: 12px;
+        color: #191919;
+        margin-bottom: 8px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -269,7 +271,7 @@
       }
 
       input:checked + .slider {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #0a66c2;
       }
 
       input:checked + .slider:before {
@@ -279,36 +281,64 @@
   </head>
   <body>
     <div class="header">
-      <h1>🛠️ CareerCraft AI</h1>
-      <span>A Handy Tool for Better LinkedIn Experience</span>
-      <div class="version">Version 2.0.0</div>
+      <h1>CareerCraft AI</h1>
+      <div class="version">v2.1.0 · Casper for LinkedIn jobs</div>
     </div>
 
     <div class="section">
       <div class="status">
         <div class="status-dot"></div>
-        <span>Extension is active and ready!</span>
+        <span>Ready on LinkedIn</span>
+      </div>
+      <div
+        id="popupAiStatus"
+        style="font-size: 11px; color: #666; margin-top: 6px"
+      >
+        AI: —
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px">
+        <a
+          href="../options.html#dashboard"
+          target="_blank"
+          class="link"
+          style="font-size: 12px; font-weight: 600"
+          >Settings</a
+        >
+        <a
+          href="../options.html#searches"
+          target="_blank"
+          class="link"
+          style="font-size: 12px; font-weight: 600"
+          >Searches</a
+        >
+        <a
+          href="../options.html#ai-keys"
+          target="_blank"
+          class="link"
+          style="font-size: 12px; font-weight: 600"
+          >AI Keys</a
+        >
+        <a
+          href="../options.html#job-tracker"
+          target="_blank"
+          class="link"
+          style="font-size: 12px; font-weight: 600"
+          >Job Tracker</a
+        >
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">
         <span class="icon">✨</span>
-        <span>Text Formatting Features</span>
+        <span>Formatter</span>
       </div>
-      <ul class="feature-list">
-        <li>Bold, Italic, Underline, Strikethrough</li>
-        <li>11 Typography styles (Serif, Sans, Script, etc.)</li>
-        <li>Bullet and numbered lists</li>
-        <li>
-          Case converter (uppercase, lowercase, title case, sentence case)
-        </li>
-        <li>Clear formatting option</li>
-        <li>Quick action for minimize the formatter bar</li>
-      </ul>
+      <p style="font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.4">
+        Bold, lists, typography &amp; case tools in LinkedIn compose.
+      </p>
     </div>
     <div class="section">
-      <div class="section-title">⚙️ Text Formating Toolbar Settings</div>
+      <div class="section-title">⚙️ Toolbar settings</div>
       <div class="feature-list">
         <div style="margin-bottom: 12px">
           <label style="display: flex; align-items: center; cursor: pointer">
@@ -440,15 +470,11 @@
     <div class="section">
       <div class="section-title">
         <span class="icon">🖼️</span>
-        <span>Image Upload</span>
+        <span>Image paste</span>
       </div>
-      <ul class="feature-list">
-        <li>Paste images directly from clipboard</li>
-        <li>Supports PNG, JPG formats</li>
-        <li>Upload less than 1MB size photos</li>
-        <li>Automatic upload to LinkedIn</li>
-        <li>No manual file selection needed</li>
-      </ul>
+      <p style="font-size: 12px; color: #666; line-height: 1.4">
+        Paste PNG/JPG from clipboard into a post (under ~1MB).
+      </p>
     </div>
 
     <div class="section">
@@ -475,31 +501,26 @@
               stroke-linecap="round"
             /></svg
         ></span>
-        <span>AI-Powered ATS Analysis</span>
+        <span>ATS analysis</span>
       </div>
-      <div style="margin-bottom: 12px">
+      <div style="margin-bottom: 8px">
         <label style="display: flex; align-items: center; cursor: pointer">
           <input
             type="checkbox"
             id="atsCheckerEnabled"
             style="margin-right: 8px"
           />
-          <span>Enable AI Profile Analyzer (ATS Checker)</span>
+          <span style="font-size: 12px">Enable ATS checker on job pages</span>
         </label>
       </div>
-      <ul class="feature-list">
-        <li>Job description analysis</li>
-        <li>Profile compatibility score</li>
-        <li>Skills matching insights</li>
-      </ul>
-      <div style="margin-top: 12px">
+      <div>
         <a
-          href="../options.html"
+          href="../options.html#ai-keys"
           target="_blank"
           class="link"
-          style="font-size: 13px; font-weight: 600"
+          style="font-size: 12px; font-weight: 600"
         >
-          ⚙️ Configure AI Settings
+          Configure AI
         </a>
       </div>
     </div>
@@ -601,7 +622,7 @@
             width: 100%;
             padding: 12px;
             margin-top: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0a66c2;
             color: white;
             border: none;
             border-radius: 6px;
@@ -624,7 +645,7 @@
             text-align: center;
             margin-top: 12px;
             font-size: 12px;
-            color: #667eea;
+            color: #0a66c2;
             text-decoration: none;
             transition: color 0.2s;
           "
@@ -657,7 +678,7 @@
             display: block;
             width: 100%;
             padding: 12px;
-            background: #667eea;
+            background: #0a66c2;
             color: white;
             text-align: center;
             text-decoration: none;
@@ -721,12 +742,12 @@
       </div>
       <div style="margin-top: 12px">
         <a
-          href="../options.html"
+          href="../options.html#searches"
           target="_blank"
           class="link"
-          style="font-size: 13px; font-weight: 600"
+          style="font-size: 12px; font-weight: 600"
         >
-          ⚙️ Manage Saved Searches
+          Manage saved searches
         </a>
       </div>
     </div>
@@ -735,182 +756,42 @@
     <div class="section">
       <div class="section-title">
         <span class="icon">🔍</span>
-        <span>Fresh Job Alerts</span>
+        <span>Fresh job alerts</span>
       </div>
-      <p
-        style="
-          font-size: 12px;
-          color: #666;
-          margin-bottom: 12px;
-          line-height: 1.5;
-        "
-      >
-        Get ahead of the competition with instant access to newly posted jobs
+      <p style="font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.4">
+        Open last-hour jobs, or manage alerts in Settings.
       </p>
-
-      <div
-        class="instructions"
-        style="
-          margin-bottom: 12px;
-          background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-          border-left-color: #0a66c2;
-        "
-      >
-        <div
-          style="
-            font-weight: 600;
-            font-size: 13px;
-            color: #0a66c2;
-            margin-bottom: 6px;
-          "
-        >
-          💡 Pro Tip: Apply Early, Stand Out!
-        </div>
-        <div style="font-size: 12px; color: #555">
-          Applications submitted within the first hour get 4x more attention
-          from recruiters.
-        </div>
-      </div>
-
       <a
         href="https://www.linkedin.com/jobs/search/?f_TPR=r3600"
         target="_blank"
         class="casper-chat-btn"
-        style="
-          display: block;
-          width: 100%;
-          padding: 12px;
-          margin-bottom: 12px;
-          text-align: center;
-          text-decoration: none;
-          border-radius: 6px;
-          font-weight: 600;
-          font-size: 13px;
-          background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
-          color: white;
-          border: none;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(10, 102, 194, 0.3);
-        "
-      >
-        🚀 View Jobs Posted in Last Hour
-      </a>
-
-      <div style="margin-bottom: 12px">
-        <div
-          style="
-            font-size: 12px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-          "
-        >
-          ✨ Benefits of 1-Hour Filter:
-        </div>
-        <ul class="feature-list">
-          <li>Be among the first applicants</li>
-          <li>Higher visibility to recruiters</li>
-          <li>Beat the competition</li>
-          <li>Fresh opportunities daily</li>
-        </ul>
-      </div>
-
-      <div
-        class="instructions"
-        style="background: #fff8e1; border-left-color: #ffc107"
-      >
-        <div style="font-size: 11px; color: #f57c00; line-height: 1.5">
-          <strong>💡 Did You Know?</strong><br />
-          You can set the 1-hour filter anytime in LinkedIn job search. Look for
-         and select "<strong>Last 1 hour</strong>"! </br>
-         
-    
-        </div>
-      </div>
-        <div
-          style="
-            font-size: 12px;
-            font-weight: 600;
-            color: #333;
-            margin-top: 12px;
-          "
-        >
-          ⏳ Custom Job Alert Features:
-        </div>
-        <div>
-                <ul class="feature-list">
-          <li>Set alerts for saved jobs to get instant desktop notifications when new roles appear.</li>
-          <li>Choose how often to check, or turn notifications off anytime.</li>
-        </ul>
-      
-      
-
-      <div
-        style="
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid #e9ecef;
-        "
-      >
-        <a
-          href="../options.html"
-          target="_blank"
-          class="link"
-          style="font-size: 13px; font-weight: 600"
-        >
-          🔔 Configure Job Notifications & Alerts
-        </a>
-      </div>
-    </div>
+        style="display:block;width:100%;padding:10px;margin-bottom:8px;text-align:center;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px;background:#0a66c2;color:#fff;border:none;cursor:pointer;"
+      >Jobs · last hour</a>
+      <a href="../options.html#searches" target="_blank" class="link" style="font-size:12px;font-weight:600">Notification settings</a>
     </div>
 
     <div class="section">
       <div class="section-title">
         <span class="icon">💾</span>
-        <span>Saved Items Filter</span>
+        <span>Saved items filter</span>
       </div>
-      <ul class="feature-list">
-        <li>Filter saved items by type (All/Posts/Images/Videos)</li>
-        <li>Automatically categorizes your saved content</li>
-        <li>Quick access to specific content types</li>
-      </ul>
-      <div style="margin-top: 12px">
-        <a
-          href="https://www.linkedin.com/my-items/saved-posts/"
-          target="_blank"
-          class="link"
-          style="font-size: 13px; font-weight: 600"
-        >
-          📂 Visit My Saved Items</a
-        >
-      </div>
-      <div
-        style="
-          margin-top: 12px;
-          padding: 8px;
-          background: #fff3cd;
-          border-radius: 4px;
-          font-size: 12px;
-          color: #856404;
-        "
+      <p style="font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 8px">
+        Extra filters on LinkedIn Saved Posts (All / Posts / Images / Videos).
+      </p>
+      <a
+        href="https://www.linkedin.com/my-items/saved-posts/"
+        target="_blank"
+        class="link"
+        style="font-size: 12px; font-weight: 600"
+        >Open saved items</a
       >
-        <strong>💡 Tip:</strong> If you switch between "Saved Posts" and "My
-        Jobs" tabs, refresh the page to reload filters.
-      </div>
     </div>
 
     <div class="section">
-      <div class="instructions">
-        <strong>📌 How to use:</strong><br />
-        1. Open LinkedIn and click "Start a post"<br />
-        2. The formatting toolbar will appear automatically<br />
-        3. Select text and click formatting buttons<br />
-        4. Paste images directly with Ctrl+V (Cmd+V on Mac)<br />
-        5. View job pages for AI-powered ATS analysis<br />
-        6. Visit "Jobs Search Page" and use 1 hour filter to get recent jobs<br />
-        7. Perform saved job searches from the popup to get quick results<br />
-        8. Visit "My Items → Saved Posts" to use filters
-      </div>
+      <p style="font-size: 12px; color: #666; line-height: 1.4">
+        Tip: Start a LinkedIn post to use the formatter; open a job page for ATS.
+        <a href="../welcome.html" target="_blank" class="link" style="font-weight:600">Quick guide</a>
+      </p>
     </div>
 
     <div class="footer">

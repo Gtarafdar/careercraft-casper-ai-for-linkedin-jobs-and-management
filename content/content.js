@@ -80,7 +80,6 @@ class LinkedInFormatter {
       this.toolbarLocations =
         loc === "posts" || loc === "comments" || loc === "both" ? loc : "both";
 
-
       if (!toolbarEnabled) {
         console.log("LinkedIn Formatter: Toolbar disabled by user");
         // Don't return - continue to initialize Casper and other features

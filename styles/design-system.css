@@ -1,0 +1,95 @@
+/**
+ * CareerCraft / Casper design tokens
+ * Calm LinkedIn-adjacent neutrals + primary blue
+ */
+:root {
+  --cc-bg: #f3f6f8;
+  --cc-surface: #ffffff;
+  --cc-surface-muted: #f9fafb;
+  --cc-border: #e5e7eb;
+  --cc-border-strong: #d1d5db;
+  --cc-text: #191919;
+  --cc-text-secondary: #666666;
+  --cc-text-muted: #8b8b8b;
+  --cc-primary: #0a66c2;
+  --cc-primary-dark: #004182;
+  --cc-primary-soft: #e8f4fc;
+  --cc-success: #057642;
+  --cc-success-soft: #d1fae5;
+  --cc-danger: #cc1016;
+  --cc-danger-soft: #fee2e2;
+  --cc-warning: #b45309;
+  --cc-radius: 10px;
+  --cc-radius-sm: 8px;
+  --cc-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --cc-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --cc-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --cc-nav-width: 220px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.cc-app {
+  margin: 0;
+  font-family: var(--cc-font);
+  color: var(--cc-text);
+  background: var(--cc-bg);
+  min-height: 100vh;
+}
+
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--cc-radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--cc-primary);
+  color: #fff;
+}
+
+.cc-btn:hover {
+  background: var(--cc-primary-dark);
+}
+
+.cc-btn-secondary {
+  background: var(--cc-surface);
+  color: var(--cc-text);
+  border: 1px solid var(--cc-border-strong);
+}
+
+.cc-btn-secondary:hover {
+  background: var(--cc-surface-muted);
+}
+
+.cc-card {
+  background: var(--cc-surface);
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius);
+  box-shadow: var(--cc-shadow);
+  padding: 16px;
+}
+
+.cc-muted {
+  color: var(--cc-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cc-metric {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--cc-text);
+}
+
+.cc-metric-label {
+  font-size: 12px;
+  color: var(--cc-text-muted);
+  margin-top: 4px;
+}
