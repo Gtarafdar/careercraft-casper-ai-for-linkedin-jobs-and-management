@@ -1,0 +1,31 @@
+PDF.js Library Installation Instructions
+=========================================
+
+The extension needs PDF.js library files to extract text from PDF files locally.
+
+AUTOMATIC INSTALLATION (Recommended):
+--------------------------------------
+Run this command in your terminal:
+
+cd "/Users/gtarafdar/Downloads/Linkedin Text Formater and Image Uploder/lib" && curl -L "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" -o pdf.min.js && curl -L "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js" -o pdf.worker.min.js && ls -lh
+
+MANUAL INSTALLATION (If automatic fails):
+-----------------------------------------
+1. Open these URLs in your browser:
+   - https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+   - https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
+
+2. Save each file (Right-click → Save As) to this directory:
+   /Users/gtarafdar/Downloads/Linkedin Text Formater and Image Uploder/lib/
+
+3. Make sure the filenames are:
+   - pdf.min.js
+   - pdf.worker.min.js
+
+4. Reload the extension in Chrome
+
+Why do we need this?
+--------------------
+- Chrome extensions cannot load external scripts due to security policies
+- We need local copies of PDF.js to extract text from PDF resumes
+- This works with ALL AI providers (Gemini, OpenAI, OpenRouter)

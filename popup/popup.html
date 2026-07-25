@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerCraft AI</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        width: 320px;
+        padding: 16px;
+        background: #f3f6f8;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        font-size: 18px;
+        color: #0a66c2;
+        margin-bottom: 8px;
+      }
+
+      .version {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .section {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .feature-list {
+        list-style: none;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .feature-list li {
+        padding: 6px 0;
+        padding-left: 20px;
+        position: relative;
+      }
+
+      .feature-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #0a66c2;
+        font-weight: bold;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background: #e7f3ff;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #0a66c2;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0a66c2;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .instructions {
+        font-size: 12px;
+        color: #666;
+        line-height: 1.5;
+        padding: 12px;
+        background: #fff8e6;
+        border-radius: 6px;
+        border-left: 3px solid #ffa500;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 11px;
+        color: #999;
+        margin-top: 16px;
+      }
+
+      .link {
+        color: #0a66c2;
+        text-decoration: none;
+        font-size: 12px;
+      }
+
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      .casper-chat-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .casper-settings-link:hover {
+        background: #764ba2 !important;
+      }
+
+      .icon {
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+        /* Ghost SVG reads slightly high vs text — optical align */
+        transform: translateY(2px);
+      }
+
+      .icon svg {
+        display: block;
+      }
+
+      /* Saved Searches Styles */
+      .saved-search-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border: 1px solid #e9ecef;
+      }
+
+      .saved-search-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .saved-search-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .saved-search-details {
+        font-size: 11px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .saved-search-actions {
+        display: flex;
+        gap: 6px;
+        margin-left: 8px;
+      }
+
+      .saved-search-btn {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-run {
+        background: #0a66c2;
+        color: white;
+      }
+
+      .btn-run:hover {
+        background: #004182;
+      }
+
+      .btn-delete {
+        background: #dc3545;
+        color: white;
+      }
+
+      .btn-delete:hover {
+        background: #c82333;
+      }
+
+      #saveCurrentSearch:hover {
+        background: #004182;
+      }
+
+      #saveCurrentSearch:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      /* Toggle Switch Styles */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 24px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🛠️ CareerCraft AI</h1>
+      <span>A Handy Tool for Better LinkedIn Experience</span>
+      <div class="version">Version 2.0.0</div>
+    </div>
+
+    <div class="section">
+      <div class="status">
+        <div class="status-dot"></div>
+        <span>Extension is active and ready!</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">✨</span>
+        <span>Text Formatting Features</span>
+      </div>
+      <ul class="feature-list">
+        <li>Bold, Italic, Underline, Strikethrough</li>
+        <li>11 Typography styles (Serif, Sans, Script, etc.)</li>
+        <li>Bullet and numbered lists</li>
+        <li>
+          Case converter (uppercase, lowercase, title case, sentence case)
+        </li>
+        <li>Clear formatting option</li>
+        <li>Quick action for minimize the formatter bar</li>
+      </ul>
+    </div>
+    <div class="section">
+      <div class="section-title">⚙️ Text Formating Toolbar Settings</div>
+      <div class="feature-list">
+        <div style="margin-bottom: 12px">
+          <label style="display: flex; align-items: center; cursor: pointer">
+            <input
+              type="checkbox"
+              id="toolbarEnabled"
+              style="margin-right: 8px"
+            />
+            <span>Enable formatting toolbar</span>
+          </label>
+        </div>
+
+        <div style="margin-bottom: 12px">
+          <strong style="font-size: 13px">Show toolbar on:</strong>
+          <div style="margin-top: 6px">
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                margin-bottom: 6px;
+              "
+            >
+              <input
+                type="radio"
+                name="toolbarLocations"
+                value="both"
+                id="toolbarLocBoth"
+                style="margin-right: 8px"
+              />
+              <span>Posts and comments</span>
+            </label>
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                margin-bottom: 6px;
+              "
+            >
+              <input
+                type="radio"
+                name="toolbarLocations"
+                value="posts"
+                id="toolbarLocPosts"
+                style="margin-right: 8px"
+              />
+              <span>Posts only</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer">
+              <input
+                type="radio"
+                name="toolbarLocations"
+                value="comments"
+                id="toolbarLocComments"
+                style="margin-right: 8px"
+              />
+              <span>Comments only</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px">
+          <strong style="font-size: 13px">Theme:</strong>
+          <div style="margin-top: 6px">
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                margin-bottom: 6px;
+              "
+            >
+              <input
+                type="radio"
+                name="theme"
+                value="light"
+                id="themeLight"
+                style="margin-right: 8px"
+              />
+              <span>☀️ Light</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer">
+              <input
+                type="radio"
+                name="theme"
+                value="dark"
+                id="themeDark"
+                style="margin-right: 8px"
+              />
+              <span>🌙 Dark</span>
+            </label>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 8px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #856404;
+          "
+        >
+          <strong>Note:</strong> Location and theme updates apply on the next
+          editor open (or immediately if LinkedIn is already open). After
+          enabling/disabling the toolbar entirely, reload the LinkedIn tab.
+        </div>
+
+        <div
+          style="
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #0c5460;
+          "
+        >
+          <strong>ℹ️ Info:</strong> Multiple format combinations (e.g., bold +
+          italic) are not yet supported.
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🖼️</span>
+        <span>Image Upload</span>
+      </div>
+      <ul class="feature-list">
+        <li>Paste images directly from clipboard</li>
+        <li>Supports PNG, JPG formats</li>
+        <li>Upload less than 1MB size photos</li>
+        <li>Automatic upload to LinkedIn</li>
+        <li>No manual file selection needed</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" aria-hidden="true"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z"
+              fill="#0a66c2"
+            />
+            <circle cx="13" cy="13" r="2" fill="white" />
+            <circle cx="19" cy="13" r="2" fill="white" />
+            <path
+              d="M12 17 Q16 20 20 17"
+              stroke="white"
+              stroke-width="1.8"
+              fill="none"
+              stroke-linecap="round"
+            /></svg
+        ></span>
+        <span>AI-Powered ATS Analysis</span>
+      </div>
+      <div style="margin-bottom: 12px">
+        <label style="display: flex; align-items: center; cursor: pointer">
+          <input
+            type="checkbox"
+            id="atsCheckerEnabled"
+            style="margin-right: 8px"
+          />
+          <span>Enable AI Profile Analyzer (ATS Checker)</span>
+        </label>
+      </div>
+      <ul class="feature-list">
+        <li>Job description analysis</li>
+        <li>Profile compatibility score</li>
+        <li>Skills matching insights</li>
+      </ul>
+      <div style="margin-top: 12px">
+        <a
+          href="../options.html"
+          target="_blank"
+          class="link"
+          style="font-size: 13px; font-weight: 600"
+        >
+          ⚙️ Configure AI Settings
+        </a>
+      </div>
+    </div>
+
+    <!-- Casper AI Assistant Section -->
+    <div class="section" id="casperSection">
+      <div class="section-title">
+        <span class="icon" aria-hidden="true"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z"
+              fill="#0a66c2"
+            />
+            <circle cx="13" cy="13" r="2" fill="white" />
+            <circle cx="19" cy="13" r="2" fill="white" />
+            <path
+              d="M12 17 Q16 20 20 17"
+              stroke="white"
+              stroke-width="1.8"
+              fill="none"
+              stroke-linecap="round"
+            /></svg
+        ></span>
+        <span>Casper AI Assistant</span>
+      </div>
+      <p style="font-size: 12px; color: #666; margin-bottom: 12px">
+        Your friendly LinkedIn AI assistant for post analysis and insights
+      </p>
+
+      <!-- Enabled state -->
+      <div id="casperEnabled" style="display: none">
+        <div class="status">
+          <span class="status-dot"></span>
+          <span>Casper is active on LinkedIn</span>
+        </div>
+
+        <!-- Post Analysis Toggle -->
+        <div
+          style="
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 16px">🎯</span>
+              <span style="font-weight: 600; font-size: 13px"
+                >Post Analysis Buttons</span
+              >
+            </div>
+            <label class="switch" style="margin: 0">
+              <input type="checkbox" id="casperPostButtonsToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p style="font-size: 11px; color: #666; margin: 0; line-height: 1.4">
+            Show ghost icons on LinkedIn posts for quick AI analysis
+          </p>
+        </div>
+
+        <!-- Reload Notice (hidden by default) -->
+        <div
+          id="casperReloadNotice"
+          style="
+            display: none;
+            margin-top: 12px;
+            padding: 10px;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #1565c0;
+          "
+        >
+          <strong>🔄 Reload Required</strong><br />
+          Please refresh your LinkedIn feed to see the changes
+        </div>
+
+        <button
+          id="openCasperChat"
+          class="casper-chat-btn"
+          style="
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+          "
+        >
+          💬 Chat with Casper
+        </button>
+
+        <!-- Settings Link -->
+        <a
+          href="../options.html#casper"
+          target="_blank"
+          id="casperSettingsLink"
+          style="
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.2s;
+          "
+        >
+          ⚙️ More Casper Settings
+        </a>
+      </div>
+
+      <!-- Disabled state -->
+      <div id="casperDisabled" style="display: none">
+        <div
+          style="
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #856404;
+            margin-bottom: 12px;
+          "
+        >
+          <strong>⚠️ Casper is currently disabled</strong><br />
+          Enable it in settings to analyze posts and get AI insights on LinkedIn
+        </div>
+        <a
+          href="../options.html#casper"
+          target="_blank"
+          class="casper-settings-link"
+          style="
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+          "
+        >
+          ⚙️ Enable Casper in Settings
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🔖</span>
+        <span>Saved Job Searches</span>
+      </div>
+      <div id="savedSearchesContainer">
+        <div id="savedSearchesList"></div>
+        <div
+          id="savedSearchesEmpty"
+          style="
+            display: none;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            padding: 12px;
+          "
+        >
+          No saved searches yet. Visit a LinkedIn job search page to save.
+        </div>
+        <div id="saveSearchButton" style="margin-top: 12px; display: none">
+          <button
+            id="saveCurrentSearch"
+            style="
+              width: 100%;
+              padding: 10px;
+              background: #0a66c2;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 13px;
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            💾 Save Current Search
+          </button>
+        </div>
+        <div
+          id="searchSlotInfo"
+          style="
+            margin-top: 8px;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+          "
+        ></div>
+      </div>
+      <div style="margin-top: 12px">
+        <a
+          href="../options.html"
+          target="_blank"
+          class="link"
+          style="font-size: 13px; font-weight: 600"
+        >
+          ⚙️ Manage Saved Searches
+        </a>
+      </div>
+    </div>
+
+    <!-- Job Search & Notifications Section -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🔍</span>
+        <span>Fresh Job Alerts</span>
+      </div>
+      <p
+        style="
+          font-size: 12px;
+          color: #666;
+          margin-bottom: 12px;
+          line-height: 1.5;
+        "
+      >
+        Get ahead of the competition with instant access to newly posted jobs
+      </p>
+
+      <div
+        class="instructions"
+        style="
+          margin-bottom: 12px;
+          background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+          border-left-color: #0a66c2;
+        "
+      >
+        <div
+          style="
+            font-weight: 600;
+            font-size: 13px;
+            color: #0a66c2;
+            margin-bottom: 6px;
+          "
+        >
+          💡 Pro Tip: Apply Early, Stand Out!
+        </div>
+        <div style="font-size: 12px; color: #555">
+          Applications submitted within the first hour get 4x more attention
+          from recruiters.
+        </div>
+      </div>
+
+      <a
+        href="https://www.linkedin.com/jobs/search/?f_TPR=r3600"
+        target="_blank"
+        class="casper-chat-btn"
+        style="
+          display: block;
+          width: 100%;
+          padding: 12px;
+          margin-bottom: 12px;
+          text-align: center;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 13px;
+          background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+          color: white;
+          border: none;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(10, 102, 194, 0.3);
+        "
+      >
+        🚀 View Jobs Posted in Last Hour
+      </a>
+
+      <div style="margin-bottom: 12px">
+        <div
+          style="
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+          "
+        >
+          ✨ Benefits of 1-Hour Filter:
+        </div>
+        <ul class="feature-list">
+          <li>Be among the first applicants</li>
+          <li>Higher visibility to recruiters</li>
+          <li>Beat the competition</li>
+          <li>Fresh opportunities daily</li>
+        </ul>
+      </div>
+
+      <div
+        class="instructions"
+        style="background: #fff8e1; border-left-color: #ffc107"
+      >
+        <div style="font-size: 11px; color: #f57c00; line-height: 1.5">
+          <strong>💡 Did You Know?</strong><br />
+          You can set the 1-hour filter anytime in LinkedIn job search. Look for
+         and select "<strong>Last 1 hour</strong>"! </br>
+         
+    
+        </div>
+      </div>
+        <div
+          style="
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 12px;
+          "
+        >
+          ⏳ Custom Job Alert Features:
+        </div>
+        <div>
+                <ul class="feature-list">
+          <li>Set alerts for saved jobs to get instant desktop notifications when new roles appear.</li>
+          <li>Choose how often to check, or turn notifications off anytime.</li>
+        </ul>
+      
+      
+
+      <div
+        style="
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #e9ecef;
+        "
+      >
+        <a
+          href="../options.html"
+          target="_blank"
+          class="link"
+          style="font-size: 13px; font-weight: 600"
+        >
+          🔔 Configure Job Notifications & Alerts
+        </a>
+      </div>
+    </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">💾</span>
+        <span>Saved Items Filter</span>
+      </div>
+      <ul class="feature-list">
+        <li>Filter saved items by type (All/Posts/Images/Videos)</li>
+        <li>Automatically categorizes your saved content</li>
+        <li>Quick access to specific content types</li>
+      </ul>
+      <div style="margin-top: 12px">
+        <a
+          href="https://www.linkedin.com/my-items/saved-posts/"
+          target="_blank"
+          class="link"
+          style="font-size: 13px; font-weight: 600"
+        >
+          📂 Visit My Saved Items</a
+        >
+      </div>
+      <div
+        style="
+          margin-top: 12px;
+          padding: 8px;
+          background: #fff3cd;
+          border-radius: 4px;
+          font-size: 12px;
+          color: #856404;
+        "
+      >
+        <strong>💡 Tip:</strong> If you switch between "Saved Posts" and "My
+        Jobs" tabs, refresh the page to reload filters.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="instructions">
+        <strong>📌 How to use:</strong><br />
+        1. Open LinkedIn and click "Start a post"<br />
+        2. The formatting toolbar will appear automatically<br />
+        3. Select text and click formatting buttons<br />
+        4. Paste images directly with Ctrl+V (Cmd+V on Mac)<br />
+        5. View job pages for AI-powered ATS analysis<br />
+        6. Visit "Jobs Search Page" and use 1 hour filter to get recent jobs<br />
+        7. Perform saved job searches from the popup to get quick results<br />
+        8. Visit "My Items → Saved Posts" to use filters
+      </div>
+    </div>
+
+    <div class="footer">
+      CareerCraft AI - Craft Your Dream Career Using The Handy Tools for
+      LinkedIn Management<br />
+      <a href="https://www.linkedin.com" target="_blank" class="link"
+        >Visit LinkedIn</a
+      >
+    </div>
+
+    <script src="../lib/saved-search-utils.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

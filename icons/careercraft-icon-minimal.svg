@@ -1,0 +1,31 @@
+<!-- CareerCraft AI Icon - Minimalist Version -->
+<!-- Clean, modern design with "CC" monogram -->
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#gradient1)"/>
+  
+  <!-- "CC" Monogram with craft elements -->
+  <g transform="translate(64, 64)">
+    <!-- First C -->
+    <path d="M-25 -15 Q-35 -15 -35 -5 Q-35 5 -25 5 L-20 5 L-20 -2 L-25 -2 Q-28 -2 -28 -5 Q-28 -8 -25 -8 L-15 -8 L-15 -15 Z" fill="#ffffff"/>
+    
+    <!-- Second C -->
+    <path d="M5 -15 Q-5 -15 -5 -5 Q-5 5 5 5 L10 5 L10 -2 L5 -2 Q2 -2 2 -5 Q2 -8 5 -8 L15 -8 L15 -15 Z" fill="#ffffff"/>
+    
+    <!-- Hammer accent on top -->
+    <rect x="-8" y="-32" width="16" height="5" rx="2" fill="#FFA500"/>
+    <rect x="-3" y="-27" width="6" height="12" rx="1" fill="#FF8C00"/>
+    
+    <!-- AI dots -->
+    <circle cx="-30" cy="-25" r="2.5" fill="#FFD700"/>
+    <circle cx="30" cy="-25" r="2.5" fill="#FFD700"/>
+    <circle cx="0" cy="25" r="2.5" fill="#FFD700"/>
+  </g>
+  
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a66c2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#004182;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

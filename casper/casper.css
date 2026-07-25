@@ -1,0 +1,1046 @@
+/**
+ * Casper AI Assistant Styles
+ * All classes use .casper-* namespace to avoid conflicts
+ */
+
+/* ===== CASPER CHATBOX ===== */
+
+#casper-chatbox {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 400px;
+  height: 500px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10000; /* Above toolbar (9999) */
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+#casper-chatbox.casper-hidden {
+  display: none !important;
+}
+
+#casper-chatbox.casper-minimized {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#casper-chatbox.casper-fullscreen {
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  width: auto;
+  height: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+/* ===== CHAT HEADER ===== */
+
+.casper-chatbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #0a66c2;
+  color: white;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.casper-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Casper avatar in header with white circular background */
+.casper-header-left svg.casper-avatar {
+  background: white;
+  border-radius: 50%;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  width: 32px;
+  height: 32px;
+}
+
+.casper-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.casper-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.casper-header-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.casper-header-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.casper-header-btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== CHAT BODY ===== */
+
+.casper-chatbox-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+/* ===== CHAT MESSAGES AREA ===== */
+
+.casper-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Custom scrollbar */
+.casper-messages-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.casper-messages-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.casper-messages-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.casper-messages-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ===== WELCOME SCREEN ===== */
+
+.casper-welcome-screen {
+  text-align: center;
+  padding: 32px 24px;
+  max-width: 320px;
+  margin: auto;
+}
+
+.casper-welcome-screen h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 16px 0 12px 0;
+}
+
+.casper-welcome-screen p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 12px 0;
+  line-height: 1.6;
+}
+
+.casper-welcome-screen ul {
+  text-align: left;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.casper-welcome-screen li {
+  font-size: 14px;
+  color: #374151;
+  padding: 8px 0;
+  padding-left: 28px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.casper-welcome-screen li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #0a66c2;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.casper-welcome-tip {
+  background: rgba(10, 102, 194, 0.08);
+  border-left: 3px solid #0a66c2;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px !important;
+  color: #4b5563 !important;
+  font-weight: 500;
+  margin-top: 20px !important;
+}
+
+/* ===== MESSAGES ===== */
+
+.casper-message {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.casper-message-user {
+  flex-direction: row-reverse;
+}
+
+.casper-message-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.casper-message-content {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.casper-message-assistant .casper-message-content {
+  background: white;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px 12px 12px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.casper-message-user .casper-message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 4px 12px;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.casper-message-content strong {
+  font-weight: 600;
+}
+
+.casper-message-content em {
+  font-style: italic;
+}
+
+.casper-message-content code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+
+/* ===== FOOTER ===== */
+
+.casper-chatbox-footer {
+  flex-shrink: 0;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0 0 12px 12px;
+}
+
+.casper-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.casper-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  transition: border-color 0.2s ease;
+  max-height: 120px;
+  min-height: 44px;
+}
+
+.casper-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.casper-input::placeholder {
+  color: #9ca3af;
+}
+
+.casper-send-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.casper-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.casper-send-btn:active {
+  transform: scale(0.95);
+}
+
+.casper-footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.casper-footer-btn {
+  flex: 1;
+  padding: 10px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.casper-footer-btn:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.casper-footer-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== LOADING & ERRORS ===== */
+
+.casper-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.casper-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.casper-error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #991b1b;
+  margin-bottom: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.casper-error strong {
+  font-weight: 700;
+}
+
+/* ===== HISTORY VIEW ===== */
+
+.casper-history-view {
+  padding: 8px 0;
+}
+
+.casper-history-view h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.casper-history-group h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 16px 0 8px 0;
+}
+
+.casper-history-item {
+  padding: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.casper-history-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  transform: translateX(4px);
+}
+
+.casper-history-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.casper-history-item-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ===== VISIBILITY STATES ===== */
+
+.casper-chatbox-hidden {
+  display: none !important;
+}
+
+.casper-chatbox-visible {
+  display: flex !important;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== MESSAGE LIST (was misnamed .casper-analyze-icon) ===== */
+
+.casper-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.casper-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.casper-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.casper-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.casper-messages::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* ===== MESSAGE BUBBLES ===== */
+
+.casper-message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: casper-message-appear 0.3s ease;
+}
+
+@keyframes casper-message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.casper-message-user {
+  justify-content: flex-end;
+}
+
+.casper-message-assistant {
+  justify-content: flex-start;
+}
+
+.casper-avatar-container {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Casper avatar in messages */
+.casper-message-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* User profile photo */
+.casper-user-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+}
+
+.casper-user-photo-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0a66c2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Message bubble container */
+.casper-message-bubble {
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Sender name */
+.casper-message-sender {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+.casper-message-user .casper-message-sender {
+  text-align: right;
+  color: #475569;
+}
+
+.casper-message-content {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.casper-message-user .casper-message-content {
+  background: #0a66c2;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.casper-message-assistant .casper-message-content {
+  background: white;
+  color: #1a202c;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+}
+
+.casper-message-time {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.casper-message-user .casper-message-time {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== INPUT AREA ===== */
+
+.casper-input-area {
+  padding: 12px 16px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.casper-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.casper-input:focus {
+  border-color: #0a66c2;
+}
+
+.casper-btn-send {
+  padding: 10px 20px;
+  background: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.casper-btn-send:hover {
+  background: #004182;
+}
+
+.casper-btn-send:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* ===== POST ANALYZE ICON — match LinkedIn action icons (no white circle) ===== */
+
+.casper-analyze-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+  isolation: isolate;
+  margin: 0;
+  padding: 0;
+  height: 32px;
+  width: 36px;
+  position: relative;
+  vertical-align: middle;
+}
+
+.casper-analyze-icon {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 36px !important;
+  height: 32px !important;
+  min-width: 36px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  border: none !important;
+  background: transparent !important;
+  /* Match LinkedIn Like/Comment/Send hover: lightly rounded square, not circle */
+  border-radius: 4px !important;
+  cursor: pointer;
+  color: #666666 !important;
+  transition: color 0.12s ease, background-color 0.12s ease;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  line-height: 0 !important;
+  vertical-align: middle;
+  /* Optical align: ghost shape reads high vs outline action icons */
+  transform: translateY(1px);
+}
+
+.casper-analyze-icon:hover,
+.casper-analyze-icon:focus-visible {
+  /* Match LinkedIn action-icon hover square */
+  background: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: none !important;
+  color: #0a66c2 !important;
+  opacity: 1 !important;
+  transform: translateY(1px);
+  border-radius: 4px !important;
+}
+
+.casper-analyze-icon:hover .casper-icon-svg,
+.casper-analyze-icon:hover svg,
+.casper-analyze-icon:focus-visible .casper-icon-svg,
+.casper-analyze-icon:focus-visible svg {
+  transform: none;
+  color: #0a66c2 !important;
+  fill: currentColor;
+}
+
+.casper-icon-svg {
+  display: block;
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0;
+  transition: color 0.12s ease;
+  color: inherit;
+}
+
+/* Fast custom tooltip (native title is ~1s delayed) */
+.casper-analyze-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%) translateY(2px);
+  background: #1b1f23;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.05s ease, transform 0.05s ease, visibility 0.05s;
+  z-index: 2147483646;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.casper-analyze-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: #1b1f23;
+}
+
+.casper-analyze-wrapper:hover .casper-analyze-tooltip,
+.casper-analyze-icon:focus-visible + .casper-analyze-tooltip,
+.casper-analyze-wrapper:focus-within .casper-analyze-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== LOADING STATE ===== */
+
+.casper-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  border-bottom-left-radius: 4px;
+  max-width: 70%;
+  font-size: 14px;
+  color: #718096;
+}
+
+.casper-loading-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.casper-loading-dot {
+  width: 6px;
+  height: 6px;
+  background: #cbd5e0;
+  border-radius: 50%;
+  animation: casper-loading-bounce 1.4s infinite ease-in-out both;
+}
+
+.casper-loading-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.casper-loading-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes casper-loading-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* ===== ERROR MESSAGE ===== */
+
+.casper-error {
+  padding: 12px;
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  border-radius: 8px;
+  color: #c53030;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.casper-error-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ===== DARK THEME ===== */
+
+[data-theme="dark"] #casper-chatbox {
+  background: #1e2124;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .casper-chatbox-body {
+  background: #2d2f31;
+}
+
+[data-theme="dark"] .casper-messages-container {
+  background: #2d2f31;
+}
+
+[data-theme="dark"] .casper-messages-container::-webkit-scrollbar-track {
+  background: #1e2124;
+}
+
+[data-theme="dark"] .casper-messages-container::-webkit-scrollbar-thumb {
+  background: #4a4b4d;
+}
+
+[data-theme="dark"] .casper-messages-container::-webkit-scrollbar-thumb:hover {
+  background: #58a6ff;
+}
+
+[data-theme="dark"] .casper-welcome-screen h3 {
+  color: #e4e6eb;
+}
+
+[data-theme="dark"] .casper-welcome-screen p {
+  color: #a0aec0;
+}
+
+[data-theme="dark"] .casper-welcome-screen li {
+  color: #e4e6eb;
+}
+
+[data-theme="dark"] .casper-welcome-tip {
+  background: rgba(88, 166, 255, 0.15);
+  border-left-color: #58a6ff;
+  color: #a0aec0 !important;
+}
+
+[data-theme="dark"] .casper-message-assistant .casper-message-content {
+  background: #38393a;
+  color: #e4e6eb;
+  border-color: #4a4b4d;
+}
+
+[data-theme="dark"] .casper-message-user .casper-message-content {
+  background: #58a6ff;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .casper-chatbox-footer {
+  background: #1e2124;
+  border-top-color: #38393a;
+}
+
+[data-theme="dark"] .casper-input-container {
+  background: transparent;
+}
+
+[data-theme="dark"] .casper-input {
+  background: #38393a;
+  color: #e4e6eb;
+  border-color: #4a4b4d;
+}
+
+[data-theme="dark"] .casper-input::placeholder {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .casper-input:focus {
+  border-color: #58a6ff;
+}
+
+[data-theme="dark"] .casper-send-btn {
+  background: #58a6ff;
+}
+
+[data-theme="dark"] .casper-send-btn:hover {
+  background: #79b8ff;
+}
+
+[data-theme="dark"] .casper-footer-btn {
+  background: #38393a;
+  border-color: #4a4b4d;
+  color: #e4e6eb;
+}
+
+[data-theme="dark"] .casper-footer-btn:hover {
+  background: #4a4b4d;
+  border-color: #58a6ff;
+}
+
+[data-theme="dark"] .casper-loading {
+  background: #38393a;
+  border-color: #4a4b4d;
+  color: #a0aec0;
+}
+
+[data-theme="dark"] .casper-loading-spinner {
+  border-color: #4a4b4d;
+  border-top-color: #58a6ff;
+}
+
+[data-theme="dark"] .casper-error {
+  background: #3d1f1f;
+  border-color: #7a2e2e;
+  border-left-color: #dc2626;
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .casper-history-view h3 {
+  color: #e4e6eb;
+}
+
+[data-theme="dark"] .casper-history-group h4 {
+  color: #a0aec0;
+}
+
+[data-theme="dark"] .casper-history-item {
+  background: #38393a;
+  border-color: #4a4b4d;
+}
+
+[data-theme="dark"] .casper-history-item:hover {
+  background: #4a4b4d;
+  border-color: #58a6ff;
+}
+
+[data-theme="dark"] .casper-history-item-title {
+  color: #e4e6eb;
+}
+
+[data-theme="dark"] .casper-history-item-preview {
+  color: #a0aec0;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  #casper-chatbox {
+    left: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+    max-width: 400px;
+  }
+
+  #casper-chatbox.casper-fullscreen {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+}

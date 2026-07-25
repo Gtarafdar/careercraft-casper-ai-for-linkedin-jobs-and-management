@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Icon Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+      }
+      canvas {
+        border: 1px solid #ccc;
+        margin: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background: #0a66c2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+      button:hover {
+        background: #084c8a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>LinkedIn Formatter Icon Generator</h1>
+    <p>Click the button below to generate extension icons</p>
+
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+
+    <br /><br />
+    <button onclick="generateIcons()">Generate Icons</button>
+    <div id="instructions" style="margin-top: 20px; display: none">
+      <h3>Icons Generated!</h3>
+      <p>Right-click each icon above and select "Save image as..."</p>
+      <p>Save them as: icon16.png, icon48.png, and icon128.png</p>
+      <p>Place them in the "icons" folder of your extension</p>
+    </div>
+
+    <script>
+      function generateIcons() {
+        generateIcon("canvas16", 16);
+        generateIcon("canvas48", 48);
+        generateIcon("canvas128", 128);
+        document.getElementById("instructions").style.display = "block";
+      }
+
+      function generateIcon(canvasId, size) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, "#0a66c2");
+        gradient.addColorStop(1, "#004182");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        // Add border
+        ctx.strokeStyle = "#002855";
+        ctx.lineWidth = size / 32;
+        ctx.strokeRect(0, 0, size, size);
+
+        // Draw "T" and "F" for Text Formatter
+        ctx.fillStyle = "white";
+        ctx.font = `bold ${size * 0.5}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("TF", size / 2, size / 2);
+
+        // Add small formatting symbol
+        ctx.font = `${size * 0.2}px Arial`;
+        ctx.fillText("𝐁𝐼", size / 2, size * 0.75);
+      }
+
+      // Generate on load
+      window.onload = generateIcons;
+    </script>
+  </body>
+</html>

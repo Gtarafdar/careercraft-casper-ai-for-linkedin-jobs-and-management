@@ -1,0 +1,443 @@
+/* LinkedIn Text Formatter Toolbar Styles */
+
+.linkedin-formatter-toolbar {
+  margin-bottom: 12px;
+  padding: 0;
+  animation: slideDown 0.3s ease-out;
+  position: relative;
+  z-index: 10000;
+  overflow: visible;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lf-toolbar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f3f6f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.lf-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+.lf-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #d0d0d0;
+}
+
+.lf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.lf-btn:hover {
+  background: #0a66c2;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(10, 102, 194, 0.3);
+}
+
+.lf-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(10, 102, 194, 0.2);
+}
+
+.lf-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Typography dropdown */
+.lf-btn-typography {
+  min-width: 40px;
+}
+
+.lf-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10000;
+  min-width: 180px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.lf-dropdown.lf-dropdown-active {
+  display: flex;
+}
+
+.lf-dropdown-item {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  color: #333;
+}
+
+.lf-dropdown-item:hover {
+  background: #f3f6f8;
+  color: #0a66c2;
+}
+
+/* Scrollbar for dropdown */
+.lf-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lf-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.lf-dropdown::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.lf-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Toolbar info */
+.lf-toolbar-info {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lf-info-text {
+  font-size: 11px;
+  color: #666;
+  font-style: italic;
+  padding: 4px 8px;
+  background: rgba(10, 102, 194, 0.05);
+  border-radius: 4px;
+}
+
+/* Toggle button */
+.lf-toggle-btn {
+  margin-left: 8px;
+  min-width: 32px;
+}
+
+/* Collapsed state - hide everything except toggle */
+.lf-toolbar-collapsed .lf-toolbar-section {
+  display: none !important;
+}
+
+.lf-toolbar-collapsed .lf-toolbar-divider {
+  display: none !important;
+}
+
+.lf-toolbar-collapsed .lf-info-text {
+  display: none !important;
+}
+
+/* Show/hide correct icon based on state */
+.lf-toolbar-collapsed .lf-icon-collapse {
+  display: none;
+}
+
+.lf-toolbar-collapsed .lf-icon-expand {
+  display: block !important;
+}
+
+/* When expanded */
+.lf-toolbar-container:not(.lf-toolbar-collapsed) .lf-icon-expand {
+  display: none;
+}
+
+.lf-toolbar-container:not(.lf-toolbar-collapsed) .lf-icon-collapse {
+  display: block;
+}
+
+/* Adjust container when collapsed */
+.lf-toolbar-collapsed {
+  padding: 4px;
+  width: fit-content;
+  max-width: 44px;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+/* Smooth transitions */
+.lf-toolbar-section,
+.lf-toolbar-divider,
+.lf-info-text {
+  transition: opacity 0.2s ease;
+}
+
+.lf-icon-collapse,
+.lf-icon-expand {
+  transition: transform 0.2s ease;
+}
+
+.lf-toggle-btn:hover .lf-icon-collapse,
+.lf-toggle-btn:hover .lf-icon-expand {
+  transform: scale(1.1);
+}
+
+/* Notification */
+.lf-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #333;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100000;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.lf-notification-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Ensure toolbar doesn't interfere with LinkedIn's UI */
+.linkedin-formatter-toolbar * {
+  box-sizing: border-box;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", "Fira Sans", Ubuntu, Oxygen, "Oxygen Sans", Cantarell,
+    "Droid Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .lf-toolbar-container {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .lf-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .lf-toolbar-info {
+    display: none;
+  }
+
+  .lf-dropdown {
+    min-width: 150px;
+  }
+}
+
+/* Dark mode support - user controlled theme */
+.lf-toolbar-container[data-theme="dark"] {
+  background: #1e2124;
+  border-color: #38393a;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-btn {
+  background: #2d2f31;
+  color: #e4e6eb;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-btn:hover {
+  background: #0a66c2;
+  color: white;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-toolbar-divider {
+  background: #38393a;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-dropdown {
+  background: #2d2f31;
+  border-color: #38393a;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-dropdown-item {
+  color: #e4e6eb;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-dropdown-item:hover {
+  background: #38393a;
+}
+
+.lf-toolbar-container[data-theme="dark"] .lf-info-text {
+  color: #b0b3b8;
+  background: rgba(10, 102, 194, 0.1);
+}
+
+/* Accessibility */
+.lf-btn:focus,
+.lf-dropdown-item:focus {
+  outline: 2px solid #0a66c2;
+  outline-offset: 2px;
+}
+
+/* Animation for button press */
+@keyframes btnPress {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+.lf-btn:active {
+  animation: btnPress 0.2s ease;
+}
+
+/* Native browser tooltips - no custom CSS needed */
+/* The title attribute will handle tooltips automatically */
+
+/* Emoji Picker Styles */
+.lf-emoji-picker {
+  position: fixed;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  z-index: 999999;
+  max-width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lf-emoji-picker-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.lf-emoji-category {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  margin: 12px 0 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.lf-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lf-emoji-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-emoji-btn:hover {
+  background: #f3f6f8;
+  transform: scale(1.15);
+}
+
+.lf-emoji-btn:active {
+  transform: scale(1.05);
+}
+
+.lf-emoji-footer {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Scrollbar for emoji picker */
+.lf-emoji-picker::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lf-emoji-picker::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.lf-emoji-picker::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.lf-emoji-picker::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

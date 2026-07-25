@@ -1,0 +1,28 @@
+<!-- CareerCraft AI Icon - Simple & Bold Version -->
+<!-- Best for small sizes (16px, 32px) -->
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" rx="28" fill="url(#grad3)"/>
+  
+  <!-- Large "C" for CareerCraft -->
+  <path d="M64 20 Q35 20 35 64 Q35 108 64 108 L80 108 L80 90 L64 90 Q50 90 50 64 Q50 38 64 38 L85 38 L85 20 Z" fill="#ffffff"/>
+  
+  <!-- Hammer overlay (craft symbol) -->
+  <g opacity="0.8">
+    <rect x="78" y="45" width="10" height="40" rx="2" fill="#FFA500"/>
+    <rect x="70" y="40" width="26" height="12" rx="3" fill="#FF8C00"/>
+  </g>
+  
+  <!-- AI sparkle top right -->
+  <g transform="translate(100, 28)">
+    <line x1="-6" y1="0" x2="6" y2="0" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+    <line x1="0" y1="-6" x2="0" y2="6" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a66c2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#004182;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

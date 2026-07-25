@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# Cursor / debug
+.cursor/
+*.log
+debug-*.log
+
+# Secrets — never commit API keys or env files
+.env
+.env.*
+*.pem
+*.p12
+secrets/
+credentials.json
+**/api_keys.json
+
+# Dependencies / build (if added later)
+node_modules/
+dist/
+build/
+.cache/
+
+# Local test artifacts
+tmp/
+temp/
+*.tmp

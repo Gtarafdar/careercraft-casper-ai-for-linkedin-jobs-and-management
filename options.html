@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerCraft AI - Settings</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #e8f4fc 0%,
+          #f0f8ff 50%,
+          #ffffff 100%
+        );
+        min-height: 100vh;
+        padding: 40px 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 16px;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .section {
+        margin-bottom: 40px;
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-title::before {
+        content: "";
+        width: 4px;
+        height: 24px;
+        background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+        border-radius: 2px;
+      }
+
+      .api-option {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .api-option:hover {
+        border-color: #0a66c2;
+        box-shadow: 0 4px 12px rgba(10, 102, 194, 0.15);
+      }
+
+      .api-option.active {
+        border-color: #0a66c2;
+        background: #e8f4fc;
+      }
+
+      .api-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .api-radio {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .api-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        flex: 1;
+      }
+
+      .api-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .api-status.configured {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .api-status.not-configured {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .api-input-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .api-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: "Courier New", monospace;
+        transition: border-color 0.2s;
+      }
+
+      .api-input:focus {
+        outline: none;
+        border-color: #0a66c2;
+      }
+
+      .api-input.error {
+        border-color: #ef4444;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: white !important;
+      }
+
+      .btn-save {
+        background: #0a66c2;
+        color: white !important;
+      }
+
+      .btn-save:hover {
+        background: #004182;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(10, 102, 194, 0.4);
+      }
+
+      .btn-clear {
+        background: #ef4444;
+        color: white !important;
+      }
+
+      .btn-clear:hover {
+        background: #dc2626;
+      }
+
+      .api-help {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+      }
+
+      .api-help a {
+        color: #0a66c2;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .api-help a:hover {
+        text-decoration: underline;
+      }
+
+      .api-model-info {
+        margin-top: 12px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #4b5563;
+      }
+
+      .api-model-info strong {
+        color: #1f2937;
+      }
+
+      .model-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 13px;
+        background: white;
+        color: #1f2937;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+
+      .model-select:focus {
+        outline: none;
+        border-color: #0a66c2;
+      }
+
+      .model-select:hover {
+        border-color: #9ca3af;
+      }
+
+      .api-usage-stats {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 6px;
+        font-size: 13px;
+      }
+
+      .api-usage-stats .usage-label {
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 6px;
+      }
+
+      .api-usage-stats .usage-value {
+        color: #78350f;
+        font-family: "Courier New", monospace;
+      }
+
+      .clear-usage-btn {
+        margin-top: 8px;
+        padding: 6px 14px;
+        background: #f59e0b;
+        color: white !important;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .clear-usage-btn:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+      }
+
+      .api-dashboard-link {
+        margin-top: 8px;
+        display: inline-block;
+        padding: 6px 12px;
+        background: #0a66c2;
+        color: white !important;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .api-dashboard-link:hover {
+        background: #004182;
+        transform: translateY(-1px);
+        text-decoration: none;
+      }
+
+      .ats-info {
+        background: #e8f4fc;
+        border-left: 4px solid #0a66c2;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .ats-info h3 {
+        color: #1f2937;
+        margin-bottom: 12px;
+        font-size: 16px;
+      }
+
+      .ats-criteria {
+        list-style: none;
+        padding: 0;
+      }
+
+      .ats-criteria li {
+        padding: 8px 0;
+        color: #4b5563;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .ats-criteria li::before {
+        content: "✓";
+        color: #059669;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .success-message,
+      .error-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+      }
+
+      .success-message {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+      }
+
+      .error-message {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #6b7280;
+        font-size: 14px;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      /* Toast Notification System */
+      .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 400px;
+      }
+
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+          0 0 0 1px rgba(0, 0, 0, 0.05);
+        animation: toastSlideIn 0.3s ease-out;
+        min-width: 300px;
+        max-width: 400px;
+      }
+
+      .toast.removing {
+        animation: toastSlideOut 0.3s ease-out forwards;
+      }
+
+      .toast-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .toast-content {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .toast-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+
+      .toast-close:hover {
+        background: #f3f4f6;
+      }
+
+      .toast.success {
+        border-left: 4px solid #10b981;
+      }
+
+      .toast.success .toast-icon {
+        color: #10b981;
+      }
+
+      .toast.error {
+        border-left: 4px solid #ef4444;
+      }
+
+      .toast.error .toast-icon {
+        color: #ef4444;
+      }
+
+      .toast.info {
+        border-left: 4px solid #0a66c2;
+      }
+
+      .toast.info .toast-icon {
+        color: #0a66c2;
+      }
+
+      .toast.warning {
+        border-left: 4px solid #f59e0b;
+      }
+
+      .toast.warning .toast-icon {
+        color: #f59e0b;
+      }
+
+      @keyframes toastSlideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes toastSlideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+
+      /* Notification Log Styles */
+      .log-entry {
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        margin-bottom: 8px;
+        background: white;
+        border-left: 3px solid #e5e7eb;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .log-entry.success {
+        border-left-color: #10b981;
+        background: #f0fdf4;
+      }
+
+      .log-entry.error {
+        border-left-color: #ef4444;
+        background: #fef2f2;
+      }
+
+      .log-entry.warning {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .log-entry.info {
+        border-left-color: #3b82f6;
+        background: #eff6ff;
+      }
+
+      .log-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .log-content {
+        flex: 1;
+      }
+
+      .log-timestamp {
+        color: #6b7280;
+        font-size: 10px;
+        margin-bottom: 4px;
+      }
+
+      .log-message {
+        color: #374151;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .log-details {
+        color: #6b7280;
+        font-size: 11px;
+        font-family: "Courier New", monospace;
+        background: rgba(0, 0, 0, 0.02);
+        padding: 4px 8px;
+        border-radius: 3px;
+        margin-top: 4px;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+
+      #checkJobsNow:hover {
+        background: #059669;
+        transform: translateY(-1px);
+      }
+
+      #clearNotificationLogs:hover {
+        background: #dc2626;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>⚙️ CareerCraft AI Settings</h1>
+        <p style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z"
+              fill="#0a66c2"
+            />
+            <circle cx="13" cy="13" r="2" fill="white" />
+            <circle cx="19" cy="13" r="2" fill="white" />
+            <path
+              d="M12 17 Q16 20 20 17"
+              stroke="white"
+              stroke-width="1.8"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+          Configure AI-powered ATS analysis with your API keys
+        </p>
+      </div>
+
+      <div class="content">
+        <div class="section">
+          <h2 class="section-title">AI Provider Selection</h2>
+          <p style="color: #6b7280; margin-bottom: 20px">
+            Choose one AI provider for job analysis, ATS scoring and for the
+            Casper AI Chatbot. Your API key is stored locally and never shared.
+            For free API try OpenRouter API Key and select Llama.
+          </p>
+
+          <!-- Google Gemini -->
+          <div class="api-option" data-provider="gemini">
+            <div class="api-header">
+              <input
+                type="radio"
+                name="ai-provider"
+                value="gemini"
+                class="api-radio"
+                id="radio-gemini"
+              />
+              <label for="radio-gemini" class="api-name"
+                >Google Gemini AI</label
+              >
+              <span class="api-status not-configured" id="status-gemini"
+                >Not Configured</span
+              >
+            </div>
+
+            <!-- Model Selection -->
+            <div class="api-model-info">
+              <label
+                for="gemini-model-select"
+                style="display: block; margin-bottom: 6px"
+              >
+                <strong>Select Model:</strong>
+              </label>
+              <select
+                id="gemini-model-select"
+                class="model-select"
+                data-provider="gemini"
+              >
+                <option value="gemini-2.5-flash">
+                  gemini-2.5-flash (Best price-performance, recommended)
+                </option>
+                <option value="gemini-2.0-flash">
+                  gemini-2.0-flash (Most stable, reliable fallback)
+                </option>
+                <option value="gemini-2.5-pro">
+                  gemini-2.5-pro (Advanced thinking, higher cost)
+                </option>
+              </select>
+              <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
+                💡 <strong>Recommended:</strong> gemini-2.5-flash for speed &
+                cost, gemini-2.5-pro for complex analysis
+              </p>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="api-usage-stats" id="usage-gemini">
+              <div class="usage-label">📊 Current Usage Tracking</div>
+              <div class="usage-value">
+                Requests: <span id="usage-gemini-requests">0</span> | Est.
+                Tokens: <span id="usage-gemini-tokens">0</span>
+              </div>
+              <button
+                class="clear-usage-btn"
+                data-provider="gemini"
+                data-action="clear-usage"
+              >
+                🗑️ Reset Usage Counter
+              </button>
+            </div>
+
+            <div class="api-input-group">
+              <input
+                type="password"
+                class="api-input"
+                id="input-gemini"
+                placeholder="Enter your Gemini API key (e.g., AIzaSy...)"
+                autocomplete="off"
+              />
+              <button
+                class="btn btn-save"
+                data-provider="gemini"
+                data-action="save"
+              >
+                Save
+              </button>
+              <button
+                class="btn btn-clear"
+                data-provider="gemini"
+                data-action="clear"
+              >
+                Clear
+              </button>
+            </div>
+            <div class="api-help">
+              Get your free API key from
+              <a href="https://makersuite.google.com/app/apikey" target="_blank"
+                >Google AI Studio</a
+              >
+              |
+              <a
+                href="https://aistudio.google.com/usage"
+                target="_blank"
+                class="api-dashboard-link"
+              >
+                📈 View Official Usage Dashboard
+              </a>
+            </div>
+          </div>
+
+          <!-- OpenAI -->
+          <div class="api-option" data-provider="openai">
+            <div class="api-header">
+              <input
+                type="radio"
+                name="ai-provider"
+                value="openai"
+                class="api-radio"
+                id="radio-openai"
+              />
+              <label for="radio-openai" class="api-name">OpenAI GPT</label>
+              <span class="api-status not-configured" id="status-openai"
+                >Not Configured</span
+              >
+            </div>
+
+            <!-- Model Selection -->
+            <div class="api-model-info">
+              <label
+                for="openai-model-select"
+                style="display: block; margin-bottom: 6px"
+              >
+                <strong>Select Model:</strong>
+              </label>
+              <select
+                id="openai-model-select"
+                class="model-select"
+                data-provider="openai"
+              >
+                <option value="gpt-3.5-turbo">
+                  gpt-3.5-turbo (Fast & cost-effective)
+                </option>
+                <option value="gpt-4">gpt-4 (Most capable, slower)</option>
+                <option value="gpt-4-turbo">
+                  gpt-4-turbo (Balanced performance)
+                </option>
+                <option value="gpt-4o">gpt-4o (Latest, multimodal)</option>
+                <option value="gpt-4o-mini">
+                  gpt-4o-mini (Cheaper alternative)
+                </option>
+              </select>
+              <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
+                💡 <strong>Recommended:</strong> gpt-3.5-turbo for speed, gpt-4o
+                for best quality
+              </p>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="api-usage-stats" id="usage-openai">
+              <div class="usage-label">📊 Current Usage Tracking</div>
+              <div class="usage-value">
+                Requests: <span id="usage-openai-requests">0</span> | Est.
+                Tokens: <span id="usage-openai-tokens">0</span>
+              </div>
+              <button
+                class="clear-usage-btn"
+                data-provider="openai"
+                data-action="clear-usage"
+              >
+                🗑️ Reset Usage Counter
+              </button>
+            </div>
+
+            <div class="api-input-group">
+              <input
+                type="password"
+                class="api-input"
+                id="input-openai"
+                placeholder="Enter your OpenAI API key (e.g., sk-...)"
+                autocomplete="off"
+              />
+              <button
+                class="btn btn-save"
+                data-provider="openai"
+                data-action="save"
+              >
+                Save
+              </button>
+              <button
+                class="btn btn-clear"
+                data-provider="openai"
+                data-action="clear"
+              >
+                Clear
+              </button>
+            </div>
+            <div class="api-help">
+              Get your API key from
+              <a href="https://platform.openai.com/api-keys" target="_blank"
+                >OpenAI Platform</a
+              >
+              |
+              <a
+                href="https://platform.openai.com/usage"
+                target="_blank"
+                class="api-dashboard-link"
+              >
+                📈 View Official Usage Dashboard
+              </a>
+            </div>
+          </div>
+
+          <!-- OpenRouter -->
+          <div class="api-option" data-provider="openrouter">
+            <div class="api-header">
+              <input
+                type="radio"
+                name="ai-provider"
+                value="openrouter"
+                class="api-radio"
+                id="radio-openrouter"
+              />
+              <label for="radio-openrouter" class="api-name">OpenRouter</label>
+              <span class="api-status not-configured" id="status-openrouter"
+                >Not Configured</span
+              >
+            </div>
+
+            <!-- Model Selection -->
+            <div class="api-model-info">
+              <label
+                for="openrouter-model-select"
+                style="display: block; margin-bottom: 6px"
+              >
+                <strong>Select Model:</strong>
+              </label>
+              <select
+                id="openrouter-model-select"
+                class="model-select"
+                data-provider="openrouter"
+              >
+                <option value="google/gemini-2.5-flash">
+                  Gemini 2.5 Flash (Recommended, $0.075/1M tokens)
+                </option>
+                <option value="meta-llama/llama-3.1-8b-instruct">
+                  Llama 3.1 8B (FREE - No cost)
+                </option>
+                <option value="openai/gpt-4o-mini">
+                  GPT-4o Mini ($0.15/1M tokens)
+                </option>
+                <option value="anthropic/claude-3.5-sonnet">
+                  Claude 3.5 Sonnet (Premium, $3/1M tokens)
+                </option>
+                <option value="google/gemini-2.5-pro">
+                  Gemini 2.5 Pro (Advanced, $1.25/1M tokens)
+                </option>
+              </select>
+              <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
+                💡 <strong>Recommended:</strong> Gemini 2.5 Flash for best
+                balance. Use Llama 3.1 for free tier.
+              </p>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="api-usage-stats" id="usage-openrouter">
+              <div class="usage-label">📊 Current Usage Tracking</div>
+              <div class="usage-value">
+                Requests: <span id="usage-openrouter-requests">0</span> | Est.
+                Tokens: <span id="usage-openrouter-tokens">0</span>
+              </div>
+              <button
+                class="clear-usage-btn"
+                data-provider="openrouter"
+                data-action="clear-usage"
+              >
+                🗑️ Reset Usage Counter
+              </button>
+            </div>
+
+            <div class="api-input-group">
+              <input
+                type="password"
+                class="api-input"
+                id="input-openrouter"
+                placeholder="Enter your OpenRouter API key (e.g., sk-or-v1-...)"
+                autocomplete="off"
+              />
+              <button
+                class="btn btn-save"
+                data-provider="openrouter"
+                data-action="save"
+              >
+                Save
+              </button>
+              <button
+                class="btn btn-clear"
+                data-provider="openrouter"
+                data-action="clear"
+              >
+                Clear
+              </button>
+            </div>
+
+            <div class="api-help">
+              Get your free API key from
+              <a href="https://openrouter.ai/keys" target="_blank"
+                >OpenRouter Dashboard</a
+              >
+              |
+              <a
+                href="https://openrouter.ai/docs"
+                target="_blank"
+                class="api-dashboard-link"
+              >
+                📚 View Documentation
+              </a>
+            </div>
+
+            <!-- Test Connection Button -->
+            <div style="margin-top: 16px">
+              <button
+                id="testOpenRouterBtn"
+                class="btn"
+                style="width: 100%; background: #10b981"
+              >
+                🧪 Test API Connection
+              </button>
+            </div>
+
+            <!-- Learn More Section (Collapsible) -->
+            <details
+              style="
+                margin-top: 16px;
+                padding: 12px;
+                background: #f9fafb;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+              "
+            >
+              <summary
+                style="
+                  cursor: pointer;
+                  font-weight: 600;
+                  color: #374151;
+                  font-size: 14px;
+                "
+              >
+                📖 Learn More About OpenRouter
+              </summary>
+              <div
+                style="
+                  margin-top: 12px;
+                  font-size: 13px;
+                  color: #6b7280;
+                  line-height: 1.6;
+                "
+              >
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  What is OpenRouter?
+                </h4>
+                <p>
+                  OpenRouter is a unified gateway to 400+ AI models from
+                  providers like OpenAI, Anthropic, Google, and Meta. One API
+                  key gives you access to all models with automatic fallbacks
+                  and cost optimization.
+                </p>
+
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  How to Get Your API Key:
+                </h4>
+                <ol style="margin-left: 20px; line-height: 1.8">
+                  <li>
+                    Visit
+                    <a
+                      href="https://openrouter.ai/keys"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >openrouter.ai/keys</a
+                    >
+                  </li>
+                  <li>Sign in with Google, GitHub, or email</li>
+                  <li>Click "Create Key" button</li>
+                  <li>Name your key (e.g., "LinkedIn ATS Analyzer")</li>
+                  <li>Set credit limit (optional, for budget control)</li>
+                  <li>
+                    Copy your key (starts with
+                    <code
+                      style="
+                        background: #e5e7eb;
+                        padding: 2px 4px;
+                        border-radius: 3px;
+                      "
+                      >sk-or-v1-</code
+                    >)
+                  </li>
+                  <li>Paste it above and click Save</li>
+                </ol>
+
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  Model Comparison:
+                </h4>
+                <table
+                  style="
+                    width: 100%;
+                    font-size: 12px;
+                    border-collapse: collapse;
+                    margin: 8px 0;
+                  "
+                >
+                  <thead>
+                    <tr style="background: #f3f4f6; text-align: left">
+                      <th style="padding: 6px">Model</th>
+                      <th style="padding: 6px">Speed</th>
+                      <th style="padding: 6px">Quality</th>
+                      <th style="padding: 6px">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid #e5e7eb">
+                      <td style="padding: 6px">Gemini 2.5 Flash</td>
+                      <td style="padding: 6px">⚡⚡⚡</td>
+                      <td style="padding: 6px">⭐⭐⭐⭐</td>
+                      <td style="padding: 6px">$0.075/1M</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb">
+                      <td style="padding: 6px">Llama 3.1 8B</td>
+                      <td style="padding: 6px">⚡⚡⚡</td>
+                      <td style="padding: 6px">⭐⭐⭐</td>
+                      <td
+                        style="padding: 6px; color: #059669; font-weight: 600"
+                      >
+                        FREE
+                      </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb">
+                      <td style="padding: 6px">GPT-4o Mini</td>
+                      <td style="padding: 6px">⚡⚡</td>
+                      <td style="padding: 6px">⭐⭐⭐⭐</td>
+                      <td style="padding: 6px">$0.15/1M</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb">
+                      <td style="padding: 6px">Claude 3.5 Sonnet</td>
+                      <td style="padding: 6px">⚡⚡</td>
+                      <td style="padding: 6px">⭐⭐⭐⭐⭐</td>
+                      <td style="padding: 6px">$3/1M</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px">Gemini 2.5 Pro</td>
+                      <td style="padding: 6px">⚡</td>
+                      <td style="padding: 6px">⭐⭐⭐⭐⭐</td>
+                      <td style="padding: 6px">$1.25/1M</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  Automatic Fallback:
+                </h4>
+                <p>
+                  If your selected model fails (rate limit, error, etc.),
+                  OpenRouter automatically tries the free Llama 3.1 model. This
+                  ensures uninterrupted service.
+                </p>
+
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  Benefits:
+                </h4>
+                <ul style="margin-left: 20px; line-height: 1.8">
+                  <li>✅ One key for popular models</li>
+                  <li>✅ Free tier available (Llama models)</li>
+                  <li>✅ Automatic failover if model unavailable</li>
+                  <li>✅ Often cheaper than direct APIs</li>
+                  <li>✅ No vendor lock-in - switch anytime</li>
+                </ul>
+
+                <h4
+                  style="color: #111827; margin: 12px 0 6px 0; font-size: 13px"
+                >
+                  Official Resources:
+                </h4>
+                <ul style="margin-left: 20px; line-height: 1.8">
+                  <li>
+                    <a
+                      href="https://openrouter.ai/keys"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >🔑 Get API Key</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://openrouter.ai/docs"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >📚 Documentation</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://openrouter.ai/models"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >Browse All Models</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://openrouter.ai/activity"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >📊 Usage Dashboard</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://openrouter.ai/docs/faq"
+                      target="_blank"
+                      style="color: #0a66c2"
+                      >❓ FAQ</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">ATS Scoring Matrix</h2>
+          <div class="ats-info">
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z"
+                  fill="#0a66c2"
+                />
+                <circle cx="13" cy="13" r="2" fill="white" />
+                <circle cx="19" cy="13" r="2" fill="white" />
+                <path
+                  d="M12 17 Q16 20 20 17"
+                  stroke="white"
+                  stroke-width="1.8"
+                  fill="none"
+                  stroke-linecap="round"
+                />
+              </svg>
+              How Casper AI Analyzes Your Profile
+            </h3>
+            <ul class="ats-criteria">
+              <li>
+                <strong>Skills Match (30%):</strong> Compares your skills with
+                job requirements
+              </li>
+              <li>
+                <strong>Experience Level (25%):</strong> Years of experience vs
+                job expectations
+              </li>
+              <li>
+                <strong>Education (15%):</strong> Degree requirements and
+                certifications
+              </li>
+              <li>
+                <strong>Keywords (20%):</strong> Relevant industry terms and
+                technologies
+              </li>
+              <li>
+                <strong>Job Responsibilities (10%):</strong> Past roles
+                alignment with job duties
+              </li>
+            </ul>
+            <p style="margin-top: 16px; color: #6b7280; font-size: 13px">
+              The AI will extract data from both the job posting and your
+              LinkedIn profile to provide a comprehensive ATS compatibility
+              score.
+            </p>
+          </div>
+        </div>
+
+        <!-- Cache Management Section -->
+        <div class="section">
+          <h2 class="section-title">💾 Cache Management</h2>
+          <div
+            class="ats-info"
+            style="background: #eff6ff; border-left-color: #3b82f6"
+          >
+            <h3>ATS Analysis Cache</h3>
+            <p style="color: #6b7280; font-size: 14px; margin: 12px 0">
+              Save API costs by caching analysis results. Cached results are
+              automatically refreshed when you update your CV or profile.
+            </p>
+
+            <!-- Cache Statistics -->
+            <div
+              id="cacheStats"
+              style="
+                margin: 16px 0;
+                padding: 14px;
+                background: white;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+              "
+            >
+              <div
+                style="font-weight: 600; color: #374151; margin-bottom: 10px"
+              >
+                Cache Statistics
+              </div>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                  gap: 10px;
+                  font-size: 13px;
+                "
+              >
+                <div>
+                  <span style="color: #6b7280">Jobs Cached:</span>
+                  <strong id="cachedJobsCount" style="color: #1f2937">0</strong>
+                </div>
+                <div>
+                  <span style="color: #6b7280">API Calls Saved:</span>
+                  <strong id="savedApiCalls" style="color: #059669">0</strong>
+                </div>
+                <div>
+                  <span style="color: #6b7280">Estimated Savings:</span>
+                  <strong id="estimatedSavings" style="color: #059669"
+                    >$0.00</strong
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Cache Settings -->
+            <div style="margin: 16px 0">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Enable Cache
+                <input
+                  type="checkbox"
+                  id="cacheEnabled"
+                  style="margin-left: 8px"
+                  checked
+                />
+              </label>
+              <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0">
+                Disable to always run fresh AI analysis (will increase API
+                costs)
+              </p>
+            </div>
+
+            <div style="margin: 16px 0">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Max Cache Size: <span id="maxCacheSizeValue">50</span> jobs
+              </label>
+              <input
+                type="range"
+                id="maxCacheSize"
+                min="10"
+                max="100"
+                value="50"
+                step="10"
+                style="width: 100%; margin: 8px 0"
+              />
+              <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0">
+                Maximum number of jobs to keep in cache (older entries are
+                automatically removed)
+              </p>
+            </div>
+
+            <div style="margin: 16px 0">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Auto-Cleanup After:
+                <span id="autoCleanupDaysValue">15</span> days
+              </label>
+              <input
+                type="range"
+                id="autoCleanupDays"
+                min="7"
+                max="30"
+                value="15"
+                step="1"
+                style="width: 100%; margin: 8px 0"
+              />
+              <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0">
+                Cached results older than this will be automatically removed
+              </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                margin-top: 16px;
+                flex-wrap: wrap;
+              "
+            >
+              <button
+                id="refreshCacheStats"
+                class="btn"
+                style="background: #3b82f6; flex: 1; min-width: 140px"
+              >
+                🔄 Refresh Stats
+              </button>
+              <button
+                id="clearAllCache"
+                class="btn"
+                style="background: #ef4444; flex: 1; min-width: 140px"
+              >
+                🗑️ Clear All Cache
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved Job Searches Section -->
+        <div class="section">
+          <h2 class="section-title">🔖 Saved Job Searches</h2>
+          <p style="color: #6b7280; margin-bottom: 20px">
+            Save up to 5 LinkedIn job searches and run them with one click.
+            Manage your saved searches below.
+          </p>
+
+          <div
+            style="
+              background: #f9fafb;
+              border: 2px solid #e5e7eb;
+              border-radius: 12px;
+              padding: 24px;
+            "
+          >
+            <!-- Search Stats -->
+            <div
+              style="
+                margin-bottom: 20px;
+                padding: 12px;
+                background: #e0f2fe;
+                border-radius: 8px;
+                border-left: 4px solid #0284c7;
+              "
+            >
+              <div style="font-weight: 600; color: #075985; margin-bottom: 8px">
+                📊 Search Slots
+              </div>
+              <div id="searchSlotsInfo" style="color: #0c4a6e; font-size: 13px">
+                <span id="searchSlotsUsed">0</span>/5 slots used
+              </div>
+            </div>
+
+            <!-- Saved Searches List -->
+            <div id="savedSearchesList" style="margin: 20px 0">
+              <div
+                id="savedSearchesEmpty"
+                style="
+                  text-align: center;
+                  color: #999;
+                  padding: 20px;
+                  font-size: 13px;
+                "
+              >
+                No saved searches yet. Open a LinkedIn job search page and use
+                the popup to save.
+              </div>
+              <div id="savedSearchesTable" style="display: none"></div>
+            </div>
+
+            <!-- Add/Edit Form -->
+            <div
+              id="addSearchForm"
+              style="
+                display: none;
+                margin-top: 20px;
+                padding: 16px;
+                background: white;
+                border-radius: 8px;
+                border: 2px dashed #d1d5db;
+              "
+            >
+              <h3
+                style="
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 12px;
+                "
+              >
+                <span id="formTitle">➕ Add New Search</span>
+              </h3>
+              <input type="hidden" id="editSearchId" />
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                  "
+                >
+                  Search Name *
+                </label>
+                <input
+                  type="text"
+                  id="searchName"
+                  placeholder="e.g., Senior Developer Jobs"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 6px;
+                    font-size: 13px;
+                  "
+                />
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                  "
+                >
+                  Keywords
+                </label>
+                <input
+                  type="text"
+                  id="searchKeywords"
+                  placeholder="e.g., Software Engineer"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 6px;
+                    font-size: 13px;
+                  "
+                />
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                  "
+                >
+                  Location
+                  <span style="font-weight: 400; color: #6b7280"
+                    >(city or Remote / Hybrid / On-site)</span
+                  >
+                </label>
+                <input
+                  type="text"
+                  id="searchLocation"
+                  placeholder="e.g., Remote or San Francisco, CA"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 6px;
+                    font-size: 13px;
+                  "
+                />
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 6px;
+                    font-size: 13px;
+                  "
+                >
+                  Search URL *
+                </label>
+                <input
+                  type="text"
+                  id="searchUrl"
+                  placeholder="Paste LinkedIn job search URL"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 6px;
+                    font-size: 13px;
+                  "
+                />
+                <p style="color: #6b7280; font-size: 11px; margin-top: 4px">
+                  Copy the full URL from a LinkedIn job search page
+                </p>
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-top: 16px">
+                <button
+                  id="saveSearchBtn"
+                  class="btn"
+                  style="background: #10b981; flex: 1"
+                >
+                  💾 Save Search
+                </button>
+                <button
+                  id="cancelSearchBtn"
+                  class="btn"
+                  style="background: #6b7280; flex: 1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Button -->
+            <button
+              id="showAddSearchForm"
+              class="btn"
+              style="width: 100%; margin-top: 12px; background: #0284c7"
+              disabled
+            >
+              ➕ Add New Search
+            </button>
+            <p
+              id="addSearchHint"
+              style="
+                color: #999;
+                font-size: 11px;
+                text-align: center;
+                margin-top: 8px;
+              "
+            >
+              Maximum 5 searches allowed
+            </p>
+          </div>
+        </div>
+
+        <!-- Notification Settings Section -->
+        <div class="section">
+          <h2 class="section-title">🔔 Job Search Notifications</h2>
+          <p style="color: #6b7280; margin-bottom: 20px">
+            Get browser notifications when new jobs are posted for your saved
+            searches. Notifications are <strong>OFF by default</strong>.
+          </p>
+
+          <!-- How It Works - Expandable -->
+          <details
+            style="
+              margin-bottom: 20px;
+              padding: 16px;
+              background: #eff6ff;
+              border-radius: 8px;
+              border: 1px solid #bfdbfe;
+            "
+          >
+            <summary
+              style="
+                cursor: pointer;
+                font-weight: 600;
+                color: #1e40af;
+                user-select: none;
+              "
+            >
+              ℹ️ How Job Notifications Work
+            </summary>
+            <div
+              style="
+                margin-top: 12px;
+                color: #1e3a8a;
+                font-size: 13px;
+                line-height: 1.6;
+              "
+            >
+              <p style="margin: 8px 0">
+                <strong>1. First Check (Baseline):</strong> When you enable
+                notifications, the extension visits each saved search and
+                records the current total job count (e.g., 1,000 jobs). This is
+                your <em>baseline</em>.
+              </p>
+              <p style="margin: 8px 0">
+                <strong>2. Subsequent Checks:</strong> At your chosen interval
+                (15-120 minutes), the extension checks each search again and
+                compares the new total to the baseline.
+              </p>
+              <p style="margin: 8px 0">
+                <strong>3. Notifications:</strong> If the job count increased
+                (e.g., from 1,000 to 1,005), you'll get a notification:
+                <strong>"5 New Jobs Found - Search: 'Your Search Name'"</strong>
+              </p>
+              <p style="margin: 8px 0">
+                <strong>4. Baseline Update:</strong> After each check, the
+                baseline is updated to the new count, so you only get notified
+                about jobs posted <em>since the last check</em>.
+              </p>
+              <p
+                style="
+                  margin: 8px 0;
+                  padding: 12px;
+                  background: #fef3c7;
+                  border-left: 3px solid #f59e0b;
+                  border-radius: 4px;
+                "
+              >
+                <strong>⚠️ Important:</strong> The first time you enable
+                notifications, you won't receive alerts immediately. The system
+                needs to establish a baseline first. Notifications will start
+                arriving after the second check when new jobs appear.
+              </p>
+              <p style="margin: 8px 0">
+                <strong>📊 Multiple Searches:</strong> If you have 2 saved
+                searches, each is checked independently with its own baseline.
+                Notifications clearly show which search triggered the alert.
+              </p>
+              <p style="margin: 8px 0">
+                <strong>🔍 Accuracy:</strong> The extension opens each search in
+                a hidden tab to extract the total job count directly from
+                LinkedIn. This may take 5-10 seconds per search.
+              </p>
+            </div>
+          </details>
+
+          <div
+            style="
+              background: #f9fafb;
+              border: 2px solid #e5e7eb;
+              border-radius: 12px;
+              padding: 24px;
+            "
+          >
+            <!-- Enable/Disable Toggle -->
+            <div style="margin: 16px 0">
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="notificationsEnabled"
+                  style="width: 20px; height: 20px; cursor: pointer"
+                />
+                <span style="font-weight: 600; color: #374151"
+                  >Enable Job Notifications</span
+                >
+              </label>
+              <p style="color: #6b7280; font-size: 12px; margin: 8px 0 0 32px">
+                Receive browser notifications when new jobs match your saved
+                searches
+              </p>
+            </div>
+
+            <!-- Check Frequency -->
+            <div style="margin: 24px 0" id="notificationSettings">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Check for new jobs every:
+                <span id="checkIntervalValue" style="color: #0a66c2"
+                  >30 minutes</span
+                >
+              </label>
+              <input
+                type="range"
+                id="checkInterval"
+                min="15"
+                max="120"
+                value="30"
+                step="15"
+                style="width: 100%; margin: 8px 0"
+              />
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  color: #9ca3af;
+                  font-size: 12px;
+                "
+              >
+                <span>15 min</span>
+                <span>30 min</span>
+                <span>1 hour</span>
+                <span>2 hours</span>
+              </div>
+            </div>
+
+            <!-- Notification Stats -->
+            <div
+              style="
+                margin: 24px 0;
+                padding: 16px;
+                background: #f0f9ff;
+                border-radius: 8px;
+                border-left: 4px solid #3b82f6;
+              "
+            >
+              <div style="font-weight: 600; color: #1e40af; margin-bottom: 8px">
+                📊 Notification Stats
+              </div>
+              <div style="color: #1e3a8a; font-size: 13px">
+                <div>
+                  Last checked:
+                  <span id="lastChecked" style="font-weight: 600">Never</span>
+                </div>
+                <div style="margin-top: 4px">
+                  Notifications sent:
+                  <span id="notificationsSent" style="font-weight: 600">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Test Notification Button -->
+            <button
+              id="testNotification"
+              class="btn"
+              style="width: 100%; margin-top: 12px; background: #3b82f6"
+            >
+              🔔 Send Test Notification
+            </button>
+
+            <!-- Manual Check Button -->
+            <button
+              id="checkJobsNow"
+              class="btn"
+              style="width: 100%; margin-top: 8px; background: #10b981"
+            >
+              🔍 Check for Jobs Now
+            </button>
+
+            <!-- Notification Logs Section -->
+            <div
+              style="
+                margin-top: 24px;
+                padding: 16px;
+                background: #f9fafb;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 12px;
+                "
+              >
+                <div style="font-weight: 600; color: #374151; font-size: 14px">
+                  📋 Activity Logs (Last 10)
+                </div>
+                <button
+                  id="clearNotificationLogs"
+                  style="
+                    padding: 4px 12px;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 600;
+                  "
+                >
+                  Clear Logs
+                </button>
+              </div>
+
+              <div
+                id="notificationLogs"
+                style="max-height: 400px; overflow-y: auto; font-size: 12px"
+              >
+                <div style="color: #9ca3af; text-align: center; padding: 20px">
+                  No logs yet. Logs will appear here when notifications are
+                  checked or sent.
+                </div>
+              </div>
+            </div>
+
+            <!-- Info Box -->
+            <div
+              style="
+                margin-top: 20px;
+                padding: 12px;
+                background: #fffbeb;
+                border: 1px solid #fbbf24;
+                border-radius: 6px;
+              "
+            >
+              <div style="font-size: 13px; color: #78350f">
+                <strong>ℹ️ How it works:</strong>
+                <ul style="margin: 8px 0 0 20px; line-height: 1.6">
+                  <li>
+                    Extension checks LinkedIn periodically for new job postings
+                  </li>
+                  <li>
+                    If new jobs match your saved searches, you get a
+                    notification
+                  </li>
+                  <li>Click notification to open the job search directly</li>
+                  <li>Each notification shows which saved search it's from</li>
+                  <li>Works even when LinkedIn tab is closed</li>
+                  <li>Supports multiple saved searches simultaneously</li>
+                  <li>
+                    PS: You will land on saved job posting when clicking
+                    notification, but don't worry check the left side bar jobs,
+                    it's happening becuase the saved search link keep the job id
+                    while saved.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">📝 Your Profile Data</h2>
+          <div
+            class="ats-info"
+            style="background: #f0fdf4; border-left-color: #10b981"
+          >
+            <h3>Profile Data Status</h3>
+            <div
+              id="profileStatus"
+              style="color: #6b7280; font-size: 14px; margin: 12px 0"
+            >
+              <p>⏳ Checking profile data...</p>
+            </div>
+
+            <!-- Method Selection Tabs -->
+            <div
+              style="
+                margin: 16px 0;
+                display: flex;
+                gap: 8px;
+                border-bottom: 2px solid #e5e7eb;
+                padding-bottom: 8px;
+              "
+            >
+              <button
+                class="profile-method-tab active"
+                data-method="upload"
+                style="
+                  padding: 8px 16px;
+                  border: none;
+                  background: #10b981;
+                  color: white;
+                  border-radius: 6px 6px 0 0;
+                  cursor: pointer;
+                  font-weight: 600;
+                  font-size: 13px;
+                "
+              >
+                📄 Upload CV/Resume
+              </button>
+              <button
+                class="profile-method-tab"
+                data-method="text"
+                style="
+                  padding: 8px 16px;
+                  border: none;
+                  background: #e5e7eb;
+                  color: #6b7280;
+                  border-radius: 6px 6px 0 0;
+                  cursor: pointer;
+                  font-weight: 600;
+                  font-size: 13px;
+                "
+              >
+                📝 Paste Profile Text
+              </button>
+              <button
+                class="profile-method-tab"
+                data-method="auto"
+                style="
+                  padding: 8px 16px;
+                  border: none;
+                  background: #e5e7eb;
+                  color: #6b7280;
+                  border-radius: 6px 6px 0 0;
+                  cursor: pointer;
+                  font-weight: 600;
+                  font-size: 13px;
+                "
+              >
+                🔄 Auto Extract
+              </button>
+            </div>
+
+            <!-- Method 1: Upload CV/Resume -->
+            <div id="method-upload" class="profile-method-content">
+              <p style="color: #6b7280; font-size: 13px; margin-bottom: 12px">
+                <strong>Recommended Method:</strong> Upload your CV, resume, or
+                LinkedIn PDF export
+              </p>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Upload Your Profile Document
+                </label>
+                <input
+                  type="file"
+                  id="cvUpload"
+                  accept=".pdf,.doc,.docx,.txt"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 2px dashed #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background: #f9fafb;
+                    cursor: pointer;
+                  "
+                />
+                <div style="font-size: 12px; color: #6b7280; margin-top: 6px">
+                  Supported formats: PDF, DOC, DOCX, TXT (Max 5MB)
+                </div>
+              </div>
+
+              <button
+                id="uploadCVBtn"
+                style="
+                  width: 100%;
+                  padding: 10px 20px;
+                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: all 0.2s;
+                  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+                "
+              >
+                📤 Parse & Save Profile
+              </button>
+
+              <div id="uploadStatus" style="margin-top: 12px; display: none">
+                <div
+                  style="padding: 10px; border-radius: 6px; font-size: 13px"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Method 2: Paste Profile Text -->
+            <div id="method-text" class="profile-method-content">
+              <p style="color: #6b7280; font-size: 13px; margin-bottom: 12px">
+                <strong>Easiest Method:</strong> Copy your LinkedIn profile data
+                and paste it below
+              </p>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  id="profileName"
+                  placeholder="e.g., John Doe"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                  "
+                />
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Headline/Current Role
+                </label>
+                <input
+                  type="text"
+                  id="profileHeadline"
+                  placeholder="e.g., Senior Software Engineer at Tech Corp"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                  "
+                />
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  About/Summary
+                </label>
+                <textarea
+                  id="profileAbout"
+                  rows="4"
+                  placeholder="Paste your About/Summary section..."
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    resize: vertical;
+                  "
+                ></textarea>
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Work Experience (one per line)
+                </label>
+                <textarea
+                  id="profileExperience"
+                  rows="5"
+                  placeholder="Senior Developer at Company A (2020-Present)&#10;Junior Developer at Company B (2018-2020)"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    resize: vertical;
+                  "
+                ></textarea>
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Education
+                </label>
+                <textarea
+                  id="profileEducation"
+                  rows="3"
+                  placeholder="BS Computer Science - University Name (2014-2018)"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    resize: vertical;
+                  "
+                ></textarea>
+              </div>
+
+              <div style="margin-bottom: 12px">
+                <label
+                  style="
+                    display: block;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 4px;
+                  "
+                >
+                  Skills (comma-separated)
+                </label>
+                <textarea
+                  id="profileSkills"
+                  rows="3"
+                  placeholder="JavaScript, Python, React, Node.js, AWS, Docker"
+                  style="
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    resize: vertical;
+                  "
+                ></textarea>
+              </div>
+
+              <button
+                class="btn btn-save"
+                id="saveProfileTextBtn"
+                style="margin-top: 8px; width: 100%"
+              >
+                💾 Save Profile Data
+              </button>
+            </div>
+
+            <!-- Method 2: Auto Extract -->
+            <div
+              id="method-auto"
+              class="profile-method-content"
+              style="display: none"
+            >
+              <p style="color: #6b7280; font-size: 13px; margin-bottom: 12px">
+                <strong>Automatic Extraction:</strong> This feature requires you
+                to be on your LinkedIn profile page
+              </p>
+
+              <div
+                style="
+                  background: #fef3c7;
+                  border: 1px solid #fbbf24;
+                  border-radius: 8px;
+                  padding: 12px;
+                  margin-bottom: 12px;
+                "
+              >
+                <p
+                  style="
+                    font-size: 12px;
+                    color: #92400e;
+                    margin: 0;
+                    line-height: 1.5;
+                  "
+                >
+                  <strong>⚠️ Note:</strong> Due to LinkedIn's dynamic content
+                  loading, automatic extraction may not capture all data. Manual
+                  text entry is more reliable.
+                </p>
+              </div>
+
+              <ol
+                style="
+                  font-size: 13px;
+                  color: #6b7280;
+                  line-height: 1.7;
+                  padding-left: 20px;
+                "
+              >
+                <li>Open your LinkedIn profile in a new tab</li>
+                <li>
+                  Scroll through your entire profile (About, Experience,
+                  Education, Skills)
+                </li>
+                <li>Click the button below while on your profile page</li>
+              </ol>
+
+              <button
+                class="btn btn-save"
+                id="updateProfileBtn"
+                style="margin-top: 12px; width: 100%"
+              >
+                🔄 Extract from Current Tab
+              </button>
+            </div>
+
+            <button
+              class="btn"
+              id="clearProfileBtn"
+              style="margin-top: 16px; background: #dc2626; width: 100%"
+            >
+              🗑️ Clear Stored Profile
+            </button>
+          </div>
+        </div>
+
+        <!-- Casper AI Assistant Section -->
+        <div class="section">
+          <h2 class="section-title" style="display: flex; align-items: center; gap: 8px;">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z"
+                fill="#0a66c2"
+              />
+              <circle cx="13" cy="13" r="2" fill="white" />
+              <circle cx="19" cy="13" r="2" fill="white" />
+              <path
+                d="M12 17 Q16 20 20 17"
+                stroke="white"
+                stroke-width="1.8"
+                fill="none"
+                stroke-linecap="round"
+              />
+            </svg>
+            Casper AI Assistant
+          </h2>
+          <p style="color: #6b7280; margin-bottom: 20px">
+            Your friendly LinkedIn AI assistant. Get insights, analysis, and
+            help with posts directly on LinkedIn.
+          </p>
+
+          <div
+            style="
+              background: #f9fafb;
+              border: 2px solid #e5e7eb;
+              border-radius: 12px;
+              padding: 24px;
+            "
+          >
+            <!-- Enable/Disable Toggle -->
+            <div style="margin: 16px 0">
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="casperEnabled"
+                  style="width: 20px; height: 20px; cursor: pointer"
+                />
+                <span style="font-weight: 600; color: #374151"
+                  >Enable Casper AI</span
+                >
+              </label>
+              <p style="color: #6b7280; font-size: 12px; margin: 8px 0 0 32px">
+                Enable Casper to analyze posts, suggest replies, and provide
+                LinkedIn strategy tips
+              </p>
+            </div>
+
+            <!-- Show Post Buttons Toggle -->
+            <div style="margin: 24px 0">
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="casperShowPostButtons"
+                  style="width: 20px; height: 20px; cursor: pointer"
+                />
+                <span style="font-weight: 600; color: #374151"
+                  >Show ghost icon on LinkedIn posts</span
+                >
+              </label>
+              <p style="color: #6b7280; font-size: 12px; margin: 8px 0 0 32px">
+                Display the ghost icon button on LinkedIn posts for quick
+                analysis. Disable if you only want to use the chat interface.
+              </p>
+            </div>
+
+            <!-- Theme Selection -->
+            <div style="margin: 24px 0" id="casperSettings">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Theme
+              </label>
+              <select
+                id="casperTheme"
+                style="
+                  padding: 8px 12px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  width: 200px;
+                "
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+
+            <!-- Chat History Settings -->
+            <div style="margin: 24px 0">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Maximum Saved Chats
+              </label>
+              <select
+                id="casperMaxChats"
+                style="
+                  padding: 8px 12px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  width: 200px;
+                "
+              >
+                <option value="25">25 chats</option>
+                <option value="50" selected>50 chats</option>
+                <option value="100">100 chats</option>
+                <option value="unlimited">Unlimited</option>
+              </select>
+              <p style="color: #6b7280; font-size: 12px; margin-top: 4px">
+                Older chats will be automatically removed when this limit is
+                reached
+              </p>
+            </div>
+
+            <!-- Auto-delete Settings -->
+            <div style="margin: 24px 0">
+              <label
+                style="
+                  display: block;
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 8px;
+                "
+              >
+                Auto-delete old chats after
+              </label>
+              <select
+                id="casperAutoDelete"
+                style="
+                  padding: 8px 12px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  width: 200px;
+                "
+              >
+                <option value="7">7 days</option>
+                <option value="30" selected>30 days</option>
+                <option value="90">90 days</option>
+                <option value="never">Never</option>
+              </select>
+              <p style="color: #6b7280; font-size: 12px; margin-top: 4px">
+                Automatically remove chats older than this period
+              </p>
+            </div>
+
+            <!-- Storage Info -->
+            <div
+              style="
+                background: #e0f2fe;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 20px 0;
+                border-left: 4px solid #0284c7;
+              "
+            >
+              <div style="font-weight: 600; color: #075985; margin-bottom: 8px">
+                📊 Storage Usage
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 13px;
+                  color: #0c4a6e;
+                  margin-bottom: 4px;
+                "
+              >
+                <span>Total Chats:</span>
+                <strong id="casperChatCount">0</strong>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 13px;
+                  color: #0c4a6e;
+                "
+              >
+                <span>Storage Used:</span>
+                <strong id="casperStorageSize">0 KB</strong>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 20px">
+              <button
+                id="casperRefreshStats"
+                class="btn"
+                style="background: #3b82f6; flex: 1; min-width: 140px"
+              >
+                🔄 Refresh Stats
+              </button>
+              <button
+                id="casperDeleteAll"
+                class="btn"
+                style="background: #ef4444; flex: 1; min-width: 140px"
+              >
+                🗑️ Delete All Chats
+              </button>
+            </div>
+
+            <!-- Info Box -->
+            <div
+              style="
+                background: #fef3c7;
+                border: 1px solid #fbbf24;
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 20px;
+              "
+            >
+              <p
+                style="
+                  font-size: 12px;
+                  color: #92400e;
+                  margin: 0;
+                  line-height: 1.5;
+                "
+              >
+                <strong>ℹ️ How to use:</strong> When enabled, you'll see a ghost
+                icon on LinkedIn posts. Click it to open Casper and get
+                AI-powered insights about the post, suggestions for replies, or
+                general LinkedIn advice. All conversations are saved in your
+                chat history.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="section"
+        style="
+          background: #f9fafb;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 24px;
+          margin: 20px;
+        "
+      >
+        <h2 class="section-title">
+          📝 Learn more about the console errors and get the solution of it
+        </h2>
+        <details
+          style="
+            margin-top: 16px;
+            padding: 12px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+            cursor: pointer;
+          "
+        >
+          <summary
+            style="
+              font-weight: 600;
+              color: #1e40af;
+              font-size: 13px;
+              cursor: pointer;
+            "
+          >
+            ℹ️ About Console Messages (Click to expand)
+          </summary>
+          <div
+            style="
+              margin-top: 12px;
+              font-size: 12px;
+              color: #1e3a8a;
+              line-height: 1.6;
+            "
+          >
+            <p style="margin-bottom: 8px">
+              <strong
+                >You might see "Extension context invalidated" errors in the
+                console.</strong
+              >
+              This is completely normal and not a bug!
+            </p>
+            <p style="margin-bottom: 8px">
+              <strong>Why does this happen?</strong>
+            </p>
+            <ul style="margin-left: 20px; margin-bottom: 8px">
+              <li>
+                When you reload/update the extension while LinkedIn pages are
+                open
+              </li>
+              <li>
+                Chrome disconnects the old extension version from active pages
+              </li>
+              <li>
+                Simply refresh any LinkedIn page to reconnect to the new version
+              </li>
+            </ul>
+            <p style="margin-bottom: 0">
+              <strong>✅ Solution:</strong> Just refresh (F5) the LinkedIn page
+              after reloading the extension. Everything will work normally!
+            </p>
+          </div>
+        </details>
+      </div>
+
+      <div class="footer">
+        <p>
+          🔒 Your API keys are stored securely in your browser's local storage
+        </p>
+        <p style="margin-top: 8px">
+          CareerCraft AI v2.0 - Craft Your Dream Career with Better LinkedIn
+          Management Tools.
+        </p>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- PDF.js library for client-side PDF text extraction (local copy) -->
+    <script src="lib/pdf.min.js"></script>
+    <script src="lib/saved-search-utils.js"></script>
+    <script src="casper/casper-avatar.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
