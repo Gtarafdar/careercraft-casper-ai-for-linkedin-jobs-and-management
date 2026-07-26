@@ -503,9 +503,10 @@ section.block {
 }
 
 .block-bleed {
-  max-width: none;
+  max-width: none !important;
   padding-left: 0;
   padding-right: 0;
+  width: 100%;
 }
 
 .block-inner {
