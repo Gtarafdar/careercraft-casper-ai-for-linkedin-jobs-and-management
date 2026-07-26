@@ -529,29 +529,66 @@ body.nav-open .backdrop {
   margin-top: 6px;
 }
 
-/* Illustrations */
-.illust {
-  margin: 28px 0 8px;
-  border-radius: 20px;
+/* Two-column text + art — shared top alignment, no white cradles */
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+
+.pair-howto {
+  align-items: start;
+}
+
+.pair-copy {
+  min-width: 0;
+}
+
+.pair-copy .lede {
+  margin-bottom: 18px;
+}
+
+.pair-art {
+  margin: 0;
+  min-width: 0;
+  border-radius: 16px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid var(--line-soft);
-  box-shadow: var(--shadow-soft);
-  display: flex;
-  justify-content: center;
-  padding: clamp(16px, 2.5vw, 28px);
+  background: transparent;
+  line-height: 0;
 }
 
-.illust img {
+.pair-art img {
   width: 100%;
-  max-width: 880px;
-  max-height: 340px;
+  height: auto;
+  max-height: none;
   object-fit: contain;
-  object-position: center;
+  object-position: top center;
+  display: block;
 }
 
-.illust.compact img {
-  max-height: 260px;
+.sticky-art {
+  position: sticky;
+  top: 76px;
+}
+
+.pair .split {
+  grid-template-columns: 1fr;
+  margin-top: 18px;
+}
+
+.who-grid-stack {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 18px;
+}
+
+.workshop-stack {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 8px;
+}
+
+.trio {
+  margin-top: 28px;
 }
 
 /* Pillars */
@@ -921,23 +958,24 @@ body.nav-open .backdrop {
 
 /* Steps */
 .steps {
-  margin: 24px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
   counter-reset: step;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .steps li {
   counter-increment: step;
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 14px;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  align-items: start;
   background: var(--surface);
   border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  padding: 16px 18px;
+  border-radius: 12px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-soft);
 }
 
@@ -1304,7 +1342,7 @@ body.nav-open .backdrop {
   .hero,
   .pillar,
   .pillar.reverse,
-  .split,
+  .pair,
   .byok,
   .trio,
   .hunt-grid,
@@ -1321,6 +1359,14 @@ body.nav-open .backdrop {
     order: unset;
   }
 
+  .sticky-art {
+    position: static;
+  }
+
+  .pair-howto .pair-art {
+    order: -1;
+  }
+
   .hero {
     min-height: 0;
     padding-top: 24px;
@@ -1328,8 +1374,10 @@ body.nav-open .backdrop {
 
   .feat-grid,
   .who-grid,
+  .who-grid-stack,
   .hunt-grid,
-  .workshop {
+  .workshop,
+  .workshop-stack {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -1346,10 +1394,12 @@ body.nav-open .backdrop {
 @media (max-width: 560px) {
   .feat-grid,
   .who-grid,
+  .who-grid-stack,
   .hunt-grid,
   .trio,
   .locks,
-  .workshop {
+  .workshop,
+  .workshop-stack {
     grid-template-columns: 1fr;
   }
 }
