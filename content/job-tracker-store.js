@@ -702,6 +702,9 @@
     if (q) {
       rows = rows.filter(function (r) {
         return (
+          String(r.id || "")
+            .toLowerCase()
+            .includes(q) ||
           String(r.title || "")
             .toLowerCase()
             .includes(q) ||

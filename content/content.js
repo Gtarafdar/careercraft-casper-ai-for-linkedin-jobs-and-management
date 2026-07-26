@@ -137,6 +137,13 @@ class LinkedInFormatter {
         error
       );
     }
+
+    // Phase 4 aside widgets (flag-gated; soft-fail — never block other features)
+    try {
+      if (typeof AsideWidgets !== "undefined") {
+        AsideWidgets.init().catch(function () {});
+      }
+    } catch (e) {}
   }
 
   /**

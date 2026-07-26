@@ -152,11 +152,60 @@ body.cc-app {
   outline-offset: 2px;
 }
 
-.cc-dashboard-actions {
+.cc-fw-block {
+  margin-bottom: 16px;
+}
+
+.cc-fw-block h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.cc-fw-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0;
+  align-items: center;
+}
+
+.cc-fw-author {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cc-border);
+}
+
+.cc-fw-author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cc-fw-author-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.cc-fw-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.cc-fw-add input {
+  flex: 1 1 180px;
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--cc-border-strong);
+  border-radius: var(--cc-radius-sm);
+  font-size: 13px;
 }
 
 .cc-placeholder {

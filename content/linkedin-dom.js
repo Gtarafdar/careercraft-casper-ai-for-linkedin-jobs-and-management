@@ -50,10 +50,21 @@
       'button[aria-label*="Past 24 hours" i]',
     ],
     asideRail: [
+      'aside[aria-label="Aside"]',
+      'aside[aria-label*="Aside" i]',
       "aside.scaffold-layout__aside",
       ".scaffold-layout__aside",
       '[class*="scaffold-layout__aside"]',
       "aside[data-testid='rightRail']",
+    ],
+    // Soft multi-strategy — LinkedIn renames games/puzzles often
+    asidePuzzles: [
+      '[data-testid*="puzzle" i]',
+      '[data-testid*="games" i]',
+      'section[componentkey*="puzzle" i]',
+      'section[componentkey*="game" i]',
+      'div[class*="puzzle" i]',
+      'div[class*="games" i]',
     ],
     feedMain: [
       "main.scaffold-layout__main",
@@ -118,7 +129,96 @@
   }
 
   function getAside() {
-    return queryFirst(SELECTORS.asideRail);
+    // LinkedIn 2026+ feed uses hashed classes + aria-label="Aside"
+    try {
+      const labeled = document.querySelector(
+        'aside[aria-label="Aside"], aside[aria-label*="Aside" i]'
+      );
+      if (labeled) return labeled;
+    } catch (e) {}
+
+    const bySel = queryFirst(SELECTORS.asideRail);
+    if (bySel) {
+      if (bySel.tagName === "ASIDE") return bySel;
+      const wrap = bySel.closest("aside");
+      if (wrap) return wrap;
+      return bySel;
+    }
+
+    // Fallback: climb from Today's puzzles copy
+    try {
+      const nodes = document.querySelectorAll("p, h2, h3");
+      for (let i = 0; i < nodes.length; i++) {
+        const t = (nodes[i].textContent || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toLowerCase();
+        if (t.length > 48) continue;
+        if (
+          t.indexOf("today") >= 0 &&
+          (t.indexOf("puzzle") >= 0 || t.indexOf("game") >= 0)
+        ) {
+          const aside = nodes[i].closest("aside");
+          if (aside) return aside;
+        }
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
+  function getAsidePuzzlesCard(aside) {
+    const root = aside || getAside();
+    if (!root) return null;
+
+    function climbToAsideChild(el) {
+      let cur = el;
+      let last = el;
+      while (cur && cur !== root) {
+        last = cur;
+        cur = cur.parentElement;
+      }
+      return last;
+    }
+
+    const bySel = queryFirst(SELECTORS.asidePuzzles, root);
+    if (bySel) return climbToAsideChild(bySel);
+
+    try {
+      const headings = root.querySelectorAll("p, h2, h3, header, span, div");
+      for (let i = 0; i < headings.length; i++) {
+        const el = headings[i];
+        const t = (el.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toLowerCase();
+        if (!t || t.length > 40) continue;
+        if (
+          t.indexOf("today") >= 0 &&
+          (t.indexOf("puzzle") >= 0 || t.indexOf("game") >= 0)
+        ) {
+          return climbToAsideChild(el);
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  /**
+   * Prefer inserting before puzzles; else first child of aside; else aside itself.
+   * Returns { parent, before } for insertBefore, or null.
+   */
+  function findAsideInsertAnchor(aside) {
+    const rail = aside || getAside();
+    if (!rail) return null;
+    const puzzles = getAsidePuzzlesCard(rail);
+    if (puzzles && puzzles.parentElement) {
+      return { parent: puzzles.parentElement, before: puzzles };
+    }
+    if (rail.firstElementChild) {
+      return { parent: rail, before: rail.firstElementChild };
+    }
+    return { parent: rail, before: null };
   }
 
   function getDatePostedFilterButton() {
@@ -408,6 +508,8 @@
     queryAll,
     getJobDetailContainer,
     getAside,
+    getAsidePuzzlesCard,
+    findAsideInsertAnchor,
     getDatePostedFilterButton,
     isJobDetailPage,
     waitFor,

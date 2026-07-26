@@ -41,8 +41,13 @@ async function addNotificationLog(status, message, details = {}) {
 // Handle messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openOptions") {
-    // Open the options page in a new tab
-    chrome.runtime.openOptionsPage();
+    const hash = request.hash ? String(request.hash).replace(/^#/, "") : "";
+    const optionsUrl = chrome.runtime.getURL(
+      "options.html" + (hash ? "#" + hash : "")
+    );
+    chrome.tabs.create({ url: optionsUrl }).catch(function () {
+      chrome.runtime.openOptionsPage();
+    });
     sendResponse({ success: true });
   } else if (request.action === "updateNotificationAlarm") {
     // Update notification check alarm (user changed settings — force recreate)
@@ -106,6 +111,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: true });
     });
     return true;
+  } else if (request.action === "softFetchAuthorPosts") {
+    softFetchAuthorPosts(request)
+      .then(function (result) {
+        sendResponse({ success: true, result: result });
+      })
+      .catch(function (e) {
+        console.warn("softFetchAuthorPosts failed", e);
+        sendResponse({ success: false, error: String(e) });
+      });
+    return true;
+  } else if (request.action === "updateAuthorPostsAlarm") {
+    setupAuthorPostsAlarm()
+      .then(function () {
+        sendResponse({ success: true });
+      })
+      .catch(function (e) {
+        sendResponse({ success: false, error: String(e) });
+      });
+    return true;
   } else if (request.action === "extractJobCount") {
     // Extract job count from LinkedIn page (called from background via tab)
     // This will be handled by content script
@@ -154,6 +178,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await setupNotificationAlarm(result.notification_settings);
   }
   await setupTrackerRefreshAlarms();
+  await setupAuthorPostsAlarm();
 });
 
 // Run cache cleanup on extension startup
@@ -167,6 +192,7 @@ chrome.runtime.onStartup.addListener(async () => {
     await setupNotificationAlarm(result.notification_settings);
   }
   await setupTrackerRefreshAlarms();
+  await setupAuthorPostsAlarm();
 });
 
 /**
@@ -713,6 +739,202 @@ async function fetchJobCountViaContentScript(searchUrl, searchName) {
 }
 
 /**
+ * Soft-fetch recent posts for favorite authors (hidden tabs, rate-limited).
+ * Never throws into callers.
+ */
+async function softFetchAuthorPosts(request) {
+  const authors = (request && request.authors) || [];
+  const per = [1, 2, 5].indexOf(request && request.postsPerAuthor) >= 0
+    ? request.postsPerAuthor
+    : 2;
+  // Fetch a small backlog so dismissed posts can be replaced from cache
+  const fetchCount = Math.min(5, Math.max(per, 5));
+  const force = !!(request && request.force);
+  let filter = request && request.filter === "all" ? "all" : "original";
+  if (!request || request.filter == null) {
+    try {
+      const sr = await chrome.storage.local.get(["aside_widget_settings"]);
+      const s = sr.aside_widget_settings || {};
+      filter = s.authorPostsFilter === "all" ? "all" : "original";
+    } catch (e) {
+      filter = "original";
+    }
+  }
+  if (!authors.length) return { fetched: 0 };
+
+  const flagsResult = await chrome.storage.local.get(["feature_flags"]);
+  const flags = flagsResult.feature_flags || {};
+  if (flags.authorWidget !== true) {
+    return { fetched: 0, skipped: "flag_off" };
+  }
+
+  const RATE_KEY = "aside_author_fetch_meta";
+  const metaResult = await chrome.storage.local.get([RATE_KEY]);
+  const meta = metaResult[RATE_KEY] || { lastByAuthor: {}, lastRunAt: 0 };
+  const now = Date.now();
+  if (!force && meta.lastRunAt && now - meta.lastRunAt < 90 * 1000) {
+    return { fetched: 0, skipped: "cooldown" };
+  }
+
+  const storeResult = await chrome.storage.local.get(["casper_author_posts"]);
+  const cache = storeResult.casper_author_posts || {};
+  let fetched = 0;
+
+  for (let i = 0; i < Math.min(authors.length, 5); i++) {
+    const author = authors[i];
+    if (!author || !author.id) continue;
+    const last = (meta.lastByAuthor && meta.lastByAuthor[author.id]) || 0;
+    if (!force && last && now - last < 10 * 60 * 1000 && (cache[author.id] || []).length) {
+      continue;
+    }
+
+    let tabId = null;
+    try {
+      const pathSuffix =
+        filter === "original"
+          ? "/recent-activity/posts/"
+          : "/recent-activity/all/";
+      let activityUrl =
+        "https://www.linkedin.com/in/" +
+        encodeURIComponent(author.id) +
+        pathSuffix;
+      const tab = await chrome.tabs.create({ url: activityUrl, active: false });
+      tabId = tab.id;
+      await waitForTabLoad(tabId);
+      await new Promise(function (r) {
+        setTimeout(r, 2500);
+      });
+
+      async function askExtract() {
+        return chrome.tabs.sendMessage(tabId, {
+          action: "extractAuthorPostsFromPage",
+          maxPosts: fetchCount,
+          author: author,
+          filter: filter,
+        });
+      }
+
+      let response = null;
+      let msgErr = null;
+      try {
+        response = await askExtract();
+      } catch (e) {
+        msgErr = String(e && e.message ? e.message : e);
+        await new Promise(function (r) {
+          setTimeout(r, 1500);
+        });
+        response = await askExtract();
+      }
+
+      let posts = (response && response.posts) || [];
+      // Fallback: posts tab empty → all activity with original filter
+      if (!posts.length && filter === "original") {
+        try {
+          await chrome.tabs.update(tabId, {
+            url:
+              "https://www.linkedin.com/in/" +
+              encodeURIComponent(author.id) +
+              "/recent-activity/all/",
+          });
+          await waitForTabLoad(tabId);
+          await new Promise(function (r) {
+            setTimeout(r, 2500);
+          });
+          response = await askExtract();
+          posts = (response && response.posts) || [];
+        } catch (e) {}
+      }
+
+      if (posts.length) {
+        cache[author.id] = posts;
+        fetched++;
+        const av = posts.find(function (p) {
+          return p && p.avatarUrl;
+        });
+        if (av && av.avatarUrl) {
+          try {
+            const sr = await chrome.storage.local.get(["aside_widget_settings"]);
+            const s = sr.aside_widget_settings || {};
+            if (Array.isArray(s.authors)) {
+              let changed = false;
+              s.authors = s.authors.map(function (a) {
+                if (a && a.id === author.id && a.avatarUrl !== av.avatarUrl) {
+                  changed = true;
+                  return Object.assign({}, a, { avatarUrl: av.avatarUrl });
+                }
+                return a;
+              });
+              if (changed) {
+                await chrome.storage.local.set({ aside_widget_settings: s });
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      if (!meta.lastByAuthor) meta.lastByAuthor = {};
+      meta.lastByAuthor[author.id] = now;
+    } catch (e) {
+      console.warn("[Aside] author fetch failed for", author.id, e);
+    } finally {
+      if (tabId) {
+        try {
+          await chrome.tabs.remove(tabId);
+        } catch (e) {}
+      }
+    }
+  }
+
+  meta.lastRunAt = now;
+  await chrome.storage.local.set({
+    casper_author_posts: cache,
+    [RATE_KEY]: meta,
+  });
+  return { fetched: fetched };
+}
+
+/**
+ * Soft ring buffer for Feed Widgets job card (max 20, newest first, deduped).
+ * Never throws into callers.
+ */
+async function pushRecentJobAlerts(entries) {
+  try {
+    const list = Array.isArray(entries) ? entries : entries ? [entries] : [];
+    if (!list.length) return;
+    const result = await chrome.storage.local.get(["recent_job_alerts"]);
+    let alerts = Array.isArray(result.recent_job_alerts)
+      ? result.recent_job_alerts.slice()
+      : [];
+    list.forEach(function (entry) {
+      if (!entry) return;
+      const id = entry.id != null ? String(entry.id) : "";
+      const url = entry.url || "";
+      const key = id || url;
+      if (!key) return;
+      alerts = alerts.filter(function (a) {
+        return String(a.id || a.url || "") !== key;
+      });
+      alerts.unshift({
+        id: id || null,
+        title: entry.title || "Job",
+        company: entry.company || "",
+        url:
+          url ||
+          (id
+            ? "https://www.linkedin.com/jobs/view/" + encodeURIComponent(id)
+            : ""),
+        searchName: entry.searchName || "",
+        at: entry.at || Date.now(),
+        kind: "alert",
+      });
+    });
+    if (alerts.length > 20) alerts = alerts.slice(0, 20);
+    await chrome.storage.local.set({ recent_job_alerts: alerts });
+  } catch (e) {
+    console.warn("[Aside] pushRecentJobAlerts failed (soft)", e);
+  }
+}
+
+/**
  * Soft-ingest up to 5 job cards from an already-open search tab into Job Tracker.
  * Returns { newlyAdded, sampleTitle, cardsSeen } for alert notifications.
  */
@@ -745,6 +967,7 @@ async function softIngestAlertJobCards(tabId, searchName) {
     const nowTs = Date.now();
     let newlyAdded = 0;
     let sampleTitle = null;
+    const newAlertEntries = [];
 
     cards.forEach(function (card) {
       if (!card || !card.id) return;
@@ -793,9 +1016,22 @@ async function softIngestAlertJobCards(tabId, searchName) {
       };
       newlyAdded++;
       if (!sampleTitle && card.title) sampleTitle = card.title;
+      newAlertEntries.push({
+        id: id,
+        title: card.title || "Untitled job",
+        company: card.company || "",
+        url:
+          card.url ||
+          "https://www.linkedin.com/jobs/view/" + encodeURIComponent(id),
+        searchName: searchName || "",
+        at: nowTs,
+      });
     });
 
     await chrome.storage.local.set({ casper_job_tracker: map });
+    if (newAlertEntries.length) {
+      await pushRecentJobAlerts(newAlertEntries);
+    }
     console.log(
       `[Job Fetch] Soft-ingested ${newlyAdded} NEW alert card(s) (${cards.length} seen) for "${
         searchName || "search"
@@ -1090,8 +1326,72 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     runTrackerMetaRefresh("expiry").catch((e) =>
       console.warn("trackerExpiryRefresh failed", e)
     );
+  } else if (alarm.name === "asideAuthorPostsRefresh") {
+    runAuthorPostsAlarm().catch((e) =>
+      console.warn("asideAuthorPostsRefresh failed", e)
+    );
   }
 });
+
+/**
+ * Soft periodic favorite-author post refresh (hidden tabs, rate-limited).
+ * Default interval 60 minutes; off when author widget disabled or interval 0.
+ */
+async function setupAuthorPostsAlarm() {
+  try {
+    await chrome.alarms.clear("asideAuthorPostsRefresh");
+    const result = await chrome.storage.local.get([
+      "feature_flags",
+      "aside_widget_settings",
+    ]);
+    const flags = result.feature_flags || {};
+    if (flags.authorWidget !== true) return;
+    const settings = Object.assign(
+      {
+        authors: [],
+        postsPerAuthor: 2,
+        authorRefreshMinutes: 60,
+      },
+      result.aside_widget_settings || {}
+    );
+    const minutes = Number(settings.authorRefreshMinutes);
+    if (!(minutes > 0)) return;
+    if (!Array.isArray(settings.authors) || !settings.authors.length) return;
+    const period = Math.max(30, minutes);
+    await chrome.alarms.create("asideAuthorPostsRefresh", {
+      delayInMinutes: Math.min(period, 60),
+      periodInMinutes: period,
+    });
+  } catch (e) {
+    console.warn("setupAuthorPostsAlarm failed", e);
+  }
+}
+
+async function runAuthorPostsAlarm() {
+  try {
+    const result = await chrome.storage.local.get([
+      "feature_flags",
+      "aside_widget_settings",
+    ]);
+    const flags = result.feature_flags || {};
+    if (flags.authorWidget !== true) return;
+    const settings = Object.assign(
+      { authors: [], postsPerAuthor: 2, authorRefreshMinutes: 60 },
+      result.aside_widget_settings || {}
+    );
+    if (!(Number(settings.authorRefreshMinutes) > 0)) return;
+    const authors = Array.isArray(settings.authors) ? settings.authors : [];
+    if (!authors.length) return;
+    await softFetchAuthorPosts({
+      authors: authors,
+      postsPerAuthor: settings.postsPerAuthor,
+      force: false,
+      filter: settings.authorPostsFilter === "all" ? "all" : "original",
+    });
+  } catch (e) {
+    console.warn("runAuthorPostsAlarm failed", e);
+  }
+}
 
 /**
  * Setup soft-gated Job Tracker refresh alarms (default OFF via settings).

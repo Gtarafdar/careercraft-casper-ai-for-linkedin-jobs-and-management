@@ -57,6 +57,17 @@
     return cache;
   }
 
+  function invalidate() {
+    cache = null;
+    loadPromise = null;
+  }
+
+  try {
+    chrome.storage.onChanged.addListener(function (changes, area) {
+      if (area === "local" && changes[STORAGE_KEY]) invalidate();
+    });
+  } catch (e) {}
+
   // Warm cache early (non-blocking)
   load().catch(() => {});
 
@@ -67,5 +78,6 @@
     isEnabled,
     isEnabledSync,
     setFlags,
+    invalidate,
   };
 })(typeof globalThis !== "undefined" ? globalThis : window);

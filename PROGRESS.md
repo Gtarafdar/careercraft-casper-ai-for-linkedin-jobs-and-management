@@ -1,8 +1,8 @@
 # CareerCraft Casper AI — Progress & Roadmap
 
 **Last updated:** 2026-07-26  
-**Product version:** 2.4.0  
-**Active branch:** `phase/job-tracker`  
+**Product version:** 2.5.0  
+**Active branch:** `phase/sidebar-widgets`  
 **Repo:** [careercraft-casper-ai-for-linkedin-jobs-and-management](https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management)
 
 Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan).
@@ -16,10 +16,10 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 | 0 | GitHub backup | **Done** |
 | 1 | Harden (DOM adapter, feature flags, manifest hygiene) | **Done** |
 | 2A | UX shell (options tabs, popup, welcome) | **Done** |
-| 2B | DeepSeek + Qwen + OpenRouter presets | **Done** (in this branch) |
-| 3 | Job Tracker hub | **Done** (core + enhancements; see notes) |
-| 4 | LinkedIn right-rail widgets | **Next** |
-| 5 | Company people enrichment | **Later** |
+| 2B | DeepSeek + Qwen + OpenRouter presets | **Done** |
+| 3 | Job Tracker hub | **Done** |
+| 4 | LinkedIn right-rail widgets | **Done** (`phase/sidebar-widgets`, flags OFF by default) |
+| 5 | Company people enrichment | **Next** |
 
 ---
 
@@ -28,7 +28,7 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 ### Platform
 - Private GitHub remote + phase branches
 - LinkedIn DOM adapter + feature flags
-- Design system + full-bleed Options shell (Dashboard, Job Tracker, Searches, AI Keys, Casper, Tools, Account)
+- Design system + full-bleed Options shell (Dashboard, Job Tracker, Searches, Feed Widgets, AI Keys, Casper, Tools, Account)
 - Compact popup + welcome onboarding
 
 ### AI
@@ -48,6 +48,12 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 - Company / location / applicants extraction hardening + migrations
 - Dashboard **Application pipeline** cards: Applied, Interview, Confirmed, Rejected, Favorites (click → filtered tracker)
 
+### Feed Widgets (Phase 4)
+- Right-rail cards on LinkedIn feed (`aside[aria-label="Aside"]`), soft-fail, flags default **OFF**
+- **Jobs to review:** alerts + tracker fill; ATS/applicants when known; exclude applied/pipeline; dismiss; LinkedIn + Tracker links; check-for-jobs
+- **Favorite authors:** miniature posts, avatars, LinkedIn-style times, original-only filter, soft-fetch + passive extract, dismiss, auto-refresh interval
+- Options **Feed Widgets** panel + popup toggles; CareerCraft footers
+
 ### Job alerts (hardened along the way)
 - Alarm schedule preserved across reloads
 - Stronger job-count extraction + soft-ingest notifications for new job IDs
@@ -63,23 +69,18 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 
 ## What’s left (next plan)
 
-### Phase 4 — Right-rail widgets (next major build)
-1. **Favorite Authors** card above “Today’s puzzles” (up to 5 authors, post count setting, rate-limited fetch, cache)
-2. **Recent Job Alerts** card (last ~5 from existing notification storage; CTA if alerts off)
-3. Feature flags default **off** until stable
-4. Soft-fail if aside missing — never break the feed
-
-### Phase 5 — Company people enrichment (after Phase 4 stable)
+### Phase 5 — Company people enrichment (next)
 - On-demand “Find contacts” on a tracker row (never bulk auto-scrape)
 - Alumni / role heuristics; hard caps; store on job record
 - Chrome Web Store / compliance review before enabling by default
 
-### Follow-ups / polish (not blocked on Phase 4)
-- [ ] Merge `phase/job-tracker` → `main` after smoke matrix
+### Follow-ups / polish
+- [ ] Merge `phase/job-tracker` + `phase/sidebar-widgets` → `main` after smoke matrix
 - [ ] Optional: migrate Job Tracker to IndexedDB if storage volume becomes an issue
 - [ ] Orphaned modules decision (`profile-analyzer`, `saved-content-*`) still open from Phase 1D
 - [ ] Windows Chrome spot-check of smoke matrix
 - [ ] Chrome Web Store packaging pass (`CHROME_STORE_SUBMISSION_PLAN.md`)
+- [ ] Consider enabling Feed Widgets flags by default only after Store / compliance review
 
 ---
 
@@ -96,6 +97,7 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 - AI Keys: save / mask / test; switch provider without losing other keys
 - Job Tracker: filter by new statuses + Favorites dashboard card
 - Dashboard pipeline counts match tracker
+- Feed Widgets OFF by default; ON: Jobs to review + Favorite authors in aside, no duplicate host
 
 ---
 
@@ -104,3 +106,4 @@ Source PRD: Cursor plan `casper_redesign_prd` (System PRD & Implementation Plan)
 - [PHASE_2A_CHECKLIST.md](PHASE_2A_CHECKLIST.md)
 - [PHASE_2B_CHECKLIST.md](PHASE_2B_CHECKLIST.md)
 - [PHASE_3_CHECKLIST.md](PHASE_3_CHECKLIST.md)
+- [PHASE_4_CHECKLIST.md](PHASE_4_CHECKLIST.md)

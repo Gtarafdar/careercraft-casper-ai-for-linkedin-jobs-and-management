@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadToolbarSettings();
   await loadCasperStatus();
   await loadPopupAiStatus();
+  await loadFeedWidgetToggles();
 
   // Casper chat button
   const openChatBtn = document.getElementById("openCasperChat");
@@ -18,9 +19,57 @@ document.addEventListener("DOMContentLoaded", async () => {
     openChatBtn.addEventListener("click", openCasperChat);
   }
 
+  const feedLink = document.getElementById("openFeedWidgetsSettings");
+  if (feedLink) {
+    feedLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      chrome.runtime.sendMessage({
+        action: "openOptions",
+        hash: "feed-widgets",
+      });
+    });
+  }
+
   // Setup CSP-compliant hover effects
   setupCasperSettingsLinkHover();
 });
+
+/**
+ * Feed widget feature flags (default OFF)
+ */
+async function loadFeedWidgetToggles() {
+  try {
+    const result = await chrome.storage.local.get(["feature_flags"]);
+    const flags = result.feature_flags || {};
+    const jobEl = document.getElementById("popupJobBoardWidget");
+    const authorEl = document.getElementById("popupAuthorWidget");
+    if (jobEl) {
+      jobEl.checked = flags.jobBoardWidget === true;
+      jobEl.addEventListener("change", async function (e) {
+        const cur = await chrome.storage.local.get(["feature_flags"]);
+        const next = Object.assign({}, cur.feature_flags || {}, {
+          jobBoardWidget: !!e.target.checked,
+        });
+        await chrome.storage.local.set({ feature_flags: next });
+      });
+    }
+    if (authorEl) {
+      authorEl.checked = flags.authorWidget === true;
+      authorEl.addEventListener("change", async function (e) {
+        const cur = await chrome.storage.local.get(["feature_flags"]);
+        const next = Object.assign({}, cur.feature_flags || {}, {
+          authorWidget: !!e.target.checked,
+        });
+        await chrome.storage.local.set({ feature_flags: next });
+        try {
+          chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+        } catch (err) {}
+      });
+    }
+  } catch (e) {
+    console.warn("Feed widget toggles failed", e);
+  }
+}
 
 /**
  * Compact AI status line for popup header

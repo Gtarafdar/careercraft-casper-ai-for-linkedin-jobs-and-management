@@ -22,6 +22,12 @@
       blurb: "Saved LinkedIn searches and job notifications.",
     },
     {
+      id: "feed-widgets",
+      label: "Feed Widgets",
+      title: "Feed Widgets",
+      blurb: "Right-rail cards on LinkedIn: Jobs to review and favorite authors.",
+    },
+    {
       id: "ai-keys",
       label: "AI API Keys",
       title: "AI API Keys",
@@ -83,6 +89,9 @@
           loadNotificationLogs().catch(function () {});
         }
       } catch (e) {}
+    }
+    if (meta.id === "feed-widgets") {
+      renderFeedWidgetsSettings().catch(function () {});
     }
   }
 
@@ -932,6 +941,413 @@
     }
   }
 
+  async function renderFeedWidgetsSettings() {
+    const panel = document.querySelector('.cc-panel[data-panel="feed-widgets"]');
+    if (!panel) return;
+
+    const SETTINGS_KEY =
+      (typeof AsideWidgets !== "undefined" && AsideWidgets.SETTINGS_KEY) ||
+      "aside_widget_settings";
+    const ALERTS_KEY =
+      (typeof AsideWidgets !== "undefined" && AsideWidgets.ALERTS_KEY) ||
+      "recent_job_alerts";
+    const AUTHOR_POSTS_KEY =
+      (typeof AsideWidgets !== "undefined" && AsideWidgets.AUTHOR_POSTS_KEY) ||
+      "casper_author_posts";
+    const DEBUG_KEY =
+      (typeof AsideWidgets !== "undefined" && AsideWidgets.DEBUG_KEY) ||
+      "aside_widgets_debug";
+    const defaults =
+      (typeof AsideWidgets !== "undefined" && AsideWidgets.DEFAULT_SETTINGS) || {
+        authors: [],
+        postsPerAuthor: 2,
+        authorRefreshMinutes: 60,
+        authorPostsFilter: "original",
+        jobAlertsLimit: 5,
+        jobAlertsTtlDays: 7,
+        fillFromTracker: true,
+      };
+
+    function normalizeUrl(raw) {
+      if (typeof AsideWidgets !== "undefined" && AsideWidgets.normalizeProfileUrl) {
+        return AsideWidgets.normalizeProfileUrl(raw);
+      }
+      const s = String(raw || "").trim();
+      if (!s) return null;
+      let u = s;
+      if (u.indexOf("http") !== 0) {
+        u = "https://www.linkedin.com/" + u.replace(/^\/+/, "");
+      }
+      try {
+        const url = new URL(u);
+        if (!String(url.hostname || "").includes("linkedin.com")) return null;
+        const m = url.pathname.match(/\/in\/([^/?#]+)/i);
+        if (!m) return null;
+        const handle = decodeURIComponent(m[1]).replace(/\/$/, "");
+        return {
+          url: "https://www.linkedin.com/in/" + handle + "/",
+          handle: handle.toLowerCase(),
+          id: handle.toLowerCase(),
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const data = await chrome.storage.local.get([
+      "feature_flags",
+      SETTINGS_KEY,
+      DEBUG_KEY,
+    ]);
+    const flags = Object.assign(
+      { authorWidget: false, jobBoardWidget: false },
+      data.feature_flags || {}
+    );
+    const settings = Object.assign({}, defaults, data[SETTINGS_KEY] || {});
+    if (!Array.isArray(settings.authors)) settings.authors = [];
+
+    let authorRows = settings.authors
+      .map(function (a, idx) {
+        return (
+          '<div class="cc-fw-author" data-idx="' +
+          idx +
+          '">' +
+          '<div class="cc-fw-author-meta">' +
+          "<strong>" +
+          escapeHtml(a.label || a.id) +
+          "</strong>" +
+          '<span class="cc-muted">' +
+          escapeHtml(a.url) +
+          "</span></div>" +
+          '<div class="cc-fw-author-actions">' +
+          '<button type="button" class="cc-btn cc-btn-secondary cc-btn-tiny" data-fw-edit="' +
+          idx +
+          '">Edit</button>' +
+          '<button type="button" class="cc-btn cc-btn-secondary cc-btn-tiny" data-fw-remove="' +
+          idx +
+          '">Remove</button>' +
+          "</div></div>"
+        );
+      })
+      .join("");
+    if (!authorRows) {
+      authorRows = '<p class="cc-muted">No authors yet. Add up to 5 LinkedIn profile URLs.</p>';
+    }
+
+    panel.innerHTML =
+      '<div class="cc-card cc-fw-block">' +
+      "<h3>Jobs to review card</h3>" +
+      '<p class="cc-muted">Shows on the LinkedIn feed right rail when enabled. Uses job alerts and Job Tracker (ATS score, applicants, and status when available). Never scrapes LinkedIn just to fill this list.</p>' +
+      '<label class="cc-check-label"><input type="checkbox" id="fwJobCardToggle" ' +
+      (flags.jobBoardWidget ? "checked" : "") +
+      " /> Show Jobs to review card on feed</label>" +
+      '<div class="cc-fw-row">' +
+      "<label>Max items <select id=\"fwJobLimit\">" +
+      [3, 5, 10]
+        .map(function (n) {
+          return (
+            '<option value="' +
+            n +
+            '"' +
+            (settings.jobAlertsLimit === n ? " selected" : "") +
+            ">" +
+            n +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select></label>" +
+      "<label>Keep alerts for <select id=\"fwJobTtl\">" +
+      [3, 7, 14]
+        .map(function (n) {
+          return (
+            '<option value="' +
+            n +
+            '"' +
+            (settings.jobAlertsTtlDays === n ? " selected" : "") +
+            ">" +
+            n +
+            " days</option>"
+          );
+        })
+        .join("") +
+      "</select></label></div>" +
+      '<label class="cc-check-label"><input type="checkbox" id="fwFillTracker" ' +
+      (settings.fillFromTracker !== false ? "checked" : "") +
+      " /> Fill empty slots from favorites &amp; recently viewed</label>" +
+      '<p class="cc-muted">Job check alarms stay under Searches &amp; Alerts. <a href="#searches" id="fwGotoSearches">Open notification settings</a></p>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="fwClearAlerts">Clear recent alert items</button>' +
+      "</div>" +
+      '<div class="cc-card cc-fw-block">' +
+      "<h3>Favorite authors card</h3>" +
+      '<p class="cc-muted">Up to 5 authors. Shows miniature recent posts with profile photos. Soft auto-refresh uses brief background tabs (rate-limited). Recommended interval: every 1 hour.</p>' +
+      '<label class="cc-check-label"><input type="checkbox" id="fwAuthorToggle" ' +
+      (flags.authorWidget ? "checked" : "") +
+      " /> Show favorite authors card on feed</label>" +
+      '<div class="cc-fw-row"><label>Posts per author <select id="fwPostsPer">' +
+      [1, 2, 5]
+        .map(function (n) {
+          return (
+            '<option value="' +
+            n +
+            '"' +
+            (settings.postsPerAuthor === n ? " selected" : "") +
+            ">" +
+            n +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select></label>" +
+      '<label>Auto-refresh <select id="fwAuthorRefresh">' +
+      [
+        { v: 0, t: "Manual only" },
+        { v: 30, t: "Every 30 minutes" },
+        { v: 60, t: "Every 1 hour (recommended)" },
+        { v: 180, t: "Every 3 hours" },
+        { v: 360, t: "Every 6 hours" },
+      ]
+        .map(function (o) {
+          const cur =
+            settings.authorRefreshMinutes == null
+              ? 60
+              : Number(settings.authorRefreshMinutes);
+          return (
+            '<option value="' +
+            o.v +
+            '"' +
+            (cur === o.v ? " selected" : "") +
+            ">" +
+            o.t +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select></label></div>" +
+      '<div class="cc-fw-row"><label>Show posts <select id="fwAuthorFilter">' +
+      [
+        { v: "original", t: "Written by them only (no reposts)" },
+        { v: "all", t: "All activity (include reposts)" },
+      ]
+        .map(function (o) {
+          const cur =
+            settings.authorPostsFilter === "all" ? "all" : "original";
+          return (
+            '<option value="' +
+            o.v +
+            '"' +
+            (cur === o.v ? " selected" : "") +
+            ">" +
+            o.t +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select></label></div>" +
+      '<div id="fwAuthorList">' +
+      authorRows +
+      "</div>" +
+      '<div class="cc-fw-add" id="fwAddForm">' +
+      '<input type="url" id="fwAuthorUrl" placeholder="https://www.linkedin.com/in/username" />' +
+      '<input type="text" id="fwAuthorLabel" placeholder="Display name (optional)" />' +
+      '<button type="button" class="cc-btn" id="fwAuthorAdd"' +
+      (settings.authors.length >= 5 ? " disabled" : "") +
+      ">Add author</button>" +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="fwAuthorSaveEdit" style="display:none">Save edit</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="fwAuthorCancelEdit" style="display:none">Cancel</button>' +
+      "</div>" +
+      '<p class="cc-muted" id="fwAuthorHint"></p>' +
+      "</div>" +
+      '<div class="cc-card cc-fw-block">' +
+      "<h3>Debug (temporary)</h3>" +
+      '<label class="cc-check-label"><input type="checkbox" id="fwDebug" ' +
+      (data[DEBUG_KEY] === true ? "checked" : "") +
+      " /> Log aside widget events to the LinkedIn page console</label>" +
+      '<p class="cc-muted">Keep off unless verifying Phase 4. Does not change LinkedIn UI.</p>' +
+      "</div>";
+
+    let editingIdx = null;
+
+    async function saveFlags(partial) {
+      const cur = await chrome.storage.local.get(["feature_flags"]);
+      const next = Object.assign({}, cur.feature_flags || {}, partial);
+      await chrome.storage.local.set({ feature_flags: next });
+      if (typeof FeatureFlags !== "undefined" && FeatureFlags.invalidate) {
+        FeatureFlags.invalidate();
+      }
+    }
+
+    async function saveSettings(partial) {
+      const cur = await chrome.storage.local.get([SETTINGS_KEY]);
+      const next = Object.assign({}, defaults, cur[SETTINGS_KEY] || {}, partial);
+      if (!Array.isArray(next.authors)) next.authors = [];
+      await chrome.storage.local.set({ [SETTINGS_KEY]: next });
+      return next;
+    }
+
+    panel.querySelector("#fwJobCardToggle").addEventListener("change", async function (e) {
+      await saveFlags({ jobBoardWidget: !!e.target.checked });
+    });
+    panel.querySelector("#fwAuthorToggle").addEventListener("change", async function (e) {
+      await saveFlags({ authorWidget: !!e.target.checked });
+      try {
+        chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+      } catch (err) {}
+    });
+    panel.querySelector("#fwJobLimit").addEventListener("change", async function (e) {
+      await saveSettings({ jobAlertsLimit: Number(e.target.value) || 5 });
+    });
+    panel.querySelector("#fwJobTtl").addEventListener("change", async function (e) {
+      await saveSettings({ jobAlertsTtlDays: Number(e.target.value) || 7 });
+    });
+    panel.querySelector("#fwFillTracker").addEventListener("change", async function (e) {
+      await saveSettings({ fillFromTracker: !!e.target.checked });
+    });
+    panel.querySelector("#fwPostsPer").addEventListener("change", async function (e) {
+      await saveSettings({ postsPerAuthor: Number(e.target.value) || 2 });
+    });
+    panel.querySelector("#fwAuthorRefresh").addEventListener("change", async function (e) {
+      await saveSettings({
+        authorRefreshMinutes: Number(e.target.value) || 0,
+      });
+      try {
+        chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+      } catch (err) {}
+    });
+    panel.querySelector("#fwAuthorFilter").addEventListener("change", async function (e) {
+      await saveSettings({
+        authorPostsFilter: e.target.value === "all" ? "all" : "original",
+      });
+    });
+    panel.querySelector("#fwDebug").addEventListener("change", async function (e) {
+      await chrome.storage.local.set({ [DEBUG_KEY]: !!e.target.checked });
+    });
+    panel.querySelector("#fwClearAlerts").addEventListener("click", async function () {
+      await chrome.storage.local.set({ [ALERTS_KEY]: [] });
+      const hint = panel.querySelector("#fwAuthorHint");
+      if (hint) hint.textContent = "Cleared recent alert items (Job Tracker unchanged).";
+    });
+    const goto = panel.querySelector("#fwGotoSearches");
+    if (goto) {
+      goto.addEventListener("click", function (e) {
+        e.preventDefault();
+        setActivePanel("searches");
+      });
+    }
+
+    function setEditMode(on, idx) {
+      editingIdx = on ? idx : null;
+      panel.querySelector("#fwAuthorAdd").style.display = on ? "none" : "";
+      panel.querySelector("#fwAuthorSaveEdit").style.display = on ? "" : "none";
+      panel.querySelector("#fwAuthorCancelEdit").style.display = on ? "" : "none";
+    }
+
+    panel.querySelector("#fwAuthorAdd").addEventListener("click", async function () {
+      const hint = panel.querySelector("#fwAuthorHint");
+      const urlRaw = panel.querySelector("#fwAuthorUrl").value;
+      const label = panel.querySelector("#fwAuthorLabel").value.trim();
+      const norm = normalizeUrl(urlRaw);
+      if (!norm) {
+        if (hint) hint.textContent = "Enter a valid LinkedIn profile URL (/in/...).";
+        return;
+      }
+      const cur = await saveSettings({});
+      if (cur.authors.length >= 5) {
+        if (hint) hint.textContent = "Maximum 5 authors.";
+        return;
+      }
+      if (
+        cur.authors.some(function (a) {
+          return a.id === norm.id;
+        })
+      ) {
+        if (hint) hint.textContent = "That author is already in the list.";
+        return;
+      }
+      cur.authors.push({
+        id: norm.id,
+        url: norm.url,
+        label: label || norm.id,
+      });
+      await saveSettings({ authors: cur.authors });
+      try {
+        chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+      } catch (err) {}
+      renderFeedWidgetsSettings().catch(function () {});
+    });
+
+    panel.querySelector("#fwAuthorSaveEdit").addEventListener("click", async function () {
+      if (editingIdx == null) return;
+      const hint = panel.querySelector("#fwAuthorHint");
+      const urlRaw = panel.querySelector("#fwAuthorUrl").value;
+      const label = panel.querySelector("#fwAuthorLabel").value.trim();
+      const norm = normalizeUrl(urlRaw);
+      if (!norm) {
+        if (hint) hint.textContent = "Enter a valid LinkedIn profile URL (/in/...).";
+        return;
+      }
+      const cur = await saveSettings({});
+      const prev = cur.authors[editingIdx];
+      cur.authors[editingIdx] = {
+        id: norm.id,
+        url: norm.url,
+        label: label || norm.id,
+        avatarUrl: prev && prev.avatarUrl ? prev.avatarUrl : "",
+      };
+      await saveSettings({ authors: cur.authors });
+      if (prev && prev.id !== norm.id) {
+        try {
+          const r = await chrome.storage.local.get([AUTHOR_POSTS_KEY]);
+          const cache = r[AUTHOR_POSTS_KEY] || {};
+          delete cache[prev.id];
+          await chrome.storage.local.set({ [AUTHOR_POSTS_KEY]: cache });
+        } catch (e) {}
+      }
+      try {
+        chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+      } catch (err) {}
+      renderFeedWidgetsSettings().catch(function () {});
+    });
+
+    panel.querySelector("#fwAuthorCancelEdit").addEventListener("click", function () {
+      setEditMode(false);
+      panel.querySelector("#fwAuthorUrl").value = "";
+      panel.querySelector("#fwAuthorLabel").value = "";
+    });
+
+    panel.querySelectorAll("[data-fw-edit]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const idx = Number(btn.getAttribute("data-fw-edit"));
+        const a = settings.authors[idx];
+        if (!a) return;
+        panel.querySelector("#fwAuthorUrl").value = a.url;
+        panel.querySelector("#fwAuthorLabel").value = a.label || "";
+        setEditMode(true, idx);
+      });
+    });
+
+    panel.querySelectorAll("[data-fw-remove]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        const idx = Number(btn.getAttribute("data-fw-remove"));
+        const cur = await saveSettings({});
+        const removed = cur.authors.splice(idx, 1)[0];
+        await saveSettings({ authors: cur.authors });
+        if (removed && removed.id) {
+          try {
+            const r = await chrome.storage.local.get([AUTHOR_POSTS_KEY]);
+            const cache = r[AUTHOR_POSTS_KEY] || {};
+            delete cache[removed.id];
+            await chrome.storage.local.set({ [AUTHOR_POSTS_KEY]: cache });
+          } catch (e) {}
+        }
+        try {
+          chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
+        } catch (err) {}
+        renderFeedWidgetsSettings().catch(function () {});
+      });
+    });
+  }
+
   function buildShell() {
     if ($("#ccOptionsShell")) return true;
 
@@ -1026,6 +1442,13 @@
       '<div class="cc-placeholder">Loading job tracker…</div>';
     contentHost.appendChild(tracker);
 
+    const feedWidgets = document.createElement("div");
+    feedWidgets.className = "cc-panel";
+    feedWidgets.dataset.panel = "feed-widgets";
+    feedWidgets.innerHTML =
+      '<div class="cc-placeholder">Loading feed widgets…</div>';
+    contentHost.appendChild(feedWidgets);
+
     ["ai-keys", "searches", "casper", "tools", "account"].forEach(function (id) {
       const panel = document.createElement("div");
       panel.className = "cc-panel";
@@ -1071,12 +1494,29 @@
     });
 
     const hash = (location.hash || "").replace(/^#/, "");
+    const hashPanel = hash.split("?")[0];
+    const hashQuery = hash.indexOf("?") >= 0 ? hash.slice(hash.indexOf("?") + 1) : "";
+    let focusJobId = "";
+    try {
+      focusJobId = new URLSearchParams(hashQuery).get("job") || "";
+    } catch (e) {
+      focusJobId = "";
+    }
+    if (focusJobId && hashPanel === "job-tracker") {
+      trackerExpandedId = focusJobId;
+      trackerFilterQ = focusJobId;
+      trackerFilterStatus = "all";
+      trackerPage = 1;
+    }
     const initial = PANELS.some(function (p) {
-      return p.id === hash;
+      return p.id === hashPanel;
     })
-      ? hash
+      ? hashPanel
       : "dashboard";
     setActivePanel(initial);
+    if (focusJobId && hashPanel === "job-tracker") {
+      renderJobTracker().catch(function () {});
+    }
     return true;
   }
 
@@ -1085,5 +1525,6 @@
     setActivePanel: setActivePanel,
     refreshDashboard: refreshDashboard,
     renderJobTracker: renderJobTracker,
+    renderFeedWidgetsSettings: renderFeedWidgetsSettings,
   };
 })();
