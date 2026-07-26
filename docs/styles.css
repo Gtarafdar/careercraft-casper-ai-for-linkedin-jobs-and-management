@@ -310,11 +310,11 @@ a {
 
 .hero-visual {
   margin-top: 36px;
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--line);
-  background: #0b1f33;
+  box-shadow: none;
+  border: none;
+  background: transparent;
   padding: 0;
 }
 
@@ -324,7 +324,7 @@ a {
   max-height: none;
   object-fit: contain;
   object-position: top center;
-  background: #eef3f9;
+  background: transparent;
   display: block;
 }
 
@@ -380,44 +380,42 @@ section.block {
 }
 
 .illust {
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  background:
-    linear-gradient(160deg, rgba(10, 102, 194, 0.06), rgba(255, 255, 255, 0.95) 45%),
-    var(--surface);
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 0;
 }
 
 .illust img {
   width: 100%;
   height: auto;
-  max-height: 420px;
+  max-height: 440px;
   object-fit: contain;
   object-position: center;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .illust-banner {
   margin-top: 22px;
-  padding: 20px 24px;
+  padding: 0;
 }
 
 .illust-banner img {
-  max-height: 360px;
+  max-height: 380px;
 }
 
 .illust-fit {
-  padding: 18px;
-  min-height: 280px;
+  padding: 0;
+  min-height: 0;
 }
 
 .illust-fit img {
-  max-height: 480px;
+  max-height: 520px;
 }
 
 .illust-wide {
@@ -425,14 +423,36 @@ section.block {
 }
 
 .illust-wide.shot-frame {
-  padding: 12px;
-  background: var(--surface);
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .illust-wide.shot-frame img {
-  max-height: 560px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
+  max-height: 640px;
+  border-radius: 0;
+  border: none;
+}
+
+.hero-visual {
+  margin-top: 36px;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.hero-visual img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
+  background: transparent;
+  display: block;
+  border-radius: 0;
 }
 
 .howto-layout,
@@ -489,12 +509,65 @@ section.block {
 .shot-inline {
   width: 100%;
   display: block;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .shot-inline img {
-  aspect-ratio: 16 / 11;
-  object-fit: cover;
+  aspect-ratio: auto;
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
   object-position: top center;
+  background: transparent;
+}
+
+.shot-inline.shot-tall img {
+  max-height: 560px;
+}
+
+.casper-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 28px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.casper-points {
+  display: grid;
+  gap: 12px;
+}
+
+.casper-points article {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.casper-points h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.casper-points p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.casper-visual {
+  margin: 0;
+}
+
+.casper-visual img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .feature-spotlight {
@@ -542,11 +615,20 @@ section.block {
 .carousel .shot {
   flex: 0 0 min(340px, 72vw);
   width: min(340px, 72vw);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .carousel .shot.tall {
-  flex-basis: min(220px, 55vw);
-  width: min(220px, 55vw);
+  flex-basis: min(200px, 48vw);
+  width: min(200px, 48vw);
+}
+
+.carousel .shot img {
+  object-fit: contain;
+  background: transparent;
 }
 
 .carousel.paused .carousel-track {
@@ -640,49 +722,48 @@ body.nav-open .nav-backdrop {
 }
 
 .gallery {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  display: none;
 }
 
 .shot {
   appearance: none;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 14px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
   padding: 0;
   overflow: hidden;
   cursor: zoom-in;
   text-align: left;
-  box-shadow: 0 4px 18px rgba(11, 31, 51, 0.06);
-  transition: transform 0.18s, box-shadow 0.18s;
+  box-shadow: none;
+  transition: opacity 0.18s;
   font: inherit;
   color: inherit;
 }
 
 .shot:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow);
+  transform: none;
+  box-shadow: none;
+  opacity: 0.92;
 }
 
 .shot.tall img {
   aspect-ratio: 9 / 16;
   object-fit: contain;
-  background: #eef3f9;
+  background: transparent;
 }
 
 .shot img {
   width: 100%;
   aspect-ratio: 16 / 10;
-  object-fit: cover;
-  object-position: top left;
-  background: #dbe4ef;
+  object-fit: contain;
+  object-position: top center;
+  background: transparent;
 }
 
 .shot figcaption,
 .shot span {
   display: block;
-  padding: 10px 12px 12px;
+  padding: 10px 0 4px;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
@@ -1044,6 +1125,7 @@ body.nav-open .nav-backdrop {
   .unique-grid,
   .howto-layout,
   .workshop-layout,
+  .casper-grid,
   .maker {
     grid-template-columns: 1fr;
   }
