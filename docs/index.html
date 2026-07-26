@@ -3,30 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CareerCraft AI — LinkedIn Jobs, ATS Scoring &amp; Post Tools</title>
-  <meta name="description" content="Track LinkedIn jobs, score fit with ATS AI, format posts, save searches, last-1-hour jobs, feed discovery, Casper post analysis — all in Chrome. Your keys stay local." />
-  <meta name="keywords" content="CareerCraft AI, Casper AI, LinkedIn Chrome extension, Job Tracker, ATS score, job alerts, last 1 hour jobs, saved posts filter, LinkedIn formatter" />
+  <title>CareerCraft AI — Know the fit before you apply</title>
+  <meta name="description" content="LinkedIn job hunting with ATS scores, Job Tracker, alerts, Casper AI, and post tools — in Chrome. Your API keys stay on your machine." />
   <meta name="author" content="Gobinda Tarafdar" />
   <meta name="theme-color" content="#0a66c2" />
   <link rel="canonical" href="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="CareerCraft AI — LinkedIn career assistant in your browser" />
-  <meta property="og:description" content="Job Tracker, ATS scores, Casper chat, feed discovery, alerts, last-1-hour jobs, saved-posts filters, and post formatting — without a CareerCraft cloud." />
+  <meta property="og:title" content="CareerCraft AI — Know the fit before you apply" />
+  <meta property="og:description" content="ATS scoring on LinkedIn jobs, Job Tracker, Casper chat, alerts, and post tools. Local-first Chrome extension — bring your own AI key." />
   <meta property="og:url" content="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/" />
-  <meta property="og:image" content="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/assets/screenshots/01-dashboard.png" />
+  <meta property="og:image" content="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/assets/screenshots/21-ats-on-job.png" />
   <meta property="og:site_name" content="CareerCraft AI" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="CareerCraft AI — LinkedIn Career Assistant" />
-  <meta name="twitter:description" content="Jobs, ATS, alerts, feed widgets, Casper AI, and post tools for LinkedIn. Privacy-first Chrome extension." />
-  <meta name="twitter:image" content="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/assets/screenshots/01-dashboard.png" />
+  <meta name="twitter:title" content="CareerCraft AI" />
+  <meta name="twitter:description" content="Know the fit before you apply. ATS, Job Tracker, Casper AI — keys stay local." />
+  <meta name="twitter:image" content="https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/assets/screenshots/21-ats-on-job.png" />
 
   <link rel="icon" href="assets/icon48.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/icon128.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 
   <script type="application/ld+json">
@@ -34,472 +33,353 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "CareerCraft AI",
-    "alternateName": "Casper AI — LinkedIn Career Assistant",
     "applicationCategory": "BrowserApplication",
     "operatingSystem": "Chrome",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "description": "Chrome extension for LinkedIn: Job Tracker, ATS scoring, Casper AI post analysis, saved-search alerts, last-1-hour jobs, feed widgets, saved-posts filters, and post formatting. API keys stay on your device.",
+    "description": "Chrome extension for LinkedIn: ATS scoring, Job Tracker, Casper AI, alerts, feed discovery, and post formatting. API keys stay on your device.",
     "url": "https://gtarafdar.github.io/careercraft-casper-ai-for-linkedin-jobs-and-management/",
     "downloadUrl": "https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest",
     "author": { "@type": "Person", "name": "Gobinda Tarafdar", "url": "https://github.com/Gtarafdar" }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Is CareerCraft AI free?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The extension is free and open source. You pay only your chosen AI provider if you use ATS or Casper." }
-      },
-      {
-        "@type": "Question",
-        "name": "Where do my API keys go?",
-        "acceptedAnswer": { "@type": "Answer", "text": "They stay in Chrome extension storage on your device. CareerCraft does not operate a key vault for you." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I use free or cheap AI models?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Connect OpenRouter and pick free or low-cost models for ATS and Casper, or use Gemini, OpenAI, DeepSeek, or Qwen with your own key. CareerCraft never adds an AI surcharge." }
-      },
-      {
-        "@type": "Question",
-        "name": "How do I install CareerCraft AI?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Download the latest release ZIP from GitHub, unzip, open chrome://extensions, enable Developer mode, and Load unpacked." }
-      }
-    ]
   }
   </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <div class="mobile-bar">
-    <strong>CareerCraft AI</strong>
-    <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="sideNav">Menu</button>
+  <header class="top">
+    <a class="top-brand" href="#top">CareerCraft AI</a>
+    <nav class="top-nav" aria-label="Primary">
+      <a href="#ats">ATS</a>
+      <a href="#casper">Casper</a>
+      <a href="#byok">Your key</a>
+      <a href="#tracker">Tracker</a>
+      <a href="#howto">How to</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn btn-ghost-ink" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">Star</a>
+      <a class="btn btn-primary" id="dlTop" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download</a>
+    </div>
+    <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="drawer">Menu</button>
+  </header>
+
+  <div class="drawer" id="drawer" hidden>
+    <nav aria-label="Mobile">
+      <a href="#ats">ATS scoring</a>
+      <a href="#casper">Casper AI</a>
+      <a href="#byok">Bring your key</a>
+      <a href="#tracker">Job Tracker</a>
+      <a href="#product">Gallery</a>
+      <a href="#howto">How to use</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#maker">About</a>
+      <a href="#faq">FAQ</a>
+      <a href="#get">Download</a>
+    </nav>
   </div>
-  <div class="nav-backdrop" id="navBackdrop" hidden></div>
+  <div class="backdrop" id="backdrop" hidden></div>
 
-  <div class="shell">
-    <aside class="side" id="sideNav" aria-label="Page sections">
-      <div class="brand">
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Chrome · LinkedIn · local-first</p>
         <h1>CareerCraft AI</h1>
-        <p>Casper · Jobs &amp; Management</p>
-      </div>
-      <nav>
-        <a class="nav-link" href="#top">Overview</a>
-        <a class="nav-link" href="#unique">ATS &amp; profile</a>
-        <a class="nav-link" href="#casper">Casper AI</a>
-        <a class="nav-link" href="#byok">Your AI key</a>
-        <a class="nav-link" href="#gap">The gap</a>
-        <a class="nav-link" href="#product">Gallery</a>
-        <a class="nav-link" href="#howto">How to use</a>
-        <a class="nav-link" href="#benefits">Job Tracker</a>
-        <a class="nav-link" href="#features">All features</a>
-        <a class="nav-link" href="#who">Who it’s for</a>
-        <a class="nav-link" href="#privacy">Privacy</a>
-        <a class="nav-link" href="#maker">About</a>
-        <a class="nav-link" href="#workshop">Workshop</a>
-        <a class="nav-link" href="#faq">FAQ</a>
-        <a class="nav-link" href="#get">Download</a>
-      </nav>
-      <div class="side-cta">
-        <a class="btn btn-primary" id="dlSide" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download ZIP</a>
-        <a class="btn btn-ghost" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">★ Star on GitHub</a>
-        <a class="btn btn-ghost" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Donate</a>
-      </div>
-    </aside>
-
-    <div class="main" id="main">
-      <header class="hero" id="top">
-        <div class="hero-inner">
-          <p class="kicker">For people who job-hunt on LinkedIn every week</p>
-          <h2>CareerCraft AI</h2>
-          <p class="lead">LinkedIn job hunting, posting, and outreach — with a tracker, ATS scores, alerts, and Casper AI in Chrome. Your API keys stay on your machine.</p>
-          <p class="sub">Format posts. Score jobs against your profile. Track applications. Catch hiring posts in your feed. No CareerCraft cloud account.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary btn-lg" id="dlHero" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download latest release</a>
-            <a class="btn btn-outline btn-lg" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">View source</a>
-            <a class="btn btn-outline btn-lg" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Support the project</a>
-          </div>
-          <div class="chips" aria-label="Highlights">
-            <span class="chip">Chrome · MV3</span>
-            <span class="chip">Keys stay local</span>
-            <span class="chip">ATS vs your profile</span>
-            <span class="chip">Job Tracker</span>
-            <span class="chip">Casper chat</span>
-            <span class="chip">Saved-search alerts</span>
-          </div>
+        <p class="hero-line">Know the fit before you apply.</p>
+        <p class="hero-sub">ATS scores on the job page, a Job Tracker that remembers every lead, Casper AI on your feed — with your API key on your machine.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" id="dlHero" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download latest ZIP</a>
+          <a class="btn btn-outline btn-lg" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">View source</a>
         </div>
-        <figure class="hero-visual">
-          <div class="media-stage">
-            <div class="frame-window">
-              <div class="frame-chrome" aria-hidden="true"></div>
-              <img src="assets/screenshots/01-dashboard.png" alt="CareerCraft AI dashboard — Career Command Center with feature status and application pipeline" width="1024" height="764" fetchpriority="high" />
-            </div>
-          </div>
+        <ul class="hero-meta">
+          <li>Free · open source</li>
+          <li>Keys stay local</li>
+          <li>OpenRouter · Gemini · OpenAI</li>
+        </ul>
+      </div>
+      <figure class="hero-art">
+        <button type="button" class="shot hero-panel" data-full="assets/screenshots/21-ats-on-job.png" aria-label="Enlarge ATS analysis screenshot">
+          <img src="assets/screenshots/21-ats-on-job.png" width="341" height="1024" alt="AI-Powered ATS Analysis on a LinkedIn job — 60% compatibility with strengths and gaps" fetchpriority="high" />
+        </button>
+        <figcaption>Live on LinkedIn job pages — score before you burn a cover letter.</figcaption>
+      </figure>
+    </section>
+
+    <section class="band gap" id="gap" aria-labelledby="gap-title">
+      <div class="band-inner">
+        <p class="eyebrow">The gap</p>
+        <h2 id="gap-title">LinkedIn has the jobs. Your process is still tabs and guesswork.</h2>
+        <div class="split">
+          <article class="pane bad">
+            <h3>Without CareerCraft</h3>
+            <ul>
+              <li>Job URLs lost in notes</li>
+              <li>“Did I apply?” guessing</li>
+              <li>No fit signal until after you apply</li>
+              <li>Hiring posts scroll past</li>
+              <li>AI that wants your keys on their servers</li>
+            </ul>
+          </article>
+          <article class="pane good">
+            <h3>With CareerCraft</h3>
+            <ul>
+              <li>ATS % on the job page</li>
+              <li>Job Tracker with a status pipeline</li>
+              <li>Saved searches + quiet alerts</li>
+              <li>Casper on the feed</li>
+              <li>Bring your own key — local storage</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="ats" aria-labelledby="ats-title">
+      <div class="band-inner duo">
+        <div class="duo-copy">
+          <p class="eyebrow">ATS scoring</p>
+          <h2 id="ats-title">See the match before you apply</h2>
+          <p>Compatibility % injected on LinkedIn job pages — must-haves, skills, experience, keywords, strengths, and gaps — scored against <strong>your</strong> CV / profile.</p>
+          <ul class="ticks">
+            <li>Soft-adds the role to Job Tracker with the score</li>
+            <li>Upload CV or auto-extract your LinkedIn profile</li>
+            <li>Completeness meter feeds every match</li>
+          </ul>
+        </div>
+        <figure class="duo-media tall">
+          <button type="button" class="shot frame" data-full="assets/screenshots/21-ats-on-job.png" aria-label="Enlarge ATS screenshot">
+            <img src="assets/screenshots/21-ats-on-job.png" alt="ATS Analysis panel with 60% score and metric breakdown" loading="lazy" width="341" height="1024" />
+          </button>
         </figure>
-      </header>
+      </div>
+    </section>
 
-      <section class="block" id="unique" aria-labelledby="unique-title">
-        <p class="section-label">What makes it unique</p>
-        <h3 id="unique-title">ATS scoring + profile check — on LinkedIn, with your keys</h3>
-        <p class="prose">Most LinkedIn tools stop at bookmarks. CareerCraft scores each role against <strong>your</strong> CV / profile before you apply — then keeps that score on the Job Tracker row.</p>
-
-        <div class="showcase">
-          <div class="showcase-copy">
-            <p class="section-label">ATS on the job page</p>
-            <h4>Know the fit before you apply</h4>
-            <ul>
-              <li>Compatibility % injected on LinkedIn job pages</li>
-              <li>Must-have vs nice-to-have requirements</li>
-              <li>Skills, experience, education, keywords, responsibilities</li>
-              <li>Strengths, gaps, and a plain-language summary</li>
-              <li>Soft-adds the role to Job Tracker with the score</li>
-            </ul>
-          </div>
-          <div class="showcase-media">
-            <button type="button" class="shot media-stage" data-full="assets/screenshots/21-ats-on-job.png" aria-label="Enlarge ATS analysis screenshot">
-              <span class="frame-panel">
-                <img src="assets/screenshots/21-ats-on-job.png" alt="AI-Powered ATS Analysis on a LinkedIn job — 72% compatibility breakdown" loading="lazy" />
-              </span>
-            </button>
-          </div>
+    <section class="band soft" id="profile" aria-labelledby="profile-title">
+      <div class="band-inner duo reverse">
+        <div class="duo-copy">
+          <p class="eyebrow">Profile check</p>
+          <h2 id="profile-title">Feed the score with your real profile</h2>
+          <p>Upload a CV, paste LinkedIn sections, or auto-extract while you’re on your profile. Stored locally — powers every ATS match.</p>
         </div>
+        <figure class="duo-media">
+          <button type="button" class="shot frame window" data-full="assets/screenshots/08-account-profile.png" aria-label="Enlarge profile screenshot">
+            <span class="chrome" aria-hidden="true"></span>
+            <img src="assets/screenshots/08-account-profile.png" alt="Profile and Account — upload CV for ATS" loading="lazy" />
+          </button>
+        </figure>
+      </div>
+    </section>
 
-        <div class="showcase reverse">
-          <div class="showcase-copy">
-            <p class="section-label">Profile check</p>
-            <h4>Feed the score with your real profile</h4>
-            <ul>
-              <li>Upload CV / resume (PDF, DOC, DOCX, TXT)</li>
-              <li>Paste LinkedIn profile text by section</li>
-              <li>Auto extract while you are on your LinkedIn profile</li>
-              <li>Completeness meter (name, headline, experience, skills)</li>
-              <li>Stored locally — powers every ATS match</li>
-            </ul>
-          </div>
-          <div class="showcase-media">
-            <button type="button" class="shot media-stage" data-full="assets/screenshots/08-account-profile.png" aria-label="Enlarge profile settings screenshot">
-              <span class="frame-window">
-                <span class="frame-chrome" aria-hidden="true"></span>
-                <img src="assets/screenshots/08-account-profile.png" alt="Profile and Account — upload CV or paste LinkedIn data for ATS" loading="lazy" />
-              </span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="block" id="casper" aria-labelledby="casper-title">
-        <p class="section-label">Casper AI</p>
-        <h3 id="casper-title">Post analysis, discuss with AI, and a real chat box</h3>
-        <p class="prose">Casper lives on LinkedIn — analyze any post, discuss replies in chat, keep history on your device.</p>
-        <div class="showcase">
-          <div class="showcase-copy">
-            <div class="casper-points">
-              <article>
-                <h4>Post analysis with AI</h4>
-                <p>Ghost icon on feed posts opens Casper with that post context — tone, hooks, what is working, what to improve.</p>
-              </article>
-              <article>
-                <h4>Discuss with AI</h4>
-                <p>Ask follow-ups in the floating chat: reply angles, connection notes, career strategy, or rewrite this softer.</p>
-              </article>
-              <article>
-                <h4>Chat box on LinkedIn</h4>
-                <p>Minimize, expand, new chat, and history. Light/dark theme. Retention limits. Opt-in only.</p>
-              </article>
-              <article>
-                <h4>Your key, your provider</h4>
-                <p>Same local AI key as ATS — Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen. No CareerCraft chat server.</p>
-              </article>
-            </div>
-          </div>
-          <div class="showcase-media">
-            <button type="button" class="shot media-stage" data-full="assets/screenshots/13-casper-chat.png" aria-label="Enlarge Casper chat screenshot">
-              <span class="frame-window">
-                <span class="frame-chrome" aria-hidden="true"></span>
-                <img src="assets/screenshots/13-casper-chat.png" alt="Casper AI chat box analyzing a LinkedIn post" loading="lazy" />
-              </span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="block" id="byok" aria-labelledby="byok-title">
-        <p class="section-label">Bring your own key</p>
-        <h3 id="byok-title">Premium AI features — without a CareerCraft bill</h3>
-        <p class="prose">ATS scoring and Casper chat call <strong>your</strong> provider. CareerCraft never sells you tokens, never proxies your prompts, and never charges a monthly AI seat. You pick the model; you keep the receipt.</p>
-        <div class="byok-grid">
-          <div class="byok-copy">
-            <ul class="byok-points">
-              <li>
-                <span class="tick" aria-hidden="true">✓</span>
-                <span><strong>No extra SaaS cost.</strong> The extension is free. You only pay your AI provider when you run ATS or Casper — same as using ChatGPT or Gemini yourself.</span>
-              </li>
-              <li>
-                <span class="tick" aria-hidden="true">✓</span>
-                <span><strong>OpenRouter for cheap &amp; free models.</strong> Point one key at OpenRouter and use free or low-cost models for everyday scoring and chat — upgrade only when you want a heavier model.</span>
-              </li>
-              <li>
-                <span class="tick" aria-hidden="true">✓</span>
-                <span><strong>Keys stay on your machine.</strong> Chrome extension storage. Switch Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen anytime — one active provider.</span>
-              </li>
-              <li>
-                <span class="tick" aria-hidden="true">✓</span>
-                <span><strong>You control spend.</strong> Usage stays visible locally. Pause AI features and the tool still tracks jobs, alerts, and formatting.</span>
-              </li>
-            </ul>
-            <div class="provider-pills" aria-label="Supported providers">
-              <span class="accent">OpenRouter · free &amp; cheap</span>
-              <span>Gemini</span>
-              <span>OpenAI</span>
-              <span>DeepSeek</span>
-              <span>Qwen</span>
-            </div>
-          </div>
-          <div class="byok-media">
-            <div class="media-stage byok-stage">
-              <div class="byok-card">
-                <p class="eyebrow">Local-first AI</p>
-                <h4>Your key. Your model. Your bill.</h4>
-                <p>Want zero surprise invoices? Start on OpenRouter free tiers for light ATS and Casper use — then step up only when a role is worth a sharper pass.</p>
-                <div class="byok-stats">
-                  <div><strong>$0</strong><span>CareerCraft AI fee</span></div>
-                  <div><strong>BYOK</strong><span>Provider of your choice</span></div>
-                  <div><strong>Local</strong><span>Keys never leave Chrome</span></div>
-                  <div><strong>Free*</strong><span>OpenRouter free models</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="block" id="gap" aria-labelledby="gap-title">
-        <p class="section-label">The gap</p>
-        <h3 id="gap-title">LinkedIn is where the jobs are. Your process is still scattered.</h3>
-        <p class="prose">Job tabs pile up. Saved searches get forgotten. You open a role, wonder if it fits, apply, then lose the thread. Feed hiring posts scroll by. Post formatting fights Unicode. AI chat lives in another tab.</p>
-        <div class="gap-with-art">
-          <div class="contrast">
+    <section class="band" id="casper" aria-labelledby="casper-title">
+      <div class="band-inner">
+        <p class="eyebrow">Casper AI</p>
+        <h2 id="casper-title">Analyze posts. Discuss replies. Stay on LinkedIn.</h2>
+        <p class="lede">Ghost icon on feed posts opens Casper with that post’s context — tone, hooks, reply angles — in a real chat box you can minimize, expand, and keep history for.</p>
+        <div class="duo">
+          <div class="stack">
             <article>
-              <h4>Without CareerCraft</h4>
-              <ul>
-                <li>Job URLs lost in notes apps</li>
-                <li>Did I apply? guesswork</li>
-                <li>No ATS signal until after you apply</li>
-                <li>Feed hiring posts vanish</li>
-                <li>Alerts you forget to check</li>
-                <li>AI tools that want your keys on their servers</li>
-              </ul>
+              <h3>Post analysis</h3>
+              <p>Open Casper on any post — what’s working, what to improve.</p>
             </article>
-            <article class="good">
-              <h4>With CareerCraft</h4>
-              <ul>
-                <li>Job Tracker with status pipeline</li>
-                <li>ATS score vs your CV / profile</li>
-                <li>Saved searches + desktop alerts</li>
-                <li>Last 1 hour + feed discovery</li>
-                <li>Casper AI post analysis on-page</li>
-                <li>Bring your own AI — local storage</li>
-              </ul>
+            <article>
+              <h3>Discuss with AI</h3>
+              <p>Follow-ups for replies, connection notes, or a softer rewrite.</p>
+            </article>
+            <article>
+              <h3>Chat on LinkedIn</h3>
+              <p>New chat, history, light/dark, retention limits. Opt-in only.</p>
+            </article>
+            <article>
+              <h3>Same key as ATS</h3>
+              <p>Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen — no CareerCraft chat server.</p>
             </article>
           </div>
-          <figure class="illust-band">
-            <div class="media-stage">
-              <div class="frame-art">
-                <img src="assets/illustrations/scene-gap.png" alt="Illustration — scattered job hunt versus a single CareerCraft board" loading="lazy" width="1536" height="1024" />
-              </div>
-            </div>
+          <figure class="duo-media fill">
+            <button type="button" class="shot frame window" data-full="assets/screenshots/13-casper-chat.png" aria-label="Enlarge Casper chat">
+              <span class="chrome" aria-hidden="true"></span>
+              <img src="assets/screenshots/13-casper-chat.png" alt="Casper AI chat analyzing a LinkedIn post" loading="lazy" />
+            </button>
           </figure>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block block-bleed" id="product" aria-labelledby="product-title">
-        <div class="block-inner">
-          <p class="section-label">Gallery</p>
-          <h3 id="product-title">See CareerCraft in use</h3>
-          <p class="carousel-hint">Slow auto-scroll · hover to pause · click to enlarge · loops</p>
-        </div>
-        <div class="carousel" id="carousel" aria-label="Product screenshot carousel">
-          <div class="carousel-viewport" id="carouselViewport">
-            <div class="carousel-track" id="carouselTrack">
-              <button type="button" class="shot" data-full="assets/screenshots/01-dashboard.png"><img src="assets/screenshots/01-dashboard.png" alt="Dashboard" loading="lazy" /><span>Dashboard</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/02-job-tracker.png"><img src="assets/screenshots/02-job-tracker.png" alt="Job Tracker" loading="lazy" /><span>Job Tracker</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/03-searches-alerts.png"><img src="assets/screenshots/03-searches-alerts.png" alt="Searches and Alerts" loading="lazy" /><span>Searches &amp; alerts</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/13-casper-chat.png"><img src="assets/screenshots/13-casper-chat.png" alt="Casper chat" loading="lazy" /><span>Casper chat</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/08-account-profile.png"><img src="assets/screenshots/08-account-profile.png" alt="Profile" loading="lazy" /><span>Profile check</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/09-post-formatter.png"><img src="assets/screenshots/09-post-formatter.png" alt="Formatter" loading="lazy" /><span>Post formatter</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/11-clipboard-image.png"><img src="assets/screenshots/11-clipboard-image.png" alt="Image paste" loading="lazy" /><span>Image paste</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/14-jobs-last-hour.png"><img src="assets/screenshots/14-jobs-last-hour.png" alt="Last 1 hour" loading="lazy" /><span>Last 1 hour</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/12-send-to-tracker.png"><img src="assets/screenshots/12-send-to-tracker.png" alt="Send to Tracker" loading="lazy" /><span>Send to Tracker</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/05-ai-keys.png"><img src="assets/screenshots/05-ai-keys.png" alt="AI keys" loading="lazy" /><span>AI API keys</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/04-feed-widgets.png"><img src="assets/screenshots/04-feed-widgets.png" alt="Feed widgets" loading="lazy" /><span>Feed widgets</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/17-saved-posts.png"><img src="assets/screenshots/17-saved-posts.png" alt="Saved items" loading="lazy" /><span>Saved items filter</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/16-save-search.png"><img src="assets/screenshots/16-save-search.png" alt="Save search" loading="lazy" /><span>Save search</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/15-notification.png"><img src="assets/screenshots/15-notification.png" alt="Notification" loading="lazy" /><span>Notifications</span></button>
-              <button type="button" class="shot tall" data-full="assets/screenshots/21-ats-on-job.png"><img src="assets/screenshots/21-ats-on-job.png" alt="ATS panel" loading="lazy" /><span>ATS on job</span></button>
-              <button type="button" class="shot tall" data-full="assets/screenshots/18-jobs-to-review.png"><img src="assets/screenshots/18-jobs-to-review.png" alt="Jobs to review" loading="lazy" /><span>Jobs to review</span></button>
-            </div>
+    <section class="band navy" id="byok" aria-labelledby="byok-title">
+      <div class="band-inner byok">
+        <div>
+          <p class="eyebrow light">Bring your own key</p>
+          <h2 id="byok-title">Premium AI features — without a CareerCraft bill</h2>
+          <p>ATS and Casper call <strong>your</strong> provider. CareerCraft never sells tokens, never proxies prompts, never charges an AI seat.</p>
+          <ul class="ticks light">
+            <li><strong>No extra SaaS cost</strong> — free extension; you only pay your AI provider when you use it</li>
+            <li><strong>OpenRouter for cheap &amp; free models</strong> — start light, upgrade only when a role is worth it</li>
+            <li><strong>Keys stay in Chrome</strong> — switch providers anytime</li>
+          </ul>
+          <div class="pills">
+            <span class="hot">OpenRouter · free &amp; cheap</span>
+            <span>Gemini</span>
+            <span>OpenAI</span>
+            <span>DeepSeek</span>
+            <span>Qwen</span>
           </div>
         </div>
-      </section>
-
-      <section class="block" id="howto" aria-labelledby="howto-title">
-        <p class="section-label">Hands-on</p>
-        <h3 id="howto-title">How to use CareerCraft</h3>
-        <figure class="illust-band compact">
-          <div class="media-stage">
-            <div class="frame-art">
-              <img src="assets/illustrations/scene-howto.png" alt="Illustration — installing and using CareerCraft on LinkedIn" loading="lazy" width="1536" height="1024" />
-            </div>
+        <aside class="byok-card" aria-label="BYOK summary">
+          <p class="byok-kicker">Local-first AI</p>
+          <p class="byok-big">Your key.<br />Your model.<br />Your bill.</p>
+          <div class="byok-stats">
+            <div><strong>$0</strong><span>CareerCraft AI fee</span></div>
+            <div><strong>BYOK</strong><span>Any supported provider</span></div>
+            <div><strong>Local</strong><span>Keys never leave Chrome</span></div>
+            <div><strong>Free*</strong><span>OpenRouter free models</span></div>
           </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="band bleed" id="product" aria-labelledby="product-title">
+      <div class="band-inner">
+        <p class="eyebrow">Gallery</p>
+        <h2 id="product-title">See CareerCraft in use</h2>
+        <p class="hint">Slow auto-scroll · hover to pause · click to enlarge</p>
+      </div>
+      <div class="carousel" id="carousel" aria-label="Product screenshots">
+        <div class="carousel-viewport" id="carouselViewport">
+          <div class="carousel-track" id="carouselTrack">
+            <button type="button" class="shot card" data-full="assets/screenshots/01-dashboard.png"><img src="assets/screenshots/01-dashboard.png" alt="Dashboard" loading="lazy" /><span>Dashboard</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/02-job-tracker.png"><img src="assets/screenshots/02-job-tracker.png" alt="Job Tracker" loading="lazy" /><span>Job Tracker</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/21-ats-on-job.png"><img src="assets/screenshots/21-ats-on-job.png" alt="ATS" loading="lazy" /><span>ATS on job</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/13-casper-chat.png"><img src="assets/screenshots/13-casper-chat.png" alt="Casper" loading="lazy" /><span>Casper chat</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/03-searches-alerts.png"><img src="assets/screenshots/03-searches-alerts.png" alt="Alerts" loading="lazy" /><span>Searches &amp; alerts</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/08-account-profile.png"><img src="assets/screenshots/08-account-profile.png" alt="Profile" loading="lazy" /><span>Profile</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/14-jobs-last-hour.png"><img src="assets/screenshots/14-jobs-last-hour.png" alt="Last hour" loading="lazy" /><span>Last 1 hour</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/05-ai-keys.png"><img src="assets/screenshots/05-ai-keys.png" alt="AI keys" loading="lazy" /><span>AI keys</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/09-post-formatter.png"><img src="assets/screenshots/09-post-formatter.png" alt="Formatter" loading="lazy" /><span>Formatter</span></button>
+            <button type="button" class="shot card" data-full="assets/screenshots/17-saved-posts.png"><img src="assets/screenshots/17-saved-posts.png" alt="Saved" loading="lazy" /><span>Saved items</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="howto" aria-labelledby="howto-title">
+      <div class="band-inner">
+        <p class="eyebrow">Hands-on</p>
+        <h2 id="howto-title">How to use CareerCraft</h2>
+        <ol class="steps">
+          <li><strong>Install the ZIP</strong><span>Unzip → <code>chrome://extensions</code> → Developer mode → Load unpacked.</span></li>
+          <li><strong>Add an AI key</strong><span>Settings → AI API Keys. OpenRouter free models work great to start.</span></li>
+          <li><strong>Load your profile</strong><span>Upload CV, paste text, or Auto extract on LinkedIn.</span></li>
+          <li><strong>Run ATS on a job</strong><span>Open a role → see the score → it lands in Job Tracker.</span></li>
+          <li><strong>Save searches &amp; alerts</strong><span>Up to 5 searches. Notify when counts rise — not every quiet check.</span></li>
+          <li><strong>Ask Casper</strong><span>Ghost on a post → analyze, discuss, keep history.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="band soft" id="tracker" aria-labelledby="tracker-title">
+      <div class="band-inner duo">
+        <div class="duo-copy">
+          <p class="eyebrow">Job Tracker</p>
+          <h2 id="tracker-title">Your LinkedIn job board — without another SaaS</h2>
+          <p>Every viewed, scored, alerted, and feed-captured role in one local board.</p>
+          <div class="mini-grid">
+            <article><h3>Status pipeline</h3><p>New → Viewed → Applied → Interview → Confirmed / Rejected / Expired.</p></article>
+            <article><h3>ATS on the row</h3><p>Fit % beside title and company.</p></article>
+            <article><h3>Source filters</h3><p>ATS, alerts, feed, board, recency, date.</p></article>
+            <article><h3>Export &amp; bulk</h3><p>CSV export. Bulk select and delete.</p></article>
+          </div>
+        </div>
+        <figure class="duo-media tall">
+          <button type="button" class="shot frame" data-full="assets/screenshots/02-job-tracker.png" aria-label="Enlarge Job Tracker">
+            <img src="assets/screenshots/02-job-tracker.png" alt="Job Tracker with statuses and ATS scores" loading="lazy" />
+          </button>
         </figure>
-        <div class="steps">
-          <div class="step"><div><h4>Install the ZIP</h4><p>Download the release → unzip → <code>chrome://extensions</code> → Developer mode → Load unpacked.</p></div></div>
-          <div class="step"><div><h4>Add an AI key</h4><p>Settings → AI API Keys → Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen. Keys stay local.</p></div></div>
-          <div class="step"><div><h4>Load your profile</h4><p>Account → upload CV, paste LinkedIn text, or Auto extract — this powers ATS match %.</p></div></div>
-          <div class="step"><div><h4>Run ATS on a job</h4><p>Open a LinkedIn job → see the AI-Powered ATS Analysis panel → role lands in Job Tracker with the score.</p></div></div>
-          <div class="step"><div><h4>Save searches &amp; alerts</h4><p>Save up to 5 searches → enable notifications when counts rise → use <strong>Last 1 hour</strong> for freshest roles.</p></div></div>
-          <div class="step"><div><h4>Ask Casper on a post</h4><p>Click the ghost → post analysis, discuss replies in the chat box, or open history.</p></div></div>
-          <div class="step"><div><h4>Feed &amp; write</h4><p>Feed discovery / Jobs to review · format &amp; paste images · filter Saved items.</p></div></div>
-        </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block" id="benefits" aria-labelledby="benefits-title">
-        <p class="section-label">Job Tracker</p>
-        <h3 id="benefits-title">Your LinkedIn job board — without another SaaS</h3>
-        <p class="prose">Every viewed, scored, alerted, and feed-captured role in one local board — so you stop guessing what you already opened.</p>
-        <div class="showcase">
-          <div class="showcase-copy">
-            <div class="benefits">
-              <article class="benefit"><h4>Status pipeline</h4><p>New → Viewed → Applied → Interview → Confirmed / Rejected / Expired / Archived.</p></article>
-              <article class="benefit"><h4>ATS on the row</h4><p>See fit % beside title and company before you burn a cover letter.</p></article>
-              <article class="benefit"><h4>Source filters</h4><p>ATS, alerts, feed, job board, employer kind, recency, date.</p></article>
-              <article class="benefit"><h4>Export &amp; bulk</h4><p>Export / copy CSV. Bulk select and delete when the list gets noisy.</p></article>
-            </div>
-          </div>
-          <div class="showcase-media">
-            <button type="button" class="shot media-stage" data-full="assets/screenshots/02-job-tracker.png" aria-label="Enlarge Job Tracker screenshot">
-              <span class="frame-panel wide">
-                <img src="assets/screenshots/02-job-tracker.png" alt="Job Tracker with statuses, ATS scores, and source badges" loading="lazy" />
-              </span>
-            </button>
-          </div>
+    <section class="band" id="features" aria-labelledby="features-title">
+      <div class="band-inner">
+        <p class="eyebrow">Capabilities</p>
+        <h2 id="features-title">Built for a real LinkedIn hunt</h2>
+        <div class="feat-grid">
+          <article><h3>ATS scoring</h3><p>Live analysis on job pages vs your stored profile.</p></article>
+          <article><h3>Profile check</h3><p>CV upload, paste, or auto-extract. Completeness meter.</p></article>
+          <article><h3>Casper chat</h3><p>Floating chat for posts, replies, and strategy.</p></article>
+          <article><h3>Job Tracker</h3><p>Pipeline, favorites, filters, export, bulk delete.</p></article>
+          <article><h3>Saved searches</h3><p>Up to 5. Desktop alerts when counts rise.</p></article>
+          <article><h3>Last 1 hour</h3><p>Past-hour jobs from search and the popup.</p></article>
+          <article><h3>Feed discovery</h3><p>Hiring posts → Jobs to review → Tracker.</p></article>
+          <article><h3>Formatter + paste</h3><p>Unicode formatting and clipboard images into compose.</p></article>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block" id="features" aria-labelledby="features-title">
-        <p class="section-label">Capabilities</p>
-        <h3 id="features-title">Built for a real LinkedIn hunt</h3>
-        <div class="feature-grid">
-          <article class="feature feature-spotlight"><div class="icon">%</div><h4>ATS scoring</h4><p>Live AI-Powered ATS Analysis on LinkedIn job pages — % score, must-haves, strengths, gaps — vs your stored profile.</p></article>
-          <article class="feature feature-spotlight"><div class="icon">P</div><h4>Profile check</h4><p>Upload CV, paste profile, or auto-extract. Completeness meter feeds every ATS score. Stays on your device.</p></article>
-          <article class="feature feature-spotlight"><div class="icon">C</div><h4>Casper chat box</h4><p>Floating chat on LinkedIn: discuss posts, strategy, and replies. New chat, history, minimize — opt-in.</p></article>
-          <article class="feature feature-spotlight"><div class="icon">A</div><h4>Post analysis with AI</h4><p>Ghost on posts opens Casper with that post context for tone, hooks, and reply angles.</p></article>
-          <article class="feature"><div class="icon">T</div><h4>Job Tracker</h4><p>Status pipeline, favorites, source filters, ATS column, export/copy, bulk delete — one local board for every lead.</p></article>
-          <article class="feature"><div class="icon">!</div><h4>Saved searches &amp; alerts</h4><p>Up to 5 LinkedIn searches. Desktop notifications when result counts go up — not on every quiet check.</p></article>
-          <article class="feature"><div class="icon">1</div><h4>Last 1 hour jobs</h4><p>One-click Past hour on Jobs search (and from the popup) so you hunt freshest roles first.</p></article>
-          <article class="feature"><div class="icon">F</div><h4>Jobs to review rail</h4><p>Right-rail shortlist from alerts, tracker, and feed candidates — Open post or send to Tracker.</p></article>
-          <article class="feature"><div class="icon">D</div><h4>Timeline job discovery</h4><p>Keyword-gated hiring / freelance posts while you scroll the feed → soft-add to Tracker.</p></article>
-          <article class="feature"><div class="icon">+</div><h4>Send to Job Tracker</h4><p>Capture a real post permalink from the LinkedIn menu into your board.</p></article>
-          <article class="feature"><div class="icon">S</div><h4>Saved items filtering</h4><p>Extra filters on LinkedIn My Items saved posts: All / Posts / Images / Videos / Articles with counts.</p></article>
-          <article class="feature"><div class="icon">Aa</div><h4>Post &amp; comment formatter</h4><p>Unicode bold, italic, lists, colors, case tools — posts and comments.</p></article>
-          <article class="feature"><div class="icon">Im</div><h4>Clipboard image paste</h4><p>Paste PNG/JPG screenshots straight into LinkedIn compose.</p></article>
-          <article class="feature"><div class="icon">AI</div><h4>Multi-provider AI</h4><p>Gemini, OpenAI, OpenRouter, DeepSeek, Qwen — one active provider; usage tracked locally.</p></article>
-          <article class="feature"><div class="icon">L</div><h4>Outreach fit labels</h4><p>Agency / job board / direct / unclear badges — classification only, no people scrape.</p></article>
-          <article class="feature"><div class="icon">H</div><h4>Dashboard command center</h4><p>Status tiles, application pipeline counts, how-to, and quick jumps to every panel.</p></article>
+    <section class="band soft" id="who" aria-labelledby="who-title">
+      <div class="band-inner">
+        <p class="eyebrow">Ideal fit</p>
+        <h2 id="who-title">Who it’s for</h2>
+        <div class="who-grid">
+          <article><h3>Active job seekers</h3><p>Daily roles, ATS before apply, last-hour freshness, quiet alerts.</p></article>
+          <article><h3>Creators &amp; marketers</h3><p>Formatter + Casper for sharper posts and replies.</p></article>
+          <article><h3>Freelance hunters</h3><p>Feed discovery catches hiring posts search misses.</p></article>
+          <article><h3>Privacy-minded</h3><p>BYO key. Tracker and chats stay in the browser.</p></article>
         </div>
-      </section>
+        <p class="mismatch">Not a LinkedIn Premium replacement. Not a bulk-apply bot. Not “we host your AI.”</p>
+      </div>
+    </section>
 
-      <section class="block" id="who" aria-labelledby="who-title">
-        <p class="section-label">Ideal fit</p>
-        <h3 id="who-title">Who CareerCraft is for</h3>
-        <figure class="illust-band compact">
-          <div class="media-stage">
-            <div class="frame-art">
-              <img src="assets/illustrations/scene-hunt.png" alt="Illustration — focused LinkedIn job hunt with CareerCraft" loading="lazy" width="1536" height="1024" />
-            </div>
-          </div>
-        </figure>
-        <div class="audience">
-          <article><h4>Active job seekers</h4><p>Daily roles, status, favorites, ATS before you apply, last-hour freshness, and alerts that only fire when counts rise.</p></article>
-          <article><h4>Creators &amp; marketers</h4><p>Formatter + image paste for sharper posts; Casper for reply angles without leaving LinkedIn.</p></article>
-          <article><h4>Side-hustle &amp; freelance hunters</h4><p>Timeline discovery + Jobs to review catch hiring posts that search alerts miss.</p></article>
-          <article><h4>Privacy-minded operators</h4><p>BYO API key. Tracker and chats stay in the browser. Feed widgets stay off until you opt in.</p></article>
-        </div>
-        <p class="mismatch">Not a LinkedIn Premium replacement, not a bulk-apply bot, and not we host your AI for you. No company people scrape. No CareerCraft cloud for your tracker.</p>
-      </section>
-
-      <section class="block" id="privacy" aria-labelledby="privacy-title">
-        <p class="section-label">Trust</p>
-        <h3 id="privacy-title">Local-first by design</h3>
+    <section class="band" id="privacy" aria-labelledby="privacy-title">
+      <div class="band-inner">
+        <p class="eyebrow">Trust</p>
+        <h2 id="privacy-title">Local-first by design</h2>
         <div class="locks">
-          <div class="lock"><strong>API keys</strong><span>Chrome extension storage on your machine.</span></div>
-          <div class="lock"><strong>Profile &amp; tracker</strong><span>Jobs, chats, and profile data stay with the extension.</span></div>
-          <div class="lock"><strong>Your providers</strong><span>AI calls go to the provider you choose — not a CareerCraft proxy.</span></div>
-          <div class="lock"><strong>Open source</strong><span>Read the code. Audit permissions. Fork if you need to.</span></div>
+          <div><strong>API keys</strong><span>Chrome extension storage on your machine.</span></div>
+          <div><strong>Profile &amp; tracker</strong><span>Jobs and chats stay with the extension.</span></div>
+          <div><strong>Your providers</strong><span>AI calls go to the provider you choose.</span></div>
+          <div><strong>Open source</strong><span>Read the code. Audit permissions.</span></div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block" id="why" aria-labelledby="why-title">
-        <p class="section-label">Origin</p>
-        <h3 id="why-title">Why this exists</h3>
-        <p class="prose">CareerCraft started as practical friction removal on LinkedIn — formatting that should have been native, job hunting that should not require five tabs, and AI that should not demand you upload your life to yet another SaaS. It is part of a workshop of small tools that prefer local control and clear UX over dark patterns.</p>
-      </section>
-
-      <section class="block" id="maker" aria-labelledby="maker-title">
-        <p class="section-label">About me</p>
-        <h3 id="maker-title">Made by Gobinda Tarafdar</h3>
-        <div class="maker">
-          <img src="assets/gobinda.jpg" width="140" height="140" alt="Portrait of Gobinda Tarafdar" />
-          <div>
-            <h4>Gobinda Tarafdar</h4>
-            <p class="role">Product Marketing Specialist @ WPBakery · stubborn problem-solver · lifelong Harry Potter devotee</p>
-            <p class="prose maker-bio">By day I help ship WordPress products. When the day-job owl flies home, I tinker on a workshop of local-first tools — CareerCraft for LinkedIn, Porter for Mac to Mac files, Aligner, Slack helpers, and more. If CareerCraft saves you time, a star or a coffee keeps the workshop lit.</p>
-            <div class="socials">
-              <a class="btn btn-outline" href="https://github.com/Gtarafdar" target="_blank" rel="noopener">GitHub</a>
-              <a class="btn btn-outline" href="https://www.linkedin.com/in/gtarafdar/" target="_blank" rel="noopener">LinkedIn</a>
-              <a class="btn btn-outline" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Donate</a>
-              <a class="btn btn-outline" href="https://gtarafdar.github.io/porter/" target="_blank" rel="noopener">Porter workshop</a>
-              <a class="btn btn-outline" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">Star CareerCraft</a>
-            </div>
+    <section class="band soft" id="maker" aria-labelledby="maker-title">
+      <div class="band-inner maker">
+        <img class="maker-photo" src="assets/gobinda.jpg" width="120" height="120" alt="Gobinda Tarafdar" />
+        <div>
+          <p class="eyebrow">About the maker</p>
+          <h2 id="maker-title">Gobinda Tarafdar</h2>
+          <p class="role">Product Marketing Specialist @ WPBakery · stubborn problem-solver · lifelong Harry Potter devotee</p>
+          <p>By day I help ship WordPress products. After hours I build local-first tools — CareerCraft, Porter, Aligner, and more. If this saves you time, a star or a coffee keeps the workshop lit.</p>
+          <div class="socials">
+            <a class="btn btn-outline" href="https://github.com/Gtarafdar" target="_blank" rel="noopener">GitHub</a>
+            <a class="btn btn-outline" href="https://www.linkedin.com/in/gtarafdar/" target="_blank" rel="noopener">LinkedIn</a>
+            <a class="btn btn-outline" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Donate</a>
+            <a class="btn btn-outline" href="https://gtarafdar.github.io/porter/" target="_blank" rel="noopener">Porter</a>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block" id="workshop" aria-labelledby="workshop-title">
-        <p class="section-label">Same workshop</p>
-        <h3 id="workshop-title">Also from the bench</h3>
-        <p class="prose">Other local-first tools from the same maker.</p>
-        <figure class="illust-band compact">
-          <div class="media-stage">
-            <div class="frame-art">
-              <img src="assets/illustrations/scene-workshop.png" alt="Illustration — the local-first tools workshop" loading="lazy" width="1536" height="1024" />
-            </div>
-          </div>
-        </figure>
+    <section class="band" id="workshop" aria-labelledby="workshop-title">
+      <div class="band-inner">
+        <p class="eyebrow">Same workshop</p>
+        <h2 id="workshop-title">Also from the bench</h2>
         <div class="workshop">
-          <a href="https://gtarafdar.github.io/porter/" target="_blank" rel="noopener"><strong>Porter</strong><span>Private Finder-like file bridge across your Macs · MCP for AI IDEs</span></a>
-          <a href="https://gtarafdar.github.io/aligner/" target="_blank" rel="noopener"><strong>Aligner</strong><span>Free Chrome toolkit for design, measure, and WordPress</span></a>
-          <a href="https://gtarafdar.github.io/FinderFlow/" target="_blank" rel="noopener"><strong>FinderFlow</strong><span>Native macOS file manager with built-in editor</span></a>
-          <a href="https://gtarafdar.github.io/slack-agent-bridge/" target="_blank" rel="noopener"><strong>Slack Agent Bridge</strong><span>MCP bridge for Cursor and Claude to Slack</span></a>
-          <a href="https://gtarafdar.github.io/auto-afk-slack/" target="_blank" rel="noopener"><strong>Auto AFK Slack</strong><span>Lock your Mac → Slack goes AFK</span></a>
-          <a href="https://gtarafdar.github.io/slack-teammate-local-time/" target="_blank" rel="noopener"><strong>Slack Teammate Time</strong><span>Teammate local times inline in Slack</span></a>
-          <a href="https://gtarafdar.github.io/broken-link-checker/" target="_blank" rel="noopener"><strong>Broken Link Checker</strong><span>Find broken links without leaving the page</span></a>
-          <a href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener"><strong>CareerCraft AI</strong><span>You are looking at it</span></a>
-          <a href="https://wpbakery.com/" target="_blank" rel="noopener"><strong>WPBakery</strong><span>Page builder — product marketing by day</span></a>
+          <a href="https://gtarafdar.github.io/porter/" target="_blank" rel="noopener"><strong>Porter</strong><span>Mac ↔ Mac file bridge · MCP</span></a>
+          <a href="https://gtarafdar.github.io/aligner/" target="_blank" rel="noopener"><strong>Aligner</strong><span>Design &amp; measure toolkit</span></a>
+          <a href="https://gtarafdar.github.io/FinderFlow/" target="_blank" rel="noopener"><strong>FinderFlow</strong><span>macOS file manager</span></a>
+          <a href="https://gtarafdar.github.io/slack-agent-bridge/" target="_blank" rel="noopener"><strong>Slack Agent Bridge</strong><span>MCP for Cursor &amp; Claude</span></a>
+          <a href="https://gtarafdar.github.io/auto-afk-slack/" target="_blank" rel="noopener"><strong>Auto AFK Slack</strong><span>Lock Mac → Slack AFK</span></a>
+          <a href="https://gtarafdar.github.io/broken-link-checker/" target="_blank" rel="noopener"><strong>Broken Link Checker</strong><span>Find dead links on-page</span></a>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="block faq" id="faq" aria-labelledby="faq-title">
-        <p class="section-label">FAQ</p>
-        <h3 id="faq-title">Questions people actually ask</h3>
+    <section class="band soft" id="faq" aria-labelledby="faq-title">
+      <div class="band-inner narrow">
+        <p class="eyebrow">FAQ</p>
+        <h2 id="faq-title">Questions people ask</h2>
         <details open>
           <summary>Is it free?</summary>
-          <p>Yes. Free and open source. You only pay your AI provider if you use ATS or Casper. Donations are optional.</p>
+          <p>Yes. Open source. You only pay your AI provider if you use ATS or Casper. Donations optional.</p>
         </details>
         <details>
           <summary>Where do my API keys go?</summary>
@@ -507,49 +387,40 @@
         </details>
         <details>
           <summary>Can I use free or cheap models?</summary>
-          <p>Yes. Connect OpenRouter and pick free or low-cost models for ATS and Casper. Or use Gemini / OpenAI / DeepSeek / Qwen with your own key — CareerCraft never adds an AI surcharge.</p>
+          <p>Yes. Connect OpenRouter and pick free or low-cost models. Or use Gemini / OpenAI / DeepSeek / Qwen with your own key.</p>
         </details>
         <details>
-          <summary>Do alerts spam me every check?</summary>
-          <p>No. Job alerts notify when a saved search total job count goes up — not on every quiet check. First enable sets a quiet baseline.</p>
-        </details>
-        <details>
-          <summary>Will it work when LinkedIn is not open?</summary>
-          <p>Saved-search checks and notifications can run via extension alarms. Feed widgets need you on LinkedIn.</p>
+          <summary>Do alerts spam every check?</summary>
+          <p>No. Notifications fire when a saved search’s job count goes up — not on quiet checks.</p>
         </details>
         <details>
           <summary>Chrome Web Store?</summary>
-          <p>Install today via GitHub Releases (Load unpacked). Star the repo to follow a Store listing later.</p>
+          <p>Install via GitHub Releases (Load unpacked) today. Star the repo to follow a Store listing later.</p>
         </details>
-        <details>
-          <summary>Is this a scraper / auto-apply bot?</summary>
-          <p>No. It enhances pages you visit and flows you configure. Not bulk people scrape, not auto-apply.</p>
-        </details>
-      </section>
+      </div>
+    </section>
 
-      <section class="cta-band" id="get">
-        <h3>Ship your next LinkedIn session with CareerCraft</h3>
-        <p>Download the latest release, load it in Chrome, and give the repo a star if it helps. Feedback and coffee always welcome.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary btn-lg" id="dlCta" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download ZIP</a>
-          <a class="btn btn-ghost btn-lg" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">Star on GitHub</a>
-          <a class="btn btn-ghost btn-lg" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Donate</a>
-          <a class="btn btn-ghost btn-lg" href="https://www.linkedin.com/in/gtarafdar/" target="_blank" rel="noopener">Connect on LinkedIn</a>
-        </div>
-      </section>
+    <section class="cta" id="get">
+      <h2>Ship your next LinkedIn session with CareerCraft</h2>
+      <p>Download the release, load it in Chrome, star the repo if it helps.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" id="dlCta" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/releases/latest">Download ZIP</a>
+        <a class="btn btn-ghost btn-lg" href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management" target="_blank" rel="noopener">★ Star on GitHub</a>
+        <a class="btn btn-ghost btn-lg" href="https://gtarafdar.com/donate" target="_blank" rel="noopener">Donate</a>
+      </div>
+    </section>
+  </main>
 
-      <footer class="footer">
-        <span>CareerCraft AI · Casper · Jobs &amp; Management · Open source</span>
-        <span>
-          <a href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management">GitHub</a>
-          ·
-          <a href="https://gtarafdar.com/donate">Donate</a>
-          ·
-          <a href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/blob/main/PRIVACY.md">Privacy</a>
-        </span>
-      </footer>
-    </div>
-  </div>
+  <footer class="foot">
+    <span>CareerCraft AI · open source</span>
+    <span>
+      <a href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management">GitHub</a>
+      ·
+      <a href="https://gtarafdar.com/donate">Donate</a>
+      ·
+      <a href="https://github.com/Gtarafdar/careercraft-casper-ai-for-linkedin-jobs-and-management/blob/main/PRIVACY.md">Privacy</a>
+    </span>
+  </footer>
 
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot preview" hidden>
     <button type="button" id="lbClose" aria-label="Close">×</button>
