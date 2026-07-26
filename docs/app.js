@@ -54,17 +54,21 @@
   window.addEventListener("scroll", setActive, { passive: true });
   setActive();
 
+  /* —— Lightbox —— */
   var lb = document.getElementById("lightbox");
   var lbImg = document.getElementById("lbImg");
   var lbClose = document.getElementById("lbClose");
+  var lightboxOpen = false;
 
   function openLb(src, alt) {
-    if (!lb || !lbImg) return;
+    if (!lb || !lbImg || !src) return;
     lbImg.src = src;
     lbImg.alt = alt || "";
     lb.hidden = false;
     lb.classList.add("open");
     document.body.style.overflow = "hidden";
+    lightboxOpen = true;
+    pauseCarousel();
   }
   function closeLb() {
     if (!lb || !lbImg) return;
@@ -72,13 +76,22 @@
     lb.hidden = true;
     lbImg.src = "";
     document.body.style.overflow = "";
+    lightboxOpen = false;
+    resumeCarousel();
   }
-  document.querySelectorAll(".shot").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var img = btn.querySelector("img");
-      openLb(btn.getAttribute("data-full"), img ? img.alt : "");
+
+  function bindShots(root) {
+    (root || document).querySelectorAll(".shot").forEach(function (btn) {
+      if (btn.dataset.lbBound) return;
+      btn.dataset.lbBound = "1";
+      btn.addEventListener("click", function () {
+        var img = btn.querySelector("img");
+        openLb(btn.getAttribute("data-full"), img ? img.alt : "");
+      });
     });
-  });
+  }
+  bindShots(document);
+
   if (lbClose) lbClose.addEventListener("click", closeLb);
   if (lb) {
     lb.addEventListener("click", function (e) {
@@ -89,6 +102,101 @@
     if (e.key === "Escape") closeLb();
   });
 
+  /* —— Slow looping carousel —— */
+  var carousel = document.getElementById("carousel");
+  var track = document.getElementById("carouselTrack");
+  var viewport = document.getElementById("carouselViewport");
+  var offset = 0;
+  var paused = false;
+  var reduceMotion =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var SPEED = 0.35; /* px per frame ≈ slow crawl */
+  var halfWidth = 0;
+  var rafId = 0;
+
+  function pauseCarousel() {
+    paused = true;
+    if (carousel) carousel.classList.add("paused");
+  }
+  function resumeCarousel() {
+    if (lightboxOpen) return;
+    paused = false;
+    if (carousel) carousel.classList.remove("paused");
+  }
+
+  function measureLoop() {
+    if (!track) return;
+    halfWidth = track.scrollWidth / 2;
+  }
+
+  function setupCarousel() {
+    if (!track || !carousel || !viewport) return;
+    var originals = Array.prototype.slice.call(track.children);
+    if (!originals.length) return;
+
+    /* Clone once for seamless loop */
+    originals.forEach(function (node) {
+      var clone = node.cloneNode(true);
+      clone.setAttribute("aria-hidden", "true");
+      clone.tabIndex = -1;
+      track.appendChild(clone);
+    });
+    bindShots(track);
+    measureLoop();
+
+    carousel.addEventListener("mouseenter", pauseCarousel);
+    carousel.addEventListener("mouseleave", resumeCarousel);
+    carousel.addEventListener("focusin", pauseCarousel);
+    carousel.addEventListener("focusout", function (e) {
+      if (!carousel.contains(e.relatedTarget)) resumeCarousel();
+    });
+
+    /* Touch: pause while finger is down */
+    carousel.addEventListener(
+      "touchstart",
+      function () {
+        pauseCarousel();
+      },
+      { passive: true }
+    );
+    carousel.addEventListener(
+      "touchend",
+      function () {
+        setTimeout(resumeCarousel, 1200);
+      },
+      { passive: true }
+    );
+
+    window.addEventListener("resize", function () {
+      measureLoop();
+    });
+
+    if (reduceMotion) {
+      /* Static horizontal scroll instead of animation */
+      viewport.style.overflowX = "auto";
+      track.style.transform = "none";
+      return;
+    }
+
+    function tick() {
+      if (!paused && halfWidth > 0) {
+        offset += SPEED;
+        if (offset >= halfWidth) offset -= halfWidth;
+        track.style.transform = "translate3d(" + -offset + "px,0,0)";
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupCarousel);
+  } else {
+    setupCarousel();
+  }
+
+  /* —— Download links —— */
   function setDownload(url) {
     ["dlSide", "dlHero", "dlCta"].forEach(function (id) {
       var el = document.getElementById(id);
