@@ -326,11 +326,36 @@ body.nav-open .backdrop {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: clamp(24px, 4vw, 48px);
-  align-items: center;
+  align-items: stretch;
   max-width: var(--max);
   margin: 0 auto;
-  padding: clamp(32px, 6vh, 64px) var(--pad) 40px;
-  min-height: min(88vh, 820px);
+  padding: clamp(28px, 5vh, 56px) var(--pad) 36px;
+  min-height: 0;
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-art {
+  margin: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: #ebe7e0;
+  align-self: stretch;
+  display: flex;
+  min-height: 100%;
+}
+
+.hero-art img {
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  object-fit: cover;
+  object-position: center;
 }
 
 .hero-brand {
@@ -447,20 +472,6 @@ body.nav-open .backdrop {
 .sell-points strong {
   color: var(--ink);
   font-weight: 800;
-}
-
-.hero-art {
-  margin: 0;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  background: #ebe7e0;
-}
-
-.hero-art img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
 }
 
 .hero-copy {
@@ -661,6 +672,39 @@ body.nav-open .backdrop {
   color: var(--ink);
 }
 
+.pillar-sub {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.pillar-media.tall {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+  align-items: center;
+}
+
+.pillar-media.tall .frame {
+  width: min(100%, 300px);
+}
+
+.pillar-media.tall .ats-tools-shot {
+  width: min(100%, 420px);
+}
+
+.pillar-media.tall .ats-tools-shot img {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
+  object-position: top;
+}
+
 .mark {
   display: inline-flex !important;
   align-items: center;
@@ -738,15 +782,6 @@ body.nav-open .backdrop {
 .pillar-media {
   margin: 0;
   min-width: 0;
-}
-
-.pillar-media.tall {
-  display: flex;
-  justify-content: center;
-}
-
-.pillar-media.tall .frame {
-  width: min(100%, 300px);
 }
 
 .frame {
@@ -1450,6 +1485,10 @@ body.nav-open .backdrop {
   .hero {
     min-height: 0;
     padding-top: 24px;
+  }
+
+  .hero-art img {
+    min-height: 280px;
   }
 
   .feat-grid,
