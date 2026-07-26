@@ -1,12 +1,12 @@
-/* CareerCraft AI — elegant warm stone + Casper blue */
+/* CareerCraft AI — soft blue mist + Casper blue */
 
 :root {
-  --paper: #f7f5f1;
-  --paper-2: #efece6;
+  --paper: #f3f6fa;
+  --paper-2: #e8eef5;
   --surface: #ffffff;
   --ink: #142033;
   --ink-soft: #2a3b4f;
-  --muted: #66788a;
+  --muted: #5f7388;
   --line: rgba(20, 32, 51, 0.1);
   --line-soft: rgba(20, 32, 51, 0.06);
   --blue: #0a66c2;
@@ -42,9 +42,9 @@ body {
   line-height: 1.55;
   color: var(--ink);
   background:
-    radial-gradient(900px 480px at 88% -5%, rgba(10, 102, 194, 0.09), transparent 55%),
-    radial-gradient(700px 400px at 0% 30%, rgba(20, 32, 51, 0.04), transparent 50%),
-    linear-gradient(180deg, #faf8f4 0%, var(--paper) 45%, var(--paper-2) 100%);
+    radial-gradient(1000px 520px at 90% -8%, rgba(10, 102, 194, 0.12), transparent 55%),
+    radial-gradient(720px 420px at -5% 25%, rgba(11, 31, 51, 0.05), transparent 50%),
+    linear-gradient(180deg, #f7fafc 0%, var(--paper) 42%, var(--paper-2) 100%);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -94,7 +94,7 @@ code {
   align-items: center;
   gap: 18px;
   padding: 11px var(--pad);
-  background: rgba(247, 245, 241, 0.86);
+  background: rgba(247, 250, 252, 0.88);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line-soft);
 }
@@ -344,7 +344,7 @@ body.nav-open .backdrop {
   border-radius: 24px;
   overflow: hidden;
   box-shadow: var(--shadow);
-  background: #ebe7e0;
+  background: #e4ebf3;
   align-self: stretch;
   display: flex;
   min-height: 100%;
@@ -693,18 +693,6 @@ body.nav-open .backdrop {
   width: min(100%, 300px);
 }
 
-.pillar-media.tall .ats-tools-shot {
-  width: min(100%, 420px);
-}
-
-.pillar-media.tall .ats-tools-shot img {
-  width: 100%;
-  height: auto;
-  max-height: 220px;
-  object-fit: cover;
-  object-position: top;
-}
-
 .mark {
   display: inline-flex !important;
   align-items: center;
@@ -876,7 +864,7 @@ body.nav-open .backdrop {
   width: 100%;
   padding: 0;
   border: none;
-  background: #ebe7e0;
+  background: #e4ebf3;
   border-radius: 12px;
   overflow: hidden;
   cursor: zoom-in;
