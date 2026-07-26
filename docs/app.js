@@ -86,7 +86,9 @@
       btn.dataset.lbBound = "1";
       btn.addEventListener("click", function () {
         var img = btn.querySelector("img");
-        openLb(btn.getAttribute("data-full"), img ? img.alt : "");
+        var src =
+          btn.getAttribute("data-full") || (img && img.getAttribute("src"));
+        openLb(src, img ? img.alt : "");
       });
     });
   }
