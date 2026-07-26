@@ -36,7 +36,6 @@
     });
   }
 
-  /* Lightbox */
   var lb = document.getElementById("lightbox");
   var lbImg = document.getElementById("lbImg");
   var lbClose = document.getElementById("lbClose");
@@ -88,7 +87,6 @@
     }
   });
 
-  /* Carousel */
   var carousel = document.getElementById("carousel");
   var track = document.getElementById("carouselTrack");
   var viewport = document.getElementById("carouselViewport");
@@ -159,10 +157,9 @@
     requestAnimationFrame(tick);
   }
 
-  /* Reveal */
   function setupReveal() {
     var nodes = document.querySelectorAll(
-      ".band, .duo, .split, .byok, .feat-grid, .cta, .steps li"
+      ".band, .pillar, .split, .byok, .trio, .hunt-grid, .feat-grid, .story, .cta, .steps li"
     );
     if (!nodes.length) return;
     if (reduceMotion || !("IntersectionObserver" in window)) {
@@ -183,7 +180,7 @@
           }
         });
       },
-      { rootMargin: "0px 0px -6% 0px", threshold: 0.1 }
+      { rootMargin: "0px 0px -6% 0px", threshold: 0.08 }
     );
     nodes.forEach(function (el) {
       io.observe(el);
@@ -201,7 +198,6 @@
     boot();
   }
 
-  /* Downloads */
   function setDownload(url) {
     ["dlTop", "dlHero", "dlCta"].forEach(function (id) {
       var el = document.getElementById(id);
