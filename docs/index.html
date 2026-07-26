@@ -61,6 +61,11 @@
       },
       {
         "@type": "Question",
+        "name": "Can I use free or cheap AI models?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Connect OpenRouter and pick free or low-cost models for ATS and Casper, or use Gemini, OpenAI, DeepSeek, or Qwen with your own key. CareerCraft never adds an AI surcharge." }
+      },
+      {
+        "@type": "Question",
         "name": "How do I install CareerCraft AI?",
         "acceptedAnswer": { "@type": "Answer", "text": "Download the latest release ZIP from GitHub, unzip, open chrome://extensions, enable Developer mode, and Load unpacked." }
       }
@@ -87,6 +92,7 @@
         <a class="nav-link" href="#top">Overview</a>
         <a class="nav-link" href="#unique">ATS &amp; profile</a>
         <a class="nav-link" href="#casper">Casper AI</a>
+        <a class="nav-link" href="#byok">Your AI key</a>
         <a class="nav-link" href="#gap">The gap</a>
         <a class="nav-link" href="#product">Gallery</a>
         <a class="nav-link" href="#howto">How to use</a>
@@ -222,33 +228,92 @@
         </div>
       </section>
 
+      <section class="block" id="byok" aria-labelledby="byok-title">
+        <p class="section-label">Bring your own key</p>
+        <h3 id="byok-title">Premium AI features — without a CareerCraft bill</h3>
+        <p class="prose">ATS scoring and Casper chat call <strong>your</strong> provider. CareerCraft never sells you tokens, never proxies your prompts, and never charges a monthly AI seat. You pick the model; you keep the receipt.</p>
+        <div class="byok-grid">
+          <div class="byok-copy">
+            <ul class="byok-points">
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span><strong>No extra SaaS cost.</strong> The extension is free. You only pay your AI provider when you run ATS or Casper — same as using ChatGPT or Gemini yourself.</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span><strong>OpenRouter for cheap &amp; free models.</strong> Point one key at OpenRouter and use free or low-cost models for everyday scoring and chat — upgrade only when you want a heavier model.</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span><strong>Keys stay on your machine.</strong> Chrome extension storage. Switch Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen anytime — one active provider.</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true">✓</span>
+                <span><strong>You control spend.</strong> Usage stays visible locally. Pause AI features and the tool still tracks jobs, alerts, and formatting.</span>
+              </li>
+            </ul>
+            <div class="provider-pills" aria-label="Supported providers">
+              <span class="accent">OpenRouter · free &amp; cheap</span>
+              <span>Gemini</span>
+              <span>OpenAI</span>
+              <span>DeepSeek</span>
+              <span>Qwen</span>
+            </div>
+          </div>
+          <div class="byok-media">
+            <div class="media-stage byok-stage">
+              <div class="byok-card">
+                <p class="eyebrow">Local-first AI</p>
+                <h4>Your key. Your model. Your bill.</h4>
+                <p>Want zero surprise invoices? Start on OpenRouter free tiers for light ATS and Casper use — then step up only when a role is worth a sharper pass.</p>
+                <div class="byok-stats">
+                  <div><strong>$0</strong><span>CareerCraft AI fee</span></div>
+                  <div><strong>BYOK</strong><span>Provider of your choice</span></div>
+                  <div><strong>Local</strong><span>Keys never leave Chrome</span></div>
+                  <div><strong>Free*</strong><span>OpenRouter free models</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="block" id="gap" aria-labelledby="gap-title">
         <p class="section-label">The gap</p>
         <h3 id="gap-title">LinkedIn is where the jobs are. Your process is still scattered.</h3>
         <p class="prose">Job tabs pile up. Saved searches get forgotten. You open a role, wonder if it fits, apply, then lose the thread. Feed hiring posts scroll by. Post formatting fights Unicode. AI chat lives in another tab.</p>
-        <div class="contrast">
-          <article>
-            <h4>Without CareerCraft</h4>
-            <ul>
-              <li>Job URLs lost in notes apps</li>
-              <li>Did I apply? guesswork</li>
-              <li>No ATS signal until after you apply</li>
-              <li>Feed hiring posts vanish</li>
-              <li>Alerts you forget to check</li>
-              <li>AI tools that want your keys on their servers</li>
-            </ul>
-          </article>
-          <article class="good">
-            <h4>With CareerCraft</h4>
-            <ul>
-              <li>Job Tracker with status pipeline</li>
-              <li>ATS score vs your CV / profile</li>
-              <li>Saved searches + desktop alerts</li>
-              <li>Last 1 hour + feed discovery</li>
-              <li>Casper AI post analysis on-page</li>
-              <li>Bring your own AI — local storage</li>
-            </ul>
-          </article>
+        <div class="gap-with-art">
+          <div class="contrast">
+            <article>
+              <h4>Without CareerCraft</h4>
+              <ul>
+                <li>Job URLs lost in notes apps</li>
+                <li>Did I apply? guesswork</li>
+                <li>No ATS signal until after you apply</li>
+                <li>Feed hiring posts vanish</li>
+                <li>Alerts you forget to check</li>
+                <li>AI tools that want your keys on their servers</li>
+              </ul>
+            </article>
+            <article class="good">
+              <h4>With CareerCraft</h4>
+              <ul>
+                <li>Job Tracker with status pipeline</li>
+                <li>ATS score vs your CV / profile</li>
+                <li>Saved searches + desktop alerts</li>
+                <li>Last 1 hour + feed discovery</li>
+                <li>Casper AI post analysis on-page</li>
+                <li>Bring your own AI — local storage</li>
+              </ul>
+            </article>
+          </div>
+          <figure class="illust-band">
+            <div class="media-stage">
+              <div class="frame-art">
+                <img src="assets/illustrations/scene-gap.png" alt="Illustration — scattered job hunt versus a single CareerCraft board" loading="lazy" width="1536" height="1024" />
+              </div>
+            </div>
+          </figure>
         </div>
       </section>
 
@@ -285,6 +350,13 @@
       <section class="block" id="howto" aria-labelledby="howto-title">
         <p class="section-label">Hands-on</p>
         <h3 id="howto-title">How to use CareerCraft</h3>
+        <figure class="illust-band compact">
+          <div class="media-stage">
+            <div class="frame-art">
+              <img src="assets/illustrations/scene-howto.png" alt="Illustration — installing and using CareerCraft on LinkedIn" loading="lazy" width="1536" height="1024" />
+            </div>
+          </div>
+        </figure>
         <div class="steps">
           <div class="step"><div><h4>Install the ZIP</h4><p>Download the release → unzip → <code>chrome://extensions</code> → Developer mode → Load unpacked.</p></div></div>
           <div class="step"><div><h4>Add an AI key</h4><p>Settings → AI API Keys → Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen. Keys stay local.</p></div></div>
@@ -345,6 +417,13 @@
       <section class="block" id="who" aria-labelledby="who-title">
         <p class="section-label">Ideal fit</p>
         <h3 id="who-title">Who CareerCraft is for</h3>
+        <figure class="illust-band compact">
+          <div class="media-stage">
+            <div class="frame-art">
+              <img src="assets/illustrations/scene-hunt.png" alt="Illustration — focused LinkedIn job hunt with CareerCraft" loading="lazy" width="1536" height="1024" />
+            </div>
+          </div>
+        </figure>
         <div class="audience">
           <article><h4>Active job seekers</h4><p>Daily roles, status, favorites, ATS before you apply, last-hour freshness, and alerts that only fire when counts rise.</p></article>
           <article><h4>Creators &amp; marketers</h4><p>Formatter + image paste for sharper posts; Casper for reply angles without leaving LinkedIn.</p></article>
@@ -395,6 +474,13 @@
         <p class="section-label">Same workshop</p>
         <h3 id="workshop-title">Also from the bench</h3>
         <p class="prose">Other local-first tools from the same maker.</p>
+        <figure class="illust-band compact">
+          <div class="media-stage">
+            <div class="frame-art">
+              <img src="assets/illustrations/scene-workshop.png" alt="Illustration — the local-first tools workshop" loading="lazy" width="1536" height="1024" />
+            </div>
+          </div>
+        </figure>
         <div class="workshop">
           <a href="https://gtarafdar.github.io/porter/" target="_blank" rel="noopener"><strong>Porter</strong><span>Private Finder-like file bridge across your Macs · MCP for AI IDEs</span></a>
           <a href="https://gtarafdar.github.io/aligner/" target="_blank" rel="noopener"><strong>Aligner</strong><span>Free Chrome toolkit for design, measure, and WordPress</span></a>
@@ -418,6 +504,10 @@
         <details>
           <summary>Where do my API keys go?</summary>
           <p>Chrome extension storage on your device. No CareerCraft key vault.</p>
+        </details>
+        <details>
+          <summary>Can I use free or cheap models?</summary>
+          <p>Yes. Connect OpenRouter and pick free or low-cost models for ATS and Casper. Or use Gemini / OpenAI / DeepSeek / Qwen with your own key — CareerCraft never adds an AI surcharge.</p>
         </details>
         <details>
           <summary>Do alerts spam me every check?</summary>
