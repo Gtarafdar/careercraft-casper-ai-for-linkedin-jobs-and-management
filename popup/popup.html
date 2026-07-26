@@ -699,7 +699,8 @@
         <span>Feed widgets</span>
       </div>
       <p style="font-size: 12px; color: #666; margin-bottom: 10px">
-        Optional LinkedIn right-rail cards (off by default).
+        Timeline discovery is separate from Saved Job Searches (job search
+        URLs). It scans posts on your LinkedIn home feed.
       </p>
       <div class="feature-list">
         <div style="margin-bottom: 10px">
@@ -722,6 +723,67 @@
             <span>Favorite authors card</span>
           </label>
         </div>
+        <div style="margin-bottom: 10px">
+          <label style="display: flex; align-items: center; cursor: pointer">
+            <input
+              type="checkbox"
+              id="popupFeedDiscover"
+              style="margin-right: 8px"
+            />
+            <span>Timeline job discovery</span>
+          </label>
+        </div>
+        <div id="popupFeedKeywordsWrap" style="margin-bottom: 10px; display: none">
+          <label
+            for="popupFeedKeywords"
+            style="font-size: 12px; color: #444; display: block; margin-bottom: 4px"
+          >
+            Timeline keywords
+            <span style="color: #888">(optional, comma-separated)</span>
+          </label>
+          <textarea
+            id="popupFeedKeywords"
+            rows="2"
+            placeholder="frontend, hiring, remote"
+            style="
+              width: 100%;
+              box-sizing: border-box;
+              font-size: 12px;
+              padding: 6px 8px;
+              border: 1px solid #ddd;
+              border-radius: 6px;
+              resize: vertical;
+            "
+          ></textarea>
+          <button
+            type="button"
+            id="popupFeedKeywordsSave"
+            class="casper-chat-btn"
+            style="
+              display: block;
+              width: 100%;
+              margin-top: 6px;
+              padding: 10px;
+              text-align: center;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 13px;
+              background: #0a66c2;
+              color: #fff;
+              border: none;
+              cursor: pointer;
+            "
+          >
+            Save timeline keywords
+          </button>
+          <p
+            id="popupFeedKeywordsHint"
+            style="font-size: 11px; color: #666; margin: 6px 0 0"
+          >
+            Empty = any hiring/freelance post. Matches soft-add to Job Tracker
+            (Source = Feed). Scroll your LinkedIn home feed to collect more.
+          </p>
+        </div>
       </div>
       <a
         href="#"
@@ -734,7 +796,7 @@
           margin-top: 4px;
         "
       >
-        Manage authors &amp; limits
+        Full timeline settings (Options)
       </a>
     </div>
 

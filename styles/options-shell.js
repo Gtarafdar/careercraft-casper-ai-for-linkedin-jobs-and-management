@@ -7,7 +7,7 @@
       id: "dashboard",
       label: "Dashboard",
       title: "Dashboard",
-      blurb: "Quick status across CareerCraft tools.",
+      blurb: "Your command center for searches, tracking, feed jobs, and AI tools.",
     },
     {
       id: "job-tracker",
@@ -107,11 +107,16 @@
   let trackerFilterDate = "all";
   let trackerFilterDateFrom = "";
   let trackerFilterDateTo = "";
+  let trackerFilterSource = "all";
+  let trackerFilterEmployerKind = "all";
   let trackerStarredOnly = false;
   let trackerPage = 1;
   const TRACKER_PAGE_SIZE = 25;
   let trackerExpandedId = null;
   let trackerStorageListener = null;
+  let trackerStorageRenderTimer = null;
+  let trackerMoreFiltersOpen = false;
+  let trackerExportMenuOpen = false;
 
   function statusLabel(status) {
     if (
@@ -163,13 +168,237 @@
 
   function sourceBadge(source) {
     const s = source || "viewed";
-    const label = s === "alert" ? "Alert" : s === "ats" ? "ATS" : "Viewed";
+    // Opened = LinkedIn open without alert/ATS; Feed = timeline discovery
+    const label =
+      s === "alert"
+        ? "Alert"
+        : s === "ats"
+          ? "ATS"
+          : s === "feed"
+            ? "Feed"
+            : "Opened";
     return (
       '<span class="cc-source-badge cc-source-' +
       escapeHtml(s) +
       '">' +
       label +
       "</span>"
+    );
+  }
+
+  function countBySource(jobs) {
+    const c = { viewed: 0, alert: 0, ats: 0, feed: 0 };
+    (jobs || []).forEach(function (j) {
+      const s = (j && j.source) || "viewed";
+      if (c[s] != null) c[s]++;
+      else c.viewed++;
+    });
+    return c;
+  }
+
+  function activeMoreFilterCount() {
+    let n = 0;
+    if (trackerFilterSource !== "all") n++;
+    if (trackerFilterEmployerKind !== "all") n++;
+    if (trackerFilterRecency !== "all") n++;
+    if (
+      trackerFilterDate !== "all" ||
+      trackerFilterDateFrom ||
+      trackerFilterDateTo
+    )
+      n++;
+    return n;
+  }
+
+  function emptyFilterMessageHtml(allJobs) {
+    const counts = countBySource(allJobs);
+    if (trackerFilterSource === "viewed" && counts.viewed === 0) {
+      return (
+        '<div class="cc-placeholder">' +
+        "<strong>No “Opened only” jobs right now.</strong><br />" +
+        "<span class=\"cc-muted\">Source → <em>Opened only</em> means jobs you opened on LinkedIn that never came from an alert and never got an ATS score. " +
+        "After an alert or ATS run, the badge becomes Alert or ATS (not Opened). " +
+        "You have " +
+        counts.alert +
+        " alert and " +
+        counts.ats +
+        " ATS jobs — set Source to <strong>All sources</strong> or <strong>ATS scored</strong> to see them.</span></div>"
+      );
+    }
+    return (
+      '<div class="cc-placeholder">No jobs match this filter. Clear filters or broaden Source / Employer / Recency.</div>'
+    );
+  }
+
+  function resolveCompanyName(job) {
+    if (
+      typeof JobTrackerStore !== "undefined" &&
+      JobTrackerStore.resolveCompanyName
+    ) {
+      return JobTrackerStore.resolveCompanyName(job) || "";
+    }
+    const company = String((job && job.company) || "").trim();
+    const detail =
+      job && job.companyDetails && job.companyDetails.name
+        ? String(job.companyDetails.name).trim()
+        : "";
+    const bad = /^(company not found|not found|n\/a|unknown company)$/i;
+    if (company && !bad.test(company)) return company;
+    if (detail && !bad.test(detail)) return detail;
+    return company || detail || "";
+  }
+
+  function resolveCompanyUrl(job) {
+    if (
+      typeof JobTrackerStore !== "undefined" &&
+      JobTrackerStore.resolveCompanyUrl
+    ) {
+      return JobTrackerStore.resolveCompanyUrl(job) || "";
+    }
+    const name = resolveCompanyName(job);
+    if (!name) return "";
+    return (
+      "https://www.linkedin.com/search/results/companies/?keywords=" +
+      encodeURIComponent(name)
+    );
+  }
+
+  function companyLinkHtml(job, opts) {
+    const options = opts || {};
+    const name = resolveCompanyName(job);
+    if (!name) return escapeHtml(options.empty || "—");
+    const href = resolveCompanyUrl(job);
+    if (!href) return escapeHtml(name);
+    return (
+      '<a class="cc-company-link" href="' +
+      escapeHtml(href) +
+      '" target="_blank" rel="noopener" title="Open company on LinkedIn">' +
+      escapeHtml(name) +
+      "</a>"
+    );
+  }
+
+  function employerKindBadge(job) {
+    const kind =
+      (job && job.employerKind) ||
+      (typeof JobTrackerStore !== "undefined" &&
+      JobTrackerStore.classifyEmployerKind
+        ? JobTrackerStore.classifyEmployerKind(job || {}).employerKind
+        : "unknown");
+    const label =
+      typeof JobTrackerStore !== "undefined" && JobTrackerStore.employerKindLabel
+        ? JobTrackerStore.employerKindLabel(kind)
+        : kind;
+    const conf = (job && job.employerKindConfidence) || "";
+    const reason = (job && job.employerKindReason) || "";
+    const title = [label, conf ? "(" + conf + ")" : "", reason]
+      .filter(Boolean)
+      .join(" — ");
+    return (
+      '<span class="cc-employer-badge cc-employer-' +
+      escapeHtml(kind) +
+      '" title="' +
+      escapeHtml(title) +
+      '">' +
+      escapeHtml(label) +
+      "</span>"
+    );
+  }
+
+  function employerKindOptionsHtml(job) {
+    const override =
+      job && job.employerKindOverride
+        ? String(job.employerKindOverride)
+        : "";
+    const kinds =
+      (typeof JobTrackerStore !== "undefined" && JobTrackerStore.EMPLOYER_KINDS) ||
+      ["direct", "agency", "job_board", "unknown"];
+    const labels =
+      (typeof JobTrackerStore !== "undefined" &&
+        JobTrackerStore.EMPLOYER_KIND_LABELS) ||
+      {};
+    let html =
+      '<option value="auto"' +
+      (!override ? " selected" : "") +
+      ">Auto (reclassify)</option>";
+    kinds.forEach(function (k) {
+      html +=
+        '<option value="' +
+        escapeHtml(k) +
+        '"' +
+        (override === k ? " selected" : "") +
+        ">" +
+        escapeHtml(labels[k] || k) +
+        "</option>";
+    });
+    return html;
+  }
+
+  function trackerOpenUrl(job) {
+    if (
+      typeof JobTrackerStore !== "undefined" &&
+      JobTrackerStore.resolveJobOpenUrl
+    ) {
+      return JobTrackerStore.resolveJobOpenUrl(job) || "#";
+    }
+    const u = String((job && (job.feedPostUrl || job.url)) || "").trim();
+    if (!u || /\/jobs\/view\/feed/i.test(u)) return "#";
+    if (/\/(company|showcase)\/[^/]+\/posts\/?/i.test(u)) return "#";
+    if (/^\d{6,}$/.test(String((job && job.id) || ""))) {
+      return "https://www.linkedin.com/jobs/view/" + job.id;
+    }
+    return u || "#";
+  }
+
+  function outreachDetailHtml(job) {
+    const kind = (job && job.employerKind) || "unknown";
+    const tip =
+      typeof JobTrackerStore !== "undefined" && JobTrackerStore.outreachTipForKind
+        ? JobTrackerStore.outreachTipForKind(kind)
+        : "";
+    const url = trackerOpenUrl(job);
+    let actions = "";
+    if (kind === "agency") {
+      actions =
+        '<p class="cc-tracker-outreach-actions">' +
+        '<a class="cc-btn cc-btn-secondary cc-btn-tiny" href="' +
+        escapeHtml(url) +
+        '" target="_blank" rel="noopener">Open LinkedIn job</a>' +
+        '<span class="cc-muted"> Use the recruiter / poster on the listing for follow-up.</span></p>';
+    } else if (kind === "job_board") {
+      actions =
+        '<p class="cc-tracker-outreach-actions">' +
+        '<a class="cc-btn cc-btn-secondary cc-btn-tiny" href="' +
+        escapeHtml(url) +
+        '" target="_blank" rel="noopener">Open listing</a>' +
+        '<span class="cc-muted"> Tip: scan the JD for the real employer name before outreach.</span></p>';
+    } else if (kind === "direct") {
+      actions =
+        '<p class="cc-muted">Update status as you apply. Contact enrichment for direct employers is deferred (Phase 5B).</p>';
+    } else {
+      actions =
+        '<p class="cc-muted">Tag the employer type below if you know whether this is an agency, board, or direct employer.</p>';
+    }
+    return (
+      "<h4>Outreach fit</h4>" +
+      '<p class="cc-tracker-outreach-tip">' +
+      escapeHtml(tip) +
+      "</p>" +
+      actions +
+      '<label class="cc-tracker-employer-override">Employer type ' +
+      '<select data-tracker-employer-kind data-job-id="' +
+      escapeHtml((job && job.id) || "") +
+      '">' +
+      employerKindOptionsHtml(job) +
+      "</select></label>" +
+      (job && job.employerKindReason && !job.employerKindOverride
+        ? '<p class="cc-muted cc-tracker-employer-reason">' +
+          escapeHtml(job.employerKindReason) +
+          (job.employerKindConfidence
+            ? " · " + escapeHtml(job.employerKindConfidence) + " confidence"
+            : "") +
+          "</p>"
+        : "")
     );
   }
 
@@ -248,6 +477,8 @@
       dateFrom: trackerFilterDateFrom,
       dateTo: trackerFilterDateTo,
       starredOnly: trackerStarredOnly,
+      source: trackerFilterSource,
+      employerKind: trackerFilterEmployerKind,
     };
   }
 
@@ -342,6 +573,10 @@
     const statusFilter = tracker.querySelector("#ccTrackerStatusFilter");
     const recencyFilter = tracker.querySelector("#ccTrackerRecencyFilter");
     const dateFilter = tracker.querySelector("#ccTrackerDateFilter");
+    const sourceFilter = tracker.querySelector("#ccTrackerSourceFilter");
+    const employerKindFilter = tracker.querySelector(
+      "#ccTrackerEmployerKindFilter"
+    );
     const starredOnly = tracker.querySelector("#ccTrackerStarredOnly");
     const searchInput = tracker.querySelector("#ccTrackerSearch");
     const exportBtn = tracker.querySelector("#ccTrackerExportCsv");
@@ -353,11 +588,48 @@
     const prevBtn = tracker.querySelector("#ccTrackerPrev");
     const nextBtn = tracker.querySelector("#ccTrackerNext");
     const saveRefresh = tracker.querySelector("#ccTrackerSaveRefresh");
+    const moreToggle = tracker.querySelector("#ccTrackerToggleMore");
+    const morePanel = tracker.querySelector("#ccTrackerMorePanel");
+    const exportMenu = tracker.querySelector("#ccTrackerExportMenu");
+
+    if (moreToggle && morePanel) {
+      moreToggle.addEventListener("click", function () {
+        trackerMoreFiltersOpen = !morePanel.classList.contains("is-open");
+        morePanel.classList.toggle("is-open", trackerMoreFiltersOpen);
+        if (trackerMoreFiltersOpen) morePanel.removeAttribute("hidden");
+        else morePanel.setAttribute("hidden", "");
+        moreToggle.setAttribute(
+          "aria-expanded",
+          trackerMoreFiltersOpen ? "true" : "false"
+        );
+      });
+    }
+    if (exportMenu) {
+      exportMenu.addEventListener("toggle", function () {
+        trackerExportMenuOpen = !!exportMenu.open;
+      });
+    }
 
     if (statusFilter) {
       statusFilter.value = trackerFilterStatus;
       statusFilter.addEventListener("change", function () {
         trackerFilterStatus = statusFilter.value;
+        trackerPage = 1;
+        renderJobTracker().catch(function () {});
+      });
+    }
+    if (sourceFilter) {
+      sourceFilter.value = trackerFilterSource;
+      sourceFilter.addEventListener("change", function () {
+        trackerFilterSource = sourceFilter.value || "all";
+        trackerPage = 1;
+        renderJobTracker().catch(function () {});
+      });
+    }
+    if (employerKindFilter) {
+      employerKindFilter.value = trackerFilterEmployerKind;
+      employerKindFilter.addEventListener("change", function () {
+        trackerFilterEmployerKind = employerKindFilter.value || "all";
         trackerPage = 1;
         renderJobTracker().catch(function () {});
       });
@@ -424,12 +696,26 @@
       searchInput.value = trackerFilterQ;
       let t = null;
       searchInput.addEventListener("input", function () {
+        // Keep filter state in sync immediately so storage remounts can't wipe q
+        trackerFilterQ = searchInput.value || "";
         clearTimeout(t);
         t = setTimeout(function () {
           trackerFilterQ = searchInput.value || "";
           trackerPage = 1;
-          renderJobTracker().catch(function () {});
-        }, 200);
+          const caret = searchInput.selectionStart;
+          renderJobTracker()
+            .then(function () {
+              const el = document.querySelector("#ccTrackerSearch");
+              if (!el) return;
+              el.focus();
+              try {
+                const pos =
+                  typeof caret === "number" ? caret : el.value.length;
+                el.setSelectionRange(pos, pos);
+              } catch (e) {}
+            })
+            .catch(function () {});
+        }, 250);
       });
     }
     if (exportBtn) {
@@ -559,6 +845,20 @@
         renderJobTracker().catch(function () {});
       });
     });
+    tracker
+      .querySelectorAll("[data-tracker-employer-kind]")
+      .forEach(function (sel) {
+        sel.addEventListener("change", async function () {
+          const id = sel.getAttribute("data-job-id");
+          if (!id || typeof JobTrackerStore === "undefined") return;
+          try {
+            await JobTrackerStore.setEmployerKind(id, sel.value);
+            await renderJobTracker();
+          } catch (e) {
+            console.warn("Set employer kind failed", e);
+          }
+        });
+      });
 
     if (saveRefresh) {
       saveRefresh.addEventListener("click", async function () {
@@ -605,7 +905,15 @@
       const active = document.querySelector(
         '.cc-panel.active[data-panel="job-tracker"]'
       );
-      if (active) renderJobTracker().catch(function () {});
+      if (!active) return;
+      const search = document.querySelector("#ccTrackerSearch");
+      const typing = !!(search && document.activeElement === search);
+      // Don't remount the toolbar while the user is typing/pasting search
+      if (typing) return;
+      clearTimeout(trackerStorageRenderTimer);
+      trackerStorageRenderTimer = setTimeout(function () {
+        renderJobTracker().catch(function () {});
+      }, 800);
     };
     try {
       chrome.storage.onChanged.addListener(trackerStorageListener);
@@ -655,6 +963,15 @@
       return;
     }
 
+    // Preserve in-progress search before this render wipes the input
+    const liveSearch = tracker.querySelector("#ccTrackerSearch");
+    if (liveSearch) {
+      const liveVal = liveSearch.value || "";
+      if (document.activeElement === liveSearch || (liveVal && !trackerFilterQ)) {
+        trackerFilterQ = liveVal;
+      }
+    }
+
     try {
       await JobTrackerStore.ensureSeeded();
     } catch (e) {
@@ -674,39 +991,93 @@
       trackerFilterDate === "custom" ||
       !!trackerFilterDateFrom ||
       !!trackerFilterDateTo;
+    const sourceCounts = countBySource(allJobs);
+    const moreCount = activeMoreFilterCount();
+    const moreOpen = trackerMoreFiltersOpen || moreCount > 0;
 
     const toolbar =
       '<div class="cc-tracker-toolbar">' +
-      '<div class="cc-tracker-filters">' +
-      '<label>Status <select id="ccTrackerStatusFilter"><option value="all">All</option>' +
+      '<div class="cc-tracker-toolbar-primary">' +
+      '<div class="cc-tracker-search-wrap">' +
+      '<input type="search" id="ccTrackerSearch" class="cc-tracker-search" placeholder="Search title, company, or alert name" />' +
+      "</div>" +
+      '<label class="cc-tracker-field cc-tracker-field--inline">Status' +
+      '<select id="ccTrackerStatusFilter" class="cc-tracker-control"><option value="all">All</option>' +
       statusOptionsHtml(null).replace(/ selected/g, "") +
       "</select></label>" +
-      '<label>Viewed <select id="ccTrackerRecencyFilter">' +
-      '<option value="all">All</option>' +
+      '<label class="cc-check-label cc-tracker-fav-check cc-tracker-control"><input type="checkbox" id="ccTrackerStarredOnly" /> Favorites</label>' +
+      '<button type="button" class="cc-btn cc-btn-secondary cc-tracker-more-btn cc-tracker-control' +
+      (moreCount ? " is-active" : "") +
+      '" id="ccTrackerToggleMore" aria-expanded="' +
+      (moreOpen ? "true" : "false") +
+      '" title="Show Source, Employer, Recency, and Date filters">Adv Filter' +
+      (moreCount ? " (" + moreCount + ")" : "") +
+      "</button>" +
+      '<div class="cc-tracker-actions">' +
+      '<details class="cc-tracker-menu' +
+      (trackerExportMenuOpen ? " is-open" : "") +
+      '" id="ccTrackerExportMenu"' +
+      (trackerExportMenuOpen ? " open" : "") +
+      ">" +
+      '<summary class="cc-tracker-control">Export / copy</summary>' +
+      '<div class="cc-tracker-menu-panel">' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerExportCsv">Export visible CSV</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerCopyTsv">Copy visible</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerExportSelected">Export selected CSV</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerCopySelected">Copy selected</button>' +
+      "</div></details>" +
+      '<button type="button" class="cc-btn cc-btn-secondary cc-tracker-danger-btn cc-tracker-control" id="ccTrackerDeleteSelected">Delete selected</button>' +
+      "</div></div>" +
+      '<div class="cc-tracker-more' +
+      (moreOpen ? " is-open" : "") +
+      '" id="ccTrackerMorePanel"' +
+      (moreOpen ? "" : " hidden") +
+      ">" +
+      '<p class="cc-tracker-more-title">Advanced filters</p>' +
+      '<label class="cc-tracker-field" title="How the job entered the tracker. Opened only = LinkedIn open with no alert/ATS yet.">Source' +
+      '<select id="ccTrackerSourceFilter">' +
+      '<option value="all">All sources</option>' +
+      '<option value="ats">ATS scored (' +
+      sourceCounts.ats +
+      ")</option>" +
+      '<option value="alert">Job alerts (' +
+      sourceCounts.alert +
+      ")</option>" +
+      '<option value="feed">Feed (' +
+      sourceCounts.feed +
+      ")</option>" +
+      '<option value="viewed">Opened only (' +
+      sourceCounts.viewed +
+      ")</option>" +
+      "</select></label>" +
+      '<label class="cc-tracker-field">Employer' +
+      '<select id="ccTrackerEmployerKindFilter">' +
+      '<option value="all">All types</option>' +
+      '<option value="agency">Agency listing</option>' +
+      '<option value="job_board">Job board</option>' +
+      '<option value="direct">Direct employer</option>' +
+      '<option value="unknown">Unclear</option>' +
+      "</select></label>" +
+      '<label class="cc-tracker-field" title="Filter by when the job was last tracked">Recency' +
+      '<select id="ccTrackerRecencyFilter">' +
+      '<option value="all">Any time</option>' +
       '<option value="recent">Last 7 days</option>' +
       '<option value="old">Older than 7 days</option>' +
       "</select></label>" +
-      '<label>Date <select id="ccTrackerDateFilter">' +
+      '<label class="cc-tracker-field">Date' +
+      '<select id="ccTrackerDateFilter">' +
       dateOptions +
       "</select></label>" +
       '<span class="cc-tracker-date-range' +
       (showCustomRange ? " is-open" : "") +
       '" id="ccTrackerDateRange">' +
-      '<label>From <input type="date" id="ccTrackerDateFrom" /></label>' +
-      '<label>To <input type="date" id="ccTrackerDateTo" /></label>' +
+      '<label class="cc-tracker-field">From <input type="date" id="ccTrackerDateFrom" /></label>' +
+      '<label class="cc-tracker-field">To <input type="date" id="ccTrackerDateTo" /></label>' +
       '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerClearDateRange">Clear dates</button>' +
       "</span>" +
-      '<label class="cc-check-label"><input type="checkbox" id="ccTrackerStarredOnly" /> Favorites only</label>' +
-      '<input type="search" id="ccTrackerSearch" placeholder="Search title, company, alert" />' +
+      '<p class="cc-tracker-more-note">Opened only = opened on LinkedIn before any alert/ATS. Most jobs become Alert or ATS after scoring.</p>' +
       "</div>" +
-      '<div class="cc-tracker-actions">' +
-      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerExportCsv">Export visible list</button>' +
-      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerCopyTsv">Copy visible list</button>' +
-      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerExportSelected">Export selected</button>' +
-      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerCopySelected">Copy selected</button>' +
-      '<button type="button" class="cc-btn cc-btn-secondary" id="ccTrackerDeleteSelected">Delete selected</button>' +
-      "</div>" +
-      '<p class="cc-tracker-hint">Visible list = Status / Viewed / Date (or custom From–To) / Favorites / search. Selected = checked rows.</p>' +
+      '<p class="cc-tracker-hint">Company names open LinkedIn. Checked rows = selected for export/delete.</p>' +
       "</div>";
 
     if (allJobs.length === 0) {
@@ -721,9 +1092,7 @@
 
     if (jobs.length === 0) {
       tracker.innerHTML =
-        toolbar +
-        '<div class="cc-placeholder">No jobs match this filter.</div>' +
-        settingsBlock;
+        toolbar + emptyFilterMessageHtml(allJobs) + settingsBlock;
       bindTrackerEvents(tracker);
       return;
     }
@@ -739,21 +1108,18 @@
         const appUpdated = job.applicantUpdatedAt
           ? new Date(job.applicantUpdatedAt).toLocaleDateString()
           : "";
-        const url = job.url || "#";
+        const url = trackerOpenUrl(job);
         const expanded = trackerExpandedId === job.id;
         let detail = "";
         if (expanded) {
           detail =
             '<tr class="cc-tracker-detail-row"><td colspan="10">' +
             '<div class="cc-tracker-detail">' +
+            outreachDetailHtml(job) +
             "<h4>ATS details</h4>" +
             atsDetailHtml(job) +
             "<h4>Company</h4><p>" +
-            escapeHtml(
-              (job.companyDetails && job.companyDetails.name) ||
-                job.company ||
-                "—"
-            ) +
+            companyLinkHtml(job) +
             "</p>" +
             '<p class="cc-muted">Applicants: ' +
             escapeHtml(applicants) +
@@ -775,9 +1141,11 @@
           escapeHtml(job.title || "Unknown") +
           "</strong> " +
           sourceBadge(job.source) +
+          " " +
+          employerKindBadge(job) +
           "</td>" +
           "<td>" +
-          escapeHtml(job.company || "—") +
+          companyLinkHtml(job) +
           "</td>" +
           "<td>" +
           escapeHtml(job.location || "—") +
@@ -855,6 +1223,20 @@
     bindTrackerEvents(tracker);
   }
 
+  function setDashValue(id, text, tone) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove(
+      "is-on",
+      "is-off",
+      "is-warn",
+      "is-neutral",
+      "is-accent"
+    );
+    if (tone) el.classList.add("is-" + tone);
+  }
+
   async function refreshDashboard() {
     try {
       const data = await chrome.storage.local.get([
@@ -869,6 +1251,8 @@
         "notification_settings",
         "ats_analysis_cache",
         "atsCheckerEnabled",
+        "feature_flags",
+        "feed_job_settings_v1",
       ]);
 
       const searches = data.saved_job_searches || [];
@@ -889,21 +1273,51 @@
       const notifOn = !!(
         data.notification_settings && data.notification_settings.enabled
       );
-
-      const setText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = text;
-      };
-
-      setText("dashSearchSlots", `${searches.length}/${max}`);
-      setText(
-        "dashAiProvider",
-        keyReady ? String(provider) : "Not configured"
+      const flags = Object.assign(
+        { authorWidget: false, jobBoardWidget: false, feedJobDiscover: false },
+        data.feature_flags || {}
       );
-      setText("dashCasper", data.casper_enabled ? "On" : "Off");
-      setText("dashAts", data.atsCheckerEnabled === false ? "Off" : "On");
-      setText("dashCache", String(cacheCount));
-      setText("dashAlerts", notifOn ? "On" : "Off");
+      let feedKw = 0;
+      if (data.feed_job_settings_v1) {
+        const raw = data.feed_job_settings_v1.keywords;
+        if (Array.isArray(raw)) {
+          feedKw = raw.filter(Boolean).length;
+        } else if (typeof raw === "string" && raw.trim()) {
+          feedKw = raw.split(/[,;\n]+/).filter(function (s) {
+            return s.trim();
+          }).length;
+        }
+      }
+      const feedOn = flags.feedJobDiscover === true;
+      const railOn =
+        flags.jobBoardWidget === true || flags.authorWidget === true;
+      const atsOn = data.atsCheckerEnabled !== false;
+      const casperOn = !!data.casper_enabled;
+
+      setDashValue(
+        "dashSearchSlots",
+        searches.length + "/" + max,
+        searches.length >= max ? "warn" : "accent"
+      );
+      setDashValue(
+        "dashAiProvider",
+        keyReady ? String(provider) : "Not configured",
+        keyReady ? "on" : "warn"
+      );
+      setDashValue("dashCasper", casperOn ? "On" : "Off", casperOn ? "on" : "off");
+      setDashValue("dashAts", atsOn ? "On" : "Off", atsOn ? "on" : "off");
+      setDashValue("dashCache", String(cacheCount), "neutral");
+      setDashValue("dashAlerts", notifOn ? "On" : "Off", notifOn ? "on" : "off");
+      setDashValue(
+        "dashFeedDiscover",
+        feedOn ? (feedKw ? "On · " + feedKw + " keywords" : "On · add keywords") : "Off",
+        feedOn ? "on" : "off"
+      );
+      setDashValue(
+        "dashFeedRail",
+        railOn ? "On" : "Off",
+        railOn ? "on" : "off"
+      );
 
       try {
         if (typeof JobTrackerStore !== "undefined") {
@@ -913,26 +1327,27 @@
           const tracked = stats
             ? stats.total
             : (await JobTrackerStore.listJobs({ status: "all" })).length;
-          setText("dashTrackedJobs", String(tracked || 0));
-          setText(
-            "dashApplied",
-            String(stats ? stats.applied : 0)
-          );
-          setText(
+          setDashValue("dashTrackedJobs", String(tracked || 0), "accent");
+          setDashValue("dashApplied", String(stats ? stats.applied : 0), "accent");
+          setDashValue(
             "dashInterview",
-            String(stats ? stats.interview : 0)
+            String(stats ? stats.interview : 0),
+            "accent"
           );
-          setText(
+          setDashValue(
             "dashRejected",
-            String(stats ? stats.rejected : 0)
+            String(stats ? stats.rejected : 0),
+            "neutral"
           );
-          setText(
+          setDashValue(
             "dashConfirmed",
-            String(stats ? stats.confirmed : 0)
+            String(stats ? stats.confirmed : 0),
+            "on"
           );
-          setText(
+          setDashValue(
             "dashFavorites",
-            String(stats ? stats.favorites : 0)
+            String(stats ? stats.favorites : 0),
+            "accent"
           );
         }
       } catch (e) {}
@@ -998,13 +1413,44 @@
       "feature_flags",
       SETTINGS_KEY,
       DEBUG_KEY,
+      "feed_job_settings_v1",
+      "casper_feed_job_candidates",
     ]);
     const flags = Object.assign(
-      { authorWidget: false, jobBoardWidget: false },
+      { authorWidget: false, jobBoardWidget: false, feedJobDiscover: false },
       data.feature_flags || {}
     );
     const settings = Object.assign({}, defaults, data[SETTINGS_KEY] || {});
     if (!Array.isArray(settings.authors)) settings.authors = [];
+
+    let feedSettings =
+      typeof FeedJobDiscover !== "undefined" && FeedJobDiscover.DEFAULT_SETTINGS
+        ? Object.assign({}, FeedJobDiscover.DEFAULT_SETTINGS)
+        : {
+            keywords: [],
+            matchMode: "any",
+            autoAddJobLinks: true,
+            includeFreelance: true,
+            maxPerSession: 15,
+            maxPerHour: 40,
+          };
+    if (data.feed_job_settings_v1 && typeof data.feed_job_settings_v1 === "object") {
+      feedSettings = Object.assign({}, feedSettings, data.feed_job_settings_v1);
+    }
+    if (
+      typeof FeedJobDiscover !== "undefined" &&
+      FeedJobDiscover.parseKeywords
+    ) {
+      feedSettings.keywords = FeedJobDiscover.parseKeywords(
+        feedSettings.keywords
+      );
+    } else if (!Array.isArray(feedSettings.keywords)) {
+      feedSettings.keywords = [];
+    }
+    const feedCandCount = data.casper_feed_job_candidates
+      ? Object.keys(data.casper_feed_job_candidates).length
+      : 0;
+    const kwText = (feedSettings.keywords || []).join(", ");
 
     let authorRows = settings.authors
       .map(function (a, idx) {
@@ -1077,6 +1523,48 @@
       " /> Fill empty slots from favorites &amp; recently viewed</label>" +
       '<p class="cc-muted">Job check alarms stay under Searches &amp; Alerts. <a href="#searches" id="fwGotoSearches">Open notification settings</a></p>' +
       '<button type="button" class="cc-btn cc-btn-secondary" id="fwClearAlerts">Clear recent alert items</button>' +
+      "</div>" +
+      '<div class="cc-card cc-fw-block">' +
+      "<h3>Timeline job discovery</h3>" +
+      '<p class="cc-muted">Separate from Searches &amp; Alerts. While you scroll LinkedIn <strong>/feed</strong>, matching hiring posts soft-add to <strong>Job Tracker</strong> (source: Feed). No Accept step by default — review later on the board. Real <code>/jobs/view/</code> links and organic hiring posts both go to Tracker. Optional keywords narrow matches; empty = hiring/freelance language.</p>' +
+      '<label class="cc-check-label"><input type="checkbox" id="fwFeedDiscoverToggle" ' +
+      (flags.feedJobDiscover ? "checked" : "") +
+      " /> Enable timeline job discovery</label>" +
+      '<label class="cc-fw-label">Keywords <span class="cc-muted">(optional — empty = any hiring/freelance post)</span>' +
+      '<textarea id="fwFeedKeywords" rows="3" placeholder="frontend, hiring, remote, product manager">' +
+      escapeHtml(kwText) +
+      "</textarea></label>" +
+      '<div class="cc-fw-row">' +
+      '<label>Match <select id="fwFeedMatchMode">' +
+      '<option value="any"' +
+      (feedSettings.matchMode !== "all" ? " selected" : "") +
+      ">Any keyword</option>" +
+      '<option value="all"' +
+      (feedSettings.matchMode === "all" ? " selected" : "") +
+      ">All keywords</option>" +
+      "</select></label>" +
+      '<label>Max / session <input type="number" id="fwFeedMaxSession" min="1" max="80" value="' +
+      escapeHtml(String(feedSettings.maxPerSession || 50)) +
+      '" /></label>' +
+      '<label>Max / hour <input type="number" id="fwFeedMaxHour" min="1" max="150" value="' +
+      escapeHtml(String(feedSettings.maxPerHour || 100)) +
+      '" /></label>' +
+      "</div>" +
+      '<label class="cc-check-label"><input type="checkbox" id="fwFeedAutoJobLinks" ' +
+      (feedSettings.autoAddJobLinks !== false ? "checked" : "") +
+      " /> Auto-add LinkedIn /jobs/view/ links to Job Tracker</label>" +
+      '<label class="cc-check-label"><input type="checkbox" id="fwFeedAutoOrganic" ' +
+      (feedSettings.autoAddOrganic !== false ? "checked" : "") +
+      " /> Auto-add organic hiring posts to Job Tracker (recommended)</label>" +
+      '<label class="cc-check-label"><input type="checkbox" id="fwFeedFreelance" ' +
+      (feedSettings.includeFreelance !== false ? "checked" : "") +
+      " /> Include freelance / contract language</label>" +
+      '<p class="cc-muted">Matches appear in Job Tracker (filter Source = Feed) and in Jobs to review. Pending queue leftovers: ' +
+      feedCandCount +
+      ".</p>" +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="fwFeedSave">Save timeline settings</button> ' +
+      '<button type="button" class="cc-btn cc-btn-secondary" id="fwFeedClearCands">Clear feed candidates</button>' +
+      '<span class="cc-muted" id="fwFeedHint" style="margin-left:8px"></span>' +
       "</div>" +
       '<div class="cc-card cc-fw-block">' +
       "<h3>Favorite authors card</h3>" +
@@ -1188,6 +1676,87 @@
     panel.querySelector("#fwJobCardToggle").addEventListener("change", async function (e) {
       await saveFlags({ jobBoardWidget: !!e.target.checked });
     });
+    const feedToggle = panel.querySelector("#fwFeedDiscoverToggle");
+    if (feedToggle) {
+      feedToggle.addEventListener("change", async function (e) {
+        await saveFlags({ feedJobDiscover: !!e.target.checked });
+      });
+    }
+    async function saveFeedSettingsFromForm() {
+      const hint = panel.querySelector("#fwFeedHint");
+      const payload = {
+        keywords: panel.querySelector("#fwFeedKeywords")
+          ? panel.querySelector("#fwFeedKeywords").value
+          : "",
+        matchMode: panel.querySelector("#fwFeedMatchMode")
+          ? panel.querySelector("#fwFeedMatchMode").value
+          : "any",
+        autoAddJobLinks: !!(
+          panel.querySelector("#fwFeedAutoJobLinks") &&
+          panel.querySelector("#fwFeedAutoJobLinks").checked
+        ),
+        autoAddOrganic: !!(
+          panel.querySelector("#fwFeedAutoOrganic") &&
+          panel.querySelector("#fwFeedAutoOrganic").checked
+        ),
+        includeFreelance: !!(
+          panel.querySelector("#fwFeedFreelance") &&
+          panel.querySelector("#fwFeedFreelance").checked
+        ),
+        maxPerSession: Number(
+          (panel.querySelector("#fwFeedMaxSession") &&
+            panel.querySelector("#fwFeedMaxSession").value) ||
+            15
+        ),
+        maxPerHour: Number(
+          (panel.querySelector("#fwFeedMaxHour") &&
+            panel.querySelector("#fwFeedMaxHour").value) ||
+            40
+        ),
+      };
+      if (typeof FeedJobDiscover !== "undefined" && FeedJobDiscover.setSettings) {
+        await FeedJobDiscover.setSettings(payload);
+      } else {
+        await chrome.storage.local.set({
+          feed_job_settings_v1: Object.assign({}, payload, {
+            keywords: String(payload.keywords || "")
+              .split(/[\n,]+/)
+              .map(function (k) {
+                return k.trim().toLowerCase();
+              })
+              .filter(Boolean),
+          }),
+        });
+      }
+      if (hint) {
+        hint.textContent = "Saved";
+        setTimeout(function () {
+          hint.textContent = "";
+        }, 1500);
+      }
+    }
+    const feedSave = panel.querySelector("#fwFeedSave");
+    if (feedSave) {
+      feedSave.addEventListener("click", function () {
+        saveFeedSettingsFromForm().catch(function (e) {
+          console.warn("Save feed settings failed", e);
+        });
+      });
+    }
+    const feedClear = panel.querySelector("#fwFeedClearCands");
+    if (feedClear) {
+      feedClear.addEventListener("click", async function () {
+        if (
+          typeof FeedJobDiscover !== "undefined" &&
+          FeedJobDiscover.clearCandidates
+        ) {
+          await FeedJobDiscover.clearCandidates();
+        } else {
+          await chrome.storage.local.set({ casper_feed_job_candidates: {} });
+        }
+        renderFeedWidgetsSettings().catch(function () {});
+      });
+    }
     panel.querySelector("#fwAuthorToggle").addEventListener("change", async function (e) {
       await saveFlags({ authorWidget: !!e.target.checked });
       try {
@@ -1382,7 +1951,16 @@
     nav.className = "cc-options-nav";
     nav.setAttribute("aria-label", "Settings");
     nav.innerHTML =
-      '<div class="cc-brand"><h1>CareerCraft AI</h1><p>Casper · Jobs &amp; Management</p></div>' +
+      '<div class="cc-brand">' +
+      '<span class="cc-brand-icon" aria-hidden="true" title="Casper">' +
+      '<svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M16 4 C10 4 6 8 6 14 V24 L9 22 L12 24 L16 22 L20 24 L23 22 L26 24 V14 C26 8 22 4 16 4 Z" fill="#ffffff"/>' +
+      '<circle cx="13" cy="13" r="2" fill="#0b1f33"/>' +
+      '<circle cx="19" cy="13" r="2" fill="#0b1f33"/>' +
+      '<path d="M12 17 Q16 20 20 17" stroke="#0b1f33" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+      "</svg></span>" +
+      '<div class="cc-brand-text"><h1>CareerCraft AI</h1><p>Casper · Jobs &amp; Management</p></div>' +
+      "</div>" +
       PANELS.map(function (p) {
         return (
           '<button type="button" class="cc-nav-btn" data-panel="' +
@@ -1398,7 +1976,7 @@
     main.innerHTML =
       '<header class="cc-options-header">' +
       '<h2 id="ccHeaderTitle">Dashboard</h2>' +
-      '<p id="ccHeaderBlurb">Quick status across CareerCraft tools.</p>' +
+      '<p id="ccHeaderBlurb">Your command center for searches, tracking, feed jobs, and AI tools.</p>' +
       "</header>" +
       '<div class="cc-options-content" id="ccOptionsContent"></div>';
 
@@ -1408,30 +1986,93 @@
     dash.className = "cc-panel active";
     dash.dataset.panel = "dashboard";
     dash.innerHTML =
-      '<div class="cc-dashboard-grid">' +
-      '<div class="cc-card"><div class="cc-metric" id="dashSearchSlots">—</div><div class="cc-metric-label">Search slots</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashAiProvider">—</div><div class="cc-metric-label">Active AI</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashAts">—</div><div class="cc-metric-label">ATS checker</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashCasper">—</div><div class="cc-metric-label">Casper</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashAlerts">—</div><div class="cc-metric-label">Job alerts</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashCache">—</div><div class="cc-metric-label">Cached ATS jobs</div></div>' +
-      '<div class="cc-card"><div class="cc-metric" id="dashTrackedJobs">—</div><div class="cc-metric-label">Tracked jobs</div></div>' +
+      '<section class="cc-dash-hero">' +
+      '<p class="cc-dash-hero-kicker">Career command center</p>' +
+      "<h3>See what&rsquo;s running — jump to what needs attention</h3>" +
+      '<p class="cc-muted">Status cards open the matching settings. Pipeline cards open Job Tracker filters.</p>' +
+      "</section>" +
+      '<h3 class="cc-dashboard-heading">Features &amp; status</h3>' +
+      '<p class="cc-muted cc-dashboard-blurb">Feature name first. Status underneath. Click any card to configure it.</p>' +
+      '<div class="cc-dashboard-grid cc-dashboard-features">' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="searches">' +
+      '<div class="cc-dash-tile-title">Search slots</div>' +
+      '<div class="cc-dash-value" id="dashSearchSlots">—</div>' +
+      '<div class="cc-dash-tile-hint">Saved LinkedIn job searches</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="ai-keys">' +
+      '<div class="cc-dash-tile-title">Active AI</div>' +
+      '<div class="cc-dash-value" id="dashAiProvider">—</div>' +
+      '<div class="cc-dash-tile-hint">Provider for scoring &amp; Casper</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="tools">' +
+      '<div class="cc-dash-tile-title">ATS checker</div>' +
+      '<div class="cc-dash-value" id="dashAts">—</div>' +
+      '<div class="cc-dash-tile-hint">Match score on job pages</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="casper">' +
+      '<div class="cc-dash-tile-title">Casper</div>' +
+      '<div class="cc-dash-value" id="dashCasper">—</div>' +
+      '<div class="cc-dash-tile-hint">In-page LinkedIn AI assistant</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="searches">' +
+      '<div class="cc-dash-tile-title">Job alerts</div>' +
+      '<div class="cc-dash-value" id="dashAlerts">—</div>' +
+      '<div class="cc-dash-tile-hint">Notifications for saved searches</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="feed-widgets">' +
+      '<div class="cc-dash-tile-title">Feed job discover</div>' +
+      '<div class="cc-dash-value" id="dashFeedDiscover">—</div>' +
+      '<div class="cc-dash-tile-hint">Hiring posts → Job Tracker</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="feed-widgets">' +
+      '<div class="cc-dash-tile-title">Feed widgets</div>' +
+      '<div class="cc-dash-value" id="dashFeedRail">—</div>' +
+      '<div class="cc-dash-tile-hint">Jobs to review rail on LinkedIn</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="job-tracker">' +
+      '<div class="cc-dash-tile-title">Tracked jobs</div>' +
+      '<div class="cc-dash-value" id="dashTrackedJobs">—</div>' +
+      '<div class="cc-dash-tile-hint">All sources in Job Tracker</div></button>' +
+      '<button type="button" class="cc-card cc-dash-tile" data-goto="tools">' +
+      '<div class="cc-dash-tile-title">Cached ATS jobs</div>' +
+      '<div class="cc-dash-value" id="dashCache">—</div>' +
+      '<div class="cc-dash-tile-hint">Local score cache size</div></button>' +
       "</div>" +
       '<h3 class="cc-dashboard-heading">Application pipeline</h3>' +
       '<p class="cc-muted cc-dashboard-blurb">Counts from Job Tracker statuses. Click a card to open that filter. Update status on each row to keep these accurate.</p>' +
       '<div class="cc-dashboard-grid cc-dashboard-pipeline">' +
-      '<button type="button" class="cc-card cc-card-stat" data-goto="job-tracker" data-status-filter="applied"><div class="cc-metric" id="dashApplied">—</div><div class="cc-metric-label">Applied</div></button>' +
-      '<button type="button" class="cc-card cc-card-stat" data-goto="job-tracker" data-status-filter="interview"><div class="cc-metric" id="dashInterview">—</div><div class="cc-metric-label">Got interview call</div></button>' +
-      '<button type="button" class="cc-card cc-card-stat" data-goto="job-tracker" data-status-filter="confirmed"><div class="cc-metric" id="dashConfirmed">—</div><div class="cc-metric-label">Confirmed</div></button>' +
-      '<button type="button" class="cc-card cc-card-stat" data-goto="job-tracker" data-status-filter="rejected"><div class="cc-metric" id="dashRejected">—</div><div class="cc-metric-label">Rejected</div></button>' +
-      '<button type="button" class="cc-card cc-card-stat" data-goto="job-tracker" data-starred-filter="1"><div class="cc-metric" id="dashFavorites">—</div><div class="cc-metric-label">Favorites</div></button>' +
+      '<button type="button" class="cc-card cc-card-stat cc-dash-tile" data-goto="job-tracker" data-status-filter="applied">' +
+      '<div class="cc-dash-tile-title">Applied</div>' +
+      '<div class="cc-dash-value" id="dashApplied">—</div></button>' +
+      '<button type="button" class="cc-card cc-card-stat cc-dash-tile" data-goto="job-tracker" data-status-filter="interview">' +
+      '<div class="cc-dash-tile-title">Got interview call</div>' +
+      '<div class="cc-dash-value" id="dashInterview">—</div></button>' +
+      '<button type="button" class="cc-card cc-card-stat cc-dash-tile" data-goto="job-tracker" data-status-filter="confirmed">' +
+      '<div class="cc-dash-tile-title">Confirmed</div>' +
+      '<div class="cc-dash-value" id="dashConfirmed">—</div></button>' +
+      '<button type="button" class="cc-card cc-card-stat cc-dash-tile" data-goto="job-tracker" data-status-filter="rejected">' +
+      '<div class="cc-dash-tile-title">Rejected</div>' +
+      '<div class="cc-dash-value" id="dashRejected">—</div></button>' +
+      '<button type="button" class="cc-card cc-card-stat cc-dash-tile" data-goto="job-tracker" data-starred-filter="1">' +
+      '<div class="cc-dash-tile-title">Favorites</div>' +
+      '<div class="cc-dash-value" id="dashFavorites">—</div></button>' +
       "</div>" +
-      '<p class="cc-muted">Use the left menu for full settings. All existing controls keep the same IDs — nothing was removed.</p>' +
+      '<h3 class="cc-dashboard-heading">How to use CareerCraft</h3>' +
+      '<div class="cc-dash-howto">' +
+      '<ol class="cc-dash-howto-list">' +
+      "<li><strong>Connect AI</strong> — Add an API key under AI API Keys so ATS scoring and Casper can run.</li>" +
+      "<li><strong>Save searches</strong> — In Searches &amp; Alerts, save LinkedIn job URLs and turn on notifications.</li>" +
+      "<li><strong>Track applications</strong> — Open jobs on LinkedIn; they land in Job Tracker. Set status as you apply.</li>" +
+      "<li><strong>Catch feed hiring posts</strong> — Enable Feed job discover, add keywords, then browse LinkedIn Feed. Use Send to Job Tracker from ⋯ when needed.</li>" +
+      "<li><strong>Review on LinkedIn</strong> — Turn on Feed widgets to show Jobs to review in the right rail while you scroll.</li>" +
+      "</ol>" +
+      '<div class="cc-dash-howto-tips">' +
+      "<p><strong>Tip:</strong> Filter Job Tracker → Adv Filter → Source → <em>Feed</em> to see timeline hiring posts only.</p>" +
+      "<p><strong>Tip:</strong> After reloading the extension, refresh any open LinkedIn tabs so content scripts pick up the new version.</p>" +
+      "</div></div>" +
+      '<h3 class="cc-dashboard-heading">Quick options</h3>' +
+      '<p class="cc-muted cc-dashboard-blurb">Jump straight into settings. Full controls stay in the left menu — nothing was removed.</p>' +
       '<div class="cc-dashboard-actions">' +
       '<button type="button" class="cc-btn" data-goto="ai-keys">AI API Keys</button>' +
       '<button type="button" class="cc-btn cc-btn-secondary" data-goto="searches">Searches &amp; Alerts</button>' +
-      '<button type="button" class="cc-btn cc-btn-secondary" data-goto="casper">Casper</button>' +
       '<button type="button" class="cc-btn cc-btn-secondary" data-goto="job-tracker">Job Tracker</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" data-goto="feed-widgets">Feed Widgets</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" data-goto="casper">Casper</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" data-goto="tools">Tools &amp; ATS</button>' +
+      '<button type="button" class="cc-btn cc-btn-secondary" data-goto="account">Account</button>' +
       "</div>";
     contentHost.appendChild(dash);
 
@@ -1504,7 +2145,8 @@
     }
     if (focusJobId && hashPanel === "job-tracker") {
       trackerExpandedId = focusJobId;
-      trackerFilterQ = focusJobId;
+      // Keep search empty — filtering by opaque feed:id confused users ("search broken")
+      trackerFilterQ = "";
       trackerFilterStatus = "all";
       trackerPage = 1;
     }

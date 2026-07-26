@@ -75,8 +75,11 @@
       '[role="listitem"][componentkey*="FeedType_MAIN_FEED"]',
       '[role="listitem"][componentkey*="FeedType"]',
       '[data-id^="urn:li:activity"]',
+      '[data-id*="urn:li:activity"]',
+      '[data-urn^="urn:li:activity"]',
       "div.feed-shared-update-v2",
       "article.feed-shared-update-v2",
+      'div[class*="occludable-update"]',
     ],
     composeEditors: [
       "#artdeco-modal-outlet .ql-editor",

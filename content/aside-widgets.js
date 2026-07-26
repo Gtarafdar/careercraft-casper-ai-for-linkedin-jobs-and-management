@@ -189,6 +189,49 @@
     await pruneAndSaveJobDismissed(map);
   }
 
+  function safeOpenUrl(jobOrUrl, maybeUrl) {
+    if (typeof JobTrackerStore !== "undefined" && JobTrackerStore.resolveJobOpenUrl) {
+      if (jobOrUrl && typeof jobOrUrl === "object") {
+        const resolved = JobTrackerStore.resolveJobOpenUrl(jobOrUrl) || "";
+        if (resolved) return resolved;
+        return urlFromFeedJobId(jobOrUrl.id) || "";
+      }
+      const resolved = JobTrackerStore.resolveJobOpenUrl({
+        id: jobOrUrl,
+        url: maybeUrl,
+        feedPostUrl: maybeUrl,
+      });
+      if (resolved) return resolved;
+      return urlFromFeedJobId(jobOrUrl) || "";
+    }
+    const u = String(
+      (jobOrUrl && jobOrUrl.feedPostUrl) ||
+        (jobOrUrl && jobOrUrl.url) ||
+        maybeUrl ||
+        ""
+    ).trim();
+    if (u && !/\/jobs\/view\/feed/i.test(u) && u !== "#") return u;
+    return urlFromFeedJobId(jobOrUrl && jobOrUrl.id != null ? jobOrUrl.id : jobOrUrl) || "";
+  }
+
+  function urlFromFeedJobId(id) {
+    const s = String(id || "");
+    let m = s.match(/^feed:(share|activity|ugcPost)-(\d+)$/i);
+    if (m) {
+      return (
+        "https://www.linkedin.com/feed/update/" +
+        encodeURIComponent("urn:li:" + m[1].toLowerCase() + ":" + m[2])
+      );
+    }
+    m = s.match(/^feed:(urn:li:(?:share|activity|ugcPost):\d+)$/i);
+    if (m) {
+      return (
+        "https://www.linkedin.com/feed/update/" + encodeURIComponent(m[1])
+      );
+    }
+    return "";
+  }
+
   function normalizeJobId(raw, url) {
     let id = String(raw || "").trim();
     if (!id && url) {
@@ -250,30 +293,70 @@
     if (!item) return item;
     const row = findTrackerRow(trackerMap, item);
     if (!row) {
-      return Object.assign({}, item, {
+      const base = Object.assign({}, item, {
         atsScore: readAtsScore(item),
         applicantCount: readApplicantCount(item),
       });
+      return attachEmployerKind(base);
     }
-    return Object.assign({}, item, {
-      id: normalizeJobId(item.id || row.id, item.url || row.url) || item.id,
-      title: item.title || row.title || "Job",
-      company: item.company || row.company || "",
-      location: item.location || row.location || "",
-      url: item.url || row.url || "",
-      atsScore:
-        readAtsScore(item) != null ? readAtsScore(item) : readAtsScore(row),
-      applicantCount:
-        readApplicantCount(item) != null
-          ? readApplicantCount(item)
-          : readApplicantCount(row),
-      status: item.status || row.status || "",
-      starred:
-        !!item.starred ||
-        !!row.starred ||
-        !!(row.starRating && row.starRating > 0),
-      searchName: item.searchName || row.searchName || "",
-    });
+    return attachEmployerKind(
+      Object.assign({}, item, {
+        id: normalizeJobId(item.id || row.id, item.url || row.url) || item.id,
+        title: item.title || row.title || "Job",
+        company: item.company || row.company || "",
+        location: item.location || row.location || "",
+        url: item.url || row.url || "",
+        atsScore:
+          readAtsScore(item) != null ? readAtsScore(item) : readAtsScore(row),
+        applicantCount:
+          readApplicantCount(item) != null
+            ? readApplicantCount(item)
+            : readApplicantCount(row),
+        status: item.status || row.status || "",
+        starred:
+          !!item.starred ||
+          !!row.starred ||
+          !!(row.starRating && row.starRating > 0),
+        searchName: item.searchName || row.searchName || "",
+        employerKind: row.employerKind || item.employerKind,
+        employerKindOverride: row.employerKindOverride,
+        employerKindConfidence: row.employerKindConfidence,
+        atsSummary: row.atsSummary || item.atsSummary,
+        companyDetails: row.companyDetails || item.companyDetails,
+      })
+    );
+  }
+
+  function attachEmployerKind(job) {
+    if (!job) return job;
+    try {
+      if (
+        typeof JobTrackerStore !== "undefined" &&
+        JobTrackerStore.applyEmployerKindFields
+      ) {
+        const copy = Object.assign({}, job);
+        JobTrackerStore.applyEmployerKindFields(copy);
+        return copy;
+      }
+      if (
+        typeof JobTrackerStore !== "undefined" &&
+        JobTrackerStore.classifyEmployerKind
+      ) {
+        return Object.assign({}, job, JobTrackerStore.classifyEmployerKind(job));
+      }
+    } catch (e) {}
+    return job;
+  }
+
+  function employerKindChipHtml(it) {
+    const kind = it && it.employerKind;
+    if (kind === "agency") {
+      return '<span class="cc-li-employer-chip cc-li-employer-chip--agency">Agency</span>';
+    }
+    if (kind === "job_board") {
+      return '<span class="cc-li-employer-chip cc-li-employer-chip--board">Board</span>';
+    }
+    return "";
   }
 
   async function loadAlertItems(settings) {
@@ -323,7 +406,8 @@
               title: j.title || "Job",
               company: j.company || "",
               location: j.location || "",
-              url: j.url || "https://www.linkedin.com/jobs/view/" + j.id,
+              url: safeOpenUrl(j),
+              feedPostUrl: j.feedPostUrl || "",
               searchName: j.searchName || "",
               at: j.updatedAt || j.viewedAt || Date.now(),
               kind: "alert",
@@ -331,6 +415,10 @@
               applicantCount: readApplicantCount(j),
               status: j.status || "",
               starred: !!j.starred || !!(j.starRating && j.starRating > 0),
+              employerKind: j.employerKind,
+              employerKindOverride: j.employerKindOverride,
+              atsSummary: j.atsSummary,
+              companyDetails: j.companyDetails,
             });
           });
       }
@@ -366,7 +454,8 @@
             title: j.title || "Job",
             company: j.company || "",
             location: j.location || "",
-            url: j.url || "https://www.linkedin.com/jobs/view/" + j.id,
+            url: safeOpenUrl(j),
+            feedPostUrl: j.feedPostUrl || "",
             searchName: j.searchName || "",
             at: j.updatedAt || j.viewedAt || Date.now(),
             kind: "ats",
@@ -374,6 +463,10 @@
             applicantCount: readApplicantCount(j),
             status: j.status || "",
             starred: !!j.starred || !!(j.starRating && j.starRating > 0),
+            employerKind: j.employerKind,
+            employerKindOverride: j.employerKindOverride,
+            atsSummary: j.atsSummary,
+            companyDetails: j.companyDetails,
           });
         });
     } catch (e) {
@@ -407,7 +500,8 @@
             title: j.title || "Job",
             company: j.company || "",
             location: j.location || "",
-            url: j.url || "https://www.linkedin.com/jobs/view/" + j.id,
+            url: safeOpenUrl(j),
+            feedPostUrl: j.feedPostUrl || "",
             at: j.updatedAt || j.viewedAt || 0,
             kind: kind,
             atsScore: readAtsScore(j),
@@ -415,6 +509,10 @@
             status: j.status || "",
             starred: !!j.starred || !!(j.starRating && j.starRating > 0),
             searchName: j.searchName || "",
+            employerKind: j.employerKind,
+            employerKindOverride: j.employerKindOverride,
+            atsSummary: j.atsSummary,
+            companyDetails: j.companyDetails,
           });
         }
 
@@ -450,6 +548,129 @@
       } catch (e) {
         dbg("tracker fill error", e);
       }
+    }
+
+    // Phase 6: organic feed candidates (review-first) + tracker rows from feed
+    try {
+      if (
+        typeof FeedJobDiscover !== "undefined" &&
+        FeedJobDiscover.listCandidates
+      ) {
+        const enabled =
+          typeof FeatureFlags !== "undefined"
+            ? (await FeatureFlags.load()).feedJobDiscover === true
+            : false;
+        if (enabled) {
+          const feedCands = await FeedJobDiscover.listCandidates(8);
+          feedCands.forEach(function (c) {
+            if (!c || !c.id) return;
+            const open = safeOpenUrl(c);
+            if (!open || open === "#") return;
+            const key = String(c.id);
+            if (
+              alerts.some(function (x) {
+                return String(x.id || x.url) === key;
+              })
+            )
+              return;
+            alerts.unshift({
+              id: c.id,
+              title: c.title || "Hiring post",
+              company: c.company || c.feedAuthor || "",
+              location: "",
+              url: open,
+              at: c.at || Date.now(),
+              kind: "feed_pending",
+              feedPending: true,
+              feedPostUrl: open,
+              feedAuthor: c.feedAuthor || "",
+              feedSnippet: c.feedSnippet || "",
+              status: "new",
+            });
+          });
+          Object.keys(trackerMap).forEach(function (k) {
+            const j = trackerMap[k];
+            if (!j || !j.id || j.source !== "feed") return;
+            if (!isReviewableJob(j)) return;
+            // Skip rows polluted by open ⋯ menu text
+            if (
+              /copy link to post|embed this post|send to job tracker|not interested|report post/i.test(
+                String(j.title || "")
+              )
+            ) {
+              return;
+            }
+            const open = safeOpenUrl(j);
+            // Orphan feed rows without a real post URL only show broken "Get link"
+            if (!open || open === "#" || !/^https?:/i.test(open)) {
+              return;
+            }
+            const key = String(j.id);
+            if (
+              alerts.some(function (x) {
+                return String(x.id || "") === key;
+              })
+            )
+              return;
+            // Dedupe near-identical feed titles (hash-id duplicates)
+            const dedupeKey =
+              String(j.title || "")
+                .toLowerCase()
+                .replace(/\s+/g, " ")
+                .slice(0, 48) +
+              "|" +
+              String(j.feedAuthor || j.company || "")
+                .toLowerCase()
+                .slice(0, 24);
+            const existingIdx = alerts.findIndex(function (x) {
+              if (!x || (x.kind !== "feed" && x.kind !== "feed_pending")) {
+                return false;
+              }
+              const otherKey =
+                String(x.title || "")
+                  .toLowerCase()
+                  .replace(/\s+/g, " ")
+                  .slice(0, 48) +
+                "|" +
+                String(x.feedAuthor || x.company || "")
+                  .toLowerCase()
+                  .slice(0, 24);
+              return otherKey === dedupeKey;
+            });
+            if (existingIdx >= 0) {
+              const existing = alerts[existingIdx];
+              const existingHasUrl = !!(existing.url || existing.feedPostUrl);
+              const newHasUrl = !!(open && open !== "#");
+              // Prefer the row that has a real post URL
+              if (!existingHasUrl && newHasUrl) {
+                alerts.splice(existingIdx, 1);
+              } else {
+                return;
+              }
+            }
+            alerts.push({
+              id: j.id,
+              title: j.title || "Job from feed",
+              company: j.company || j.feedAuthor || "",
+              location: j.location || "",
+              url: open && open !== "#" ? open : "",
+              at: j.feedDetectedAt || j.updatedAt || j.viewedAt || Date.now(),
+              kind: "feed",
+              atsScore: readAtsScore(j),
+              applicantCount: readApplicantCount(j),
+              status: j.status || "",
+              starred: !!j.starred || !!(j.starRating && j.starRating > 0),
+              employerKind: j.employerKind,
+              feedPostUrl: open && open !== "#" ? open : j.feedPostUrl || "",
+              feedMatchKeywords: j.feedMatchKeywords || [],
+              feedSnippet: j.feedSnippet || "",
+              feedAuthor: j.feedAuthor || "",
+            });
+          });
+        }
+      }
+    } catch (e) {
+      dbg("feed candidates error", e);
     }
 
     const dismissed = await loadJobDismissedMap();
@@ -491,17 +712,28 @@
       visible.push(item);
     });
 
-    // Prefer roles that already have ATS / applicants so meta isn't buried past the limit
+    // Feed pending first (Accept), then ATS/applicants, then the rest.
+    // Sticky shortlist must not bury new timeline candidates.
     function hasJobMeta(it) {
       return it.atsScore != null || it.applicantCount != null;
     }
+    function isFeedPendingItem(it) {
+      return !!(it && (it.kind === "feed_pending" || it.feedPending));
+    }
+    function isFeedItem(it) {
+      return !!(it && (isFeedPendingItem(it) || it.kind === "feed"));
+    }
+    const feedPending = [];
+    const feedRows = [];
     const preferred = [];
     const rest = [];
     visible.forEach(function (it) {
-      if (hasJobMeta(it)) preferred.push(it);
+      if (isFeedPendingItem(it)) feedPending.push(it);
+      else if (isFeedItem(it)) feedRows.push(it);
+      else if (hasJobMeta(it)) preferred.push(it);
       else rest.push(it);
     });
-    const ranked = preferred.concat(rest);
+    const ranked = feedPending.concat(feedRows, preferred, rest);
     const byId = {};
     ranked.forEach(function (it) {
       const id = String(
@@ -512,6 +744,25 @@
 
     // Keep the shortlist stable across remounts so jobs don't appear to reshuffle
     let items = [];
+    // Always surface pending feed reviews first (new timeline flow)
+    feedPending.forEach(function (it) {
+      if (items.length >= limit) return;
+      const id = String(
+        normalizeJobId(it.id, it.url) || it.id || it.url || ""
+      );
+      if (!id || !byId[id]) return;
+      items.push(byId[id]);
+      delete byId[id];
+    });
+    feedRows.forEach(function (it) {
+      if (items.length >= limit) return;
+      const id = String(
+        normalizeJobId(it.id, it.url) || it.id || it.url || ""
+      );
+      if (!id || !byId[id]) return;
+      items.push(byId[id]);
+      delete byId[id];
+    });
     if (Array.isArray(stickyJobIds) && stickyJobIds.length) {
       stickyJobIds.forEach(function (id) {
         if (items.length >= limit) return;
@@ -533,6 +784,7 @@
     stickyJobIds = items.map(function (it) {
       return String(normalizeJobId(it.id, it.url) || it.id || it.url || "");
     });
+
 
     return {
       items: items,
@@ -577,6 +829,14 @@
       const a = formatApplicants(it.applicantCount);
       if (a) bits.push(a);
     }
+    if (
+      Array.isArray(it.feedMatchKeywords) &&
+      it.feedMatchKeywords.length
+    ) {
+      bits.push("kw: " + it.feedMatchKeywords.slice(0, 3).join(", "));
+    } else if (it.kind === "feed" || it.kind === "feed_pending") {
+      bits.push("From timeline");
+    }
     const st = statusShort(it.status);
     if (st && st !== "New") bits.push(st);
     if (it.starred) bits.push("★ Saved");
@@ -594,6 +854,7 @@
     if (kind === "favorite") return "Favorites to apply";
     if (kind === "recent") return "Recently viewed";
     if (kind === "ats") return "ATS checked";
+    if (kind === "feed" || kind === "feed_pending") return "From your feed";
     return "From your alerts";
   }
 
@@ -631,38 +892,81 @@
             "</div>";
           lastKind = k;
         }
-        const company = it.company
-          ? escapeHtml(it.company)
-          : it.searchName
-            ? escapeHtml(it.searchName)
+        const companyRaw = it.company || it.feedAuthor || it.searchName || "";
+        const company =
+          companyRaw &&
+          !/wpbakery|product marketing specialist|wordpress plugin growth/i.test(
+            companyRaw
+          )
+            ? escapeHtml(String(companyRaw).replace(/\s+/g, " ").trim().slice(0, 80))
             : "";
+        const kindChip = employerKindChipHtml(it);
         const meta = jobMetaLine(it);
         const jobKey = String(
           normalizeJobId(it.id, it.url) || it.id || it.url || ""
         );
         const trackerHash =
           "job-tracker?job=" + encodeURIComponent(jobKey);
+        const isFeedPending = it.kind === "feed_pending" || !!it.feedPending;
+        const isFeed = isFeedPending || it.kind === "feed";
+        const openUrl = safeOpenUrl(it);
+        const hasPostUrl = !!(openUrl && openUrl !== "#" && /^https?:/i.test(openUrl));
         body +=
           '<div class="cc-li-job-row-wrap" data-job-id="' +
           escapeHtml(jobKey) +
+          '" data-feed-pending="' +
+          (isFeedPending ? "1" : "0") +
+          '" data-feed-open-url="' +
+          escapeHtml(hasPostUrl ? openUrl : "") +
+          '" data-feed-title="' +
+          escapeHtml(String(it.title || "").slice(0, 80)) +
           '">' +
-          '<a class="cc-li-rail-row cc-li-job-row" href="' +
-          escapeHtml(it.url) +
-          '" target="_blank" rel="noopener">' +
+          (hasPostUrl
+            ? '<a class="cc-li-rail-row cc-li-job-row" href="' +
+              escapeHtml(openUrl) +
+              '" target="_blank" rel="noopener">'
+            : '<div class="cc-li-rail-row cc-li-job-row">') +
           '<span class="cc-li-rail-row-title">' +
           escapeHtml(it.title || "Job") +
+          (kindChip ? " " + kindChip : "") +
+          (isFeedPending
+            ? ' <span class="cc-li-employer-chip cc-li-employer-chip--board">Review</span>'
+            : it.kind === "feed"
+              ? ' <span class="cc-li-employer-chip cc-li-employer-chip--board">Feed</span>'
+              : "") +
           "</span>" +
           (company
             ? '<span class="cc-li-rail-row-sub">' + company + "</span>"
             : "") +
-          (meta
-            ? '<span class="cc-li-job-meta">' + escapeHtml(meta) + "</span>"
-            : '<span class="cc-li-job-meta cc-li-job-meta--muted">Open job to load ATS &amp; applicants</span>') +
-          "</a>" +
+          (it.feedSnippet &&
+          isFeed &&
+          !/wpbakery|product marketing specialist|wordpress plugin growth/i.test(
+            String(it.feedSnippet)
+          )
+            ? '<span class="cc-li-job-meta">' +
+              escapeHtml(String(it.feedSnippet).slice(0, 100)) +
+              "</span>"
+            : meta
+              ? '<span class="cc-li-job-meta">' + escapeHtml(meta) + "</span>"
+              : '<span class="cc-li-job-meta cc-li-job-meta--muted">Open job to load ATS &amp; applicants</span>') +
+          (hasPostUrl ? "</a>" : "</div>") +
           '<div class="cc-li-job-links">' +
-          '<a class="cc-li-job-link" href="' +
-          escapeHtml(it.url) +
-          '" target="_blank" rel="noopener">LinkedIn</a>' +
+          (isFeedPending
+            ? '<button type="button" class="cc-li-job-link cc-li-job-link-btn" data-cc-accept-feed="' +
+              escapeHtml(jobKey) +
+              '">Accept</button>'
+            : "") +
+          (isFeed
+            ? hasPostUrl
+              ? '<button type="button" class="cc-li-job-link cc-li-job-link-btn" data-cc-open-feed-post="' +
+                escapeHtml(jobKey) +
+                '">Open post</button>'
+              : '<button type="button" class="cc-li-job-link cc-li-job-link-btn" data-cc-open-feed-post="' +
+                escapeHtml(jobKey) +
+                '" title="Scroll to the post and we will capture its link">Get link</button>'
+            : '<a class="cc-li-job-link" href="' +
+              escapeHtml(hasPostUrl ? openUrl : "#") +
+              '" target="_blank" rel="noopener">LinkedIn</a>') +
           '<a class="cc-li-job-link" href="#" data-cc-open-options="' +
           escapeHtml(trackerHash) +
           '">Tracker</a>' +
@@ -680,7 +984,7 @@
     return (
       '<section class="cc-li-rail-card" data-cc-aside-widget="jobs">' +
       '<header class="cc-li-rail-head">Jobs to review' +
-      '<p class="cc-li-rail-head-sub">Open roles from alerts &amp; tracker (not applied)</p>' +
+      '<p class="cc-li-rail-head-sub">Alerts, tracker &amp; timeline posts (not applied)</p>' +
       "</header>" +
       '<div class="cc-li-rail-body">' +
       body +
@@ -692,7 +996,7 @@
       '<button type="button" class="cc-li-rail-btn" data-cc-job-confirm-yes>Yes, remove</button>' +
       '<button type="button" class="cc-li-rail-btn cc-li-rail-btn--ghost" data-cc-job-confirm-no>Keep</button>' +
       "</div></div>" +
-      '<footer class="cc-li-rail-foot">From CareerCraft · Job alerts &amp; Job Tracker</footer>' +
+      '<footer class="cc-li-rail-foot">From CareerCraft · Alerts, Tracker &amp; Timeline</footer>' +
       "</section>"
     );
   }
@@ -1373,6 +1677,79 @@
       });
     });
 
+    host.querySelectorAll("[data-cc-accept-feed]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.getAttribute("data-cc-accept-feed");
+        if (!id || typeof FeedJobDiscover === "undefined") return;
+        btn.disabled = true;
+        FeedJobDiscover.acceptCandidate(id)
+          .then(function () {
+            stickyJobIds = null;
+            lastRenderFp = "";
+            scheduleRemount();
+          })
+          .catch(function () {
+            btn.disabled = false;
+          });
+      });
+    });
+
+    host.querySelectorAll("[data-cc-open-feed-post]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wrap = btn.closest(".cc-li-job-row-wrap");
+        const jobId = btn.getAttribute("data-cc-open-feed-post") || "";
+        const titleHint =
+          (wrap && wrap.getAttribute("data-feed-title")) || "";
+        let url =
+          (wrap && wrap.getAttribute("data-feed-open-url")) ||
+          urlFromFeedJobId(jobId) ||
+          "";
+        const openResolved = function (finalUrl) {
+          if (finalUrl && /^https?:\/\//i.test(finalUrl)) {
+            window.open(finalUrl, "_blank", "noopener");
+            return;
+          }
+          // Never open Tracker / # here — that caused the options loop.
+          const prevLabel = btn.textContent;
+          btn.textContent = "Open ⋯ → Copy link once";
+          setTimeout(function () {
+            try {
+              btn.textContent = prevLabel || "Open post";
+            } catch (err) {}
+          }, 2800);
+        };
+        if (url && /^https?:\/\//i.test(url)) {
+          openResolved(url);
+          return;
+        }
+        if (
+          typeof FeedJobDiscover === "undefined" ||
+          !FeedJobDiscover.resolvePostUrlForJob
+        ) {
+          openResolved("");
+          return;
+        }
+        btn.disabled = true;
+        const prev = btn.textContent;
+        btn.textContent = "Opening…";
+        FeedJobDiscover.resolvePostUrlForJob(jobId, titleHint)
+          .then(function (resolved) {
+            btn.disabled = false;
+            btn.textContent = prev || "Open post";
+            openResolved(resolved || "");
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = prev || "Open post";
+            openResolved("");
+          });
+      });
+    });
+
     if (confirmEl) {
       const yes = confirmEl.querySelector("[data-cc-job-confirm-yes]");
       const no = confirmEl.querySelector("[data-cc-job-confirm-no]");
@@ -1390,18 +1767,26 @@
             return;
           }
           const jobId = pending.jobId;
+          const wrap = pending.wrap;
+          const isFeedPending =
+            wrap && wrap.getAttribute("data-feed-pending") === "1";
           hideConfirm();
-          dismissJob(jobId)
-            .then(function () {
-              stickyJobIds = null;
-              lastRenderFp = "";
-              scheduleRemount();
-            })
-            .catch(function () {
-              stickyJobIds = null;
-              lastRenderFp = "";
-              scheduleRemount();
-            });
+          const done = function () {
+            stickyJobIds = null;
+            lastRenderFp = "";
+            scheduleRemount();
+          };
+          if (
+            isFeedPending &&
+            typeof FeedJobDiscover !== "undefined" &&
+            FeedJobDiscover.dismissCandidate
+          ) {
+            FeedJobDiscover.dismissCandidate(jobId)
+              .then(done)
+              .catch(done);
+          } else {
+            dismissJob(jobId).then(done).catch(done);
+          }
         });
       }
     }
@@ -1576,10 +1961,19 @@
         return;
       }
 
-      const flags =
-        typeof FeatureFlags !== "undefined"
-          ? await FeatureFlags.load()
-          : { authorWidget: false, jobBoardWidget: false };
+      let flags;
+      try {
+        flags =
+          typeof FeatureFlags !== "undefined"
+            ? await FeatureFlags.load()
+            : { authorWidget: false, jobBoardWidget: false };
+      } catch (e) {
+        // Stale content script after extension Reload — ignore until page refresh
+        if (/extension context invalidated/i.test(String((e && e.message) || e))) {
+          return;
+        }
+        flags = { authorWidget: false, jobBoardWidget: false };
+      }
       if (flags.jobBoardWidget !== true && flags.authorWidget !== true) {
         removeHost();
         dbg("skip: flags off");
@@ -1653,11 +2047,12 @@
   }
 
   function watchPath() {
-    let last = location.href;
+    let last = location.pathname + location.search;
     if (pathWatcher) clearInterval(pathWatcher);
     pathWatcher = setInterval(function () {
-      if (location.href === last) return;
-      last = location.href;
+      const cur = location.pathname + location.search;
+      if (cur === last) return;
+      last = cur;
       scheduleRemount();
       maybePassiveAuthorExtract().catch(function () {});
     }, 800);
@@ -1726,6 +2121,14 @@
     try {
       await refreshDebugFlag();
       dbg("init");
+      try {
+        if (
+          typeof JobTrackerStore !== "undefined" &&
+          JobTrackerStore.repairBadFeedUrls
+        ) {
+          await JobTrackerStore.repairBadFeedUrls();
+        }
+      } catch (e) {}
 
       if (typeof LinkedInDOM !== "undefined" && LinkedInDOM.onAsideReady) {
         unwatchAside = LinkedInDOM.onAsideReady(function () {
@@ -1748,6 +2151,8 @@
             changes[DISMISSED_KEY] ||
             changes[JOB_DISMISSED_KEY] ||
             changes.casper_job_tracker ||
+            changes.casper_feed_job_candidates ||
+            changes.casper_feed_job_dismissed ||
             changes[DEBUG_KEY]
           ) {
             if (changes[DEBUG_KEY]) refreshDebugFlag();

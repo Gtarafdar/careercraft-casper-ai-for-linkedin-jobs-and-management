@@ -22,6 +22,14 @@
         margin: 0;
       }
 
+      /* Hide legacy card layout until options shell mounts (prevents flash) */
+      body:not(.cc-app) > .container {
+        visibility: hidden;
+      }
+      body:not(.cc-app) {
+        background: #0f172a;
+      }
+
       body.cc-app {
         padding: 0 !important;
         margin: 0 !important;
@@ -1776,7 +1784,11 @@
                   "
                 />
                 <p style="color: #6b7280; font-size: 11px; margin-top: 4px">
-                  Copy the full URL from a LinkedIn job search page
+                  Copy the full URL from a LinkedIn <strong>job search</strong>
+                  page (not /feed). Timeline posts use a separate flow:
+                  <a href="#feed-widgets" id="gotoFeedWidgetsFromSearch"
+                    >Feed Widgets → Timeline</a
+                  >.
                 </p>
               </div>
 
@@ -2858,6 +2870,7 @@
     <script src="lib/saved-search-utils.js"></script>
     <script src="content/feature-flags.js"></script>
     <script src="content/job-tracker-store.js"></script>
+    <script src="content/feed-job-discover.js"></script>
     <script src="casper/casper-avatar.js"></script>
     <script src="styles/options-shell.js"></script>
     <script src="options.js"></script>

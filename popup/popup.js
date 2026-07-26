@@ -35,14 +35,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /**
- * Feed widget feature flags (default OFF)
+ * Feed widget feature flags (default OFF) + timeline keywords (separate from job searches)
  */
 async function loadFeedWidgetToggles() {
   try {
-    const result = await chrome.storage.local.get(["feature_flags"]);
+    const result = await chrome.storage.local.get([
+      "feature_flags",
+      "feed_job_settings_v1",
+    ]);
     const flags = result.feature_flags || {};
+    const feedSettings = result.feed_job_settings_v1 || {};
     const jobEl = document.getElementById("popupJobBoardWidget");
     const authorEl = document.getElementById("popupAuthorWidget");
+    const feedEl = document.getElementById("popupFeedDiscover");
+    const kwWrap = document.getElementById("popupFeedKeywordsWrap");
+    const kwEl = document.getElementById("popupFeedKeywords");
+    const kwSave = document.getElementById("popupFeedKeywordsSave");
+    const kwHint = document.getElementById("popupFeedKeywordsHint");
+
+    function syncKwVisibility() {
+      if (!kwWrap || !feedEl) return;
+      kwWrap.style.display = feedEl.checked ? "block" : "none";
+    }
+
+    if (kwEl) {
+      const kws = Array.isArray(feedSettings.keywords)
+        ? feedSettings.keywords
+        : [];
+      kwEl.value = kws.join(", ");
+    }
+
     if (jobEl) {
       jobEl.checked = flags.jobBoardWidget === true;
       jobEl.addEventListener("change", async function (e) {
@@ -64,6 +86,45 @@ async function loadFeedWidgetToggles() {
         try {
           chrome.runtime.sendMessage({ action: "updateAuthorPostsAlarm" });
         } catch (err) {}
+      });
+    }
+    if (feedEl) {
+      feedEl.checked = flags.feedJobDiscover === true;
+      syncKwVisibility();
+      feedEl.addEventListener("change", async function (e) {
+        const cur = await chrome.storage.local.get(["feature_flags"]);
+        const next = Object.assign({}, cur.feature_flags || {}, {
+          feedJobDiscover: !!e.target.checked,
+        });
+        await chrome.storage.local.set({ feature_flags: next });
+        syncKwVisibility();
+      });
+    }
+    if (kwSave && kwEl) {
+      kwSave.addEventListener("click", async function () {
+        const raw = kwEl.value || "";
+        const keywords = raw
+          .split(/[\n,]+/)
+          .map(function (k) {
+            return k.trim().toLowerCase();
+          })
+          .filter(Boolean)
+          .slice(0, 40);
+        const cur = await chrome.storage.local.get(["feed_job_settings_v1"]);
+        const next = Object.assign({}, cur.feed_job_settings_v1 || {}, {
+          keywords: keywords,
+        });
+        await chrome.storage.local.set({ feed_job_settings_v1: next });
+        if (kwHint) {
+          kwHint.textContent =
+            keywords.length > 0
+              ? "Saved " + keywords.length + " keyword(s). Scroll your LinkedIn feed — matches go to Job Tracker."
+              : "Saved (empty = any hiring/freelance post). Scroll /feed — matches go to Job Tracker.";
+          setTimeout(function () {
+            kwHint.textContent =
+              "Empty = any hiring/freelance post. Matches soft-add to Job Tracker (Source = Feed). Scroll your LinkedIn home feed to collect more.";
+          }, 2500);
+        }
       });
     }
   } catch (e) {

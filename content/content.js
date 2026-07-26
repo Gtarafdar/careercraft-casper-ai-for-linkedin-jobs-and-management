@@ -4407,7 +4407,12 @@ class LinkedInFormatter {
           applicantCount: Number.isNaN(applicantCount) ? null : applicantCount,
           companyDetails:
             __safeCompany
-              ? { name: __safeCompany, linkedinUrl: null, raw: null }
+              ? {
+                  name: __safeCompany,
+                  linkedinUrl:
+                    (jobData && jobData.companyUrl) || null,
+                  raw: null,
+                }
               : null,
         }).catch(function () {});
       }
@@ -6002,11 +6007,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 String(company).toLowerCase() !== "company not found"
               ) {
                 patch.company = company;
+                const companyUrl =
+                  typeof extractor.extractCompanyUrl === "function"
+                    ? extractor.extractCompanyUrl()
+                    : null;
+                patch.companyDetails = {
+                  name: company,
+                  linkedinUrl: companyUrl || null,
+                };
               } else if (title && String(title).indexOf("|") >= 0) {
                 const split = extractor.splitRoleAndCompany(title);
                 if (split.company) {
                   patch.company = split.company;
                   if (split.title) patch.title = split.title;
+                  patch.companyDetails = {
+                    name: split.company,
+                    linkedinUrl:
+                      typeof extractor.extractCompanyUrl === "function"
+                        ? extractor.extractCompanyUrl()
+                        : null,
+                  };
                 }
               }
               if (

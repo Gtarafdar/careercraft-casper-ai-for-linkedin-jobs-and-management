@@ -19,6 +19,7 @@
     trackerApplicantRefresh: false,
     trackerExpiryRefresh: false,
     companyPeople: false,
+    feedJobDiscover: false,
   };
 
   let cache = null;
@@ -32,6 +33,12 @@
         const result = await chrome.storage.local.get([STORAGE_KEY]);
         cache = { ...DEFAULTS, ...(result[STORAGE_KEY] || {}) };
       } catch (e) {
+        const msg = String((e && e.message) || e || "");
+        // Orphaned content script after extension reload — do not cache kill-switch defaults
+        if (/extension context invalidated/i.test(msg)) {
+          loadPromise = null;
+          throw e;
+        }
         console.warn("FeatureFlags: load failed, using defaults", e);
         cache = { ...DEFAULTS };
       }

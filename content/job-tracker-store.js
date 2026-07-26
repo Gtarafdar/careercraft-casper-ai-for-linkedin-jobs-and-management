@@ -9,8 +9,25 @@
   const APPLICANTS_LOC_MIGRATE_KEY = "casper_job_tracker_applicants_loc_v1";
   const PLACEHOLDER_TITLE_MIGRATE_KEY = "casper_job_tracker_fix_placeholders_v1";
   const COMPANY_FROM_TITLE_MIGRATE_KEY = "casper_job_tracker_company_from_title_v1";
+  const EMPLOYER_KIND_MIGRATE_KEY = "casper_job_tracker_employer_kind_v1";
   const REFRESH_SETTINGS_KEY = "tracker_refresh_settings";
   const RECENT_MS = 7 * 24 * 60 * 60 * 1000;
+
+  const EMPLOYER_KINDS = ["direct", "agency", "job_board", "unknown"];
+  const EMPLOYER_KIND_LABELS = {
+    direct: "Direct employer",
+    agency: "Agency listing",
+    job_board: "Job board",
+    unknown: "Unclear",
+  };
+  const EMPLOYER_KIND_CONFIDENCES = ["low", "medium", "high"];
+
+  const AGENCY_NAME_RE =
+    /\b(recruit(?:er|ing|ment)?|staffing|talent(?:\s+(?:acquisition|solutions|partners|agency))?|consultanc(?:y|ies)|manpower|outsourcing|\brpo\b|placement|headhunt(?:ing|er)?|executive\s*search|workforce(?:\s+solutions)?|hr\s+solutions|personnel|temp\s+agency|contract\s+staffing|search\s+firm)\b/i;
+  const JOB_BOARD_NAME_RE =
+    /\b(bdjobs|indeed|glassdoor|monster|careerbuilder|jobstreet|seek|naukri|bayt|linkedin\s+jobs?|job\s*board|jobs?\s+marketplace|careerjet|ziprecruiter|simplyhired)\b|jobbd/i;
+  const AGENCY_TITLE_RE =
+    /\b(recruit(?:er|ing)|staffing|talent\s+acquisition|rpo|manpower|outsourcing)\b/i;
 
   const STATUSES = [
     "new",
@@ -34,7 +51,7 @@
     archived: "Archived",
   };
 
-  const SOURCES = ["viewed", "alert", "ats"];
+  const SOURCES = ["viewed", "alert", "ats", "feed"];
 
   const DEFAULT_REFRESH_SETTINGS = {
     applicantCheckEnabled: false,
@@ -49,7 +66,61 @@
   }
 
   function jobUrl(id) {
-    return "https://www.linkedin.com/jobs/view/" + encodeURIComponent(id);
+    const s = String(id || "").trim();
+    // Only real LinkedIn job posting IDs — never feed:hash organic ids
+    if (/^\d{6,}$/.test(s)) {
+      return "https://www.linkedin.com/jobs/view/" + s;
+    }
+    return "";
+  }
+
+  function isUnusableTrackerUrl(url) {
+    const u = String(url || "").trim();
+    if (!u || u === "#") return true;
+    // Organic feed ids wrongly encoded as job views
+    if (/\/jobs\/view\/feed/i.test(u)) return true;
+    if (/\/jobs\/view\/[^/?#]*feed[%3A:]/i.test(u)) return true;
+    // Any /jobs/view/ that is not a pure numeric job id
+    const jobId = u.match(/\/jobs\/view\/([^/?#]+)/i);
+    if (jobId && !/^\d{6,}$/.test(decodeURIComponent(jobId[1]))) return true;
+    if (/\/(company|showcase)\/[^/]+\/posts\/?(\?|#|$)/i.test(u)) return true;
+    if (/\/showcase\/[^/]+\/?(\?|#|$)/i.test(u)) return true;
+    if (/\/in\/[^/]+\/recent-activity/i.test(u)) return true;
+    return false;
+  }
+
+  function urlFromFeedStyleId(id) {
+    const s = String(id || "");
+    let m = s.match(/^feed:(share|activity|ugcPost)-(\d+)$/i);
+    if (m) {
+      return (
+        "https://www.linkedin.com/feed/update/" +
+        encodeURIComponent("urn:li:" + m[1].toLowerCase() + ":" + m[2])
+      );
+    }
+    m = s.match(/^feed:(urn:li:(?:share|activity|ugcPost):\d+)$/i);
+    if (m) {
+      return (
+        "https://www.linkedin.com/feed/update/" + encodeURIComponent(m[1])
+      );
+    }
+    return "";
+  }
+
+  /**
+   * Safe URL for opening a tracker row. Never returns jobs/view/feed:…
+   */
+  function resolveJobOpenUrl(job) {
+    if (!job) return "";
+    const candidates = [job.feedPostUrl, job.url];
+    for (let i = 0; i < candidates.length; i++) {
+      const c = String(candidates[i] || "").trim();
+      if (c && !isUnusableTrackerUrl(c)) return c;
+    }
+    const fromId = urlFromFeedStyleId(job.id);
+    if (fromId) return fromId;
+    const numeric = jobUrl(job.id);
+    return numeric || "";
   }
 
   function clampRating(n) {
@@ -155,6 +226,180 @@
     return false;
   }
 
+  function employerKindHaystack(job) {
+    const bits = [];
+    if (!job) return "";
+    ["company", "title", "searchName", "location", "atsSummary", "notes"].forEach(
+      function (k) {
+        if (job[k]) bits.push(String(job[k]));
+      }
+    );
+    if (job.companyDetails) {
+      if (job.companyDetails.name) bits.push(String(job.companyDetails.name));
+      if (job.companyDetails.industry)
+        bits.push(String(job.companyDetails.industry));
+    }
+    if (job.atsDetails && typeof job.atsDetails === "object") {
+      if (job.atsDetails.summary) bits.push(String(job.atsDetails.summary));
+      if (job.atsDetails.company) bits.push(String(job.atsDetails.company));
+    }
+    return bits.join(" \n ");
+  }
+
+  /**
+   * Soft local heuristics only — no LinkedIn People / company scrape.
+   * Returns { employerKind, employerKindConfidence, employerKindReason }.
+   */
+  function classifyEmployerKind(job) {
+    const company = String(
+      (job && (job.company || (job.companyDetails && job.companyDetails.name))) ||
+        ""
+    ).trim();
+    const title = String((job && job.title) || "").trim();
+    const searchName = String((job && job.searchName) || "").trim();
+    const hay = employerKindHaystack(job);
+
+    if (company && JOB_BOARD_NAME_RE.test(company)) {
+      return {
+        employerKind: "job_board",
+        employerKindConfidence: "high",
+        employerKindReason: "Company name matches a known job board / marketplace",
+      };
+    }
+    if (searchName && JOB_BOARD_NAME_RE.test(searchName)) {
+      return {
+        employerKind: "job_board",
+        employerKindConfidence: "medium",
+        employerKindReason: "Alert / search name looks like a job board",
+      };
+    }
+    if (JOB_BOARD_NAME_RE.test(hay)) {
+      return {
+        employerKind: "job_board",
+        employerKindConfidence: "medium",
+        employerKindReason: "Job board signal in title, company, or summary",
+      };
+    }
+
+    if (company && AGENCY_NAME_RE.test(company)) {
+      return {
+        employerKind: "agency",
+        employerKindConfidence: "high",
+        employerKindReason: "Company name looks like recruiting / staffing",
+      };
+    }
+    if (title && AGENCY_TITLE_RE.test(title) && AGENCY_NAME_RE.test(hay)) {
+      return {
+        employerKind: "agency",
+        employerKindConfidence: "medium",
+        employerKindReason: "Title and listing text suggest a recruiting firm",
+      };
+    }
+    if (AGENCY_NAME_RE.test(hay)) {
+      return {
+        employerKind: "agency",
+        employerKindConfidence: "medium",
+        employerKindReason: "Staffing / recruiting keywords in listing fields",
+      };
+    }
+
+    if (
+      company &&
+      !isPlaceholderField("company", company) &&
+      company.length >= 2
+    ) {
+      return {
+        employerKind: "direct",
+        employerKindConfidence: "medium",
+        employerKindReason:
+          "Listed company does not match agency or job-board patterns",
+      };
+    }
+
+    return {
+      employerKind: "unknown",
+      employerKindConfidence: "low",
+      employerKindReason: "Not enough signal to classify employer type",
+    };
+  }
+
+  function applyEmployerKindFields(job) {
+    if (!job) return job;
+    const override = job.employerKindOverride;
+    if (override && EMPLOYER_KINDS.indexOf(override) >= 0) {
+      job.employerKind = override;
+      job.employerKindConfidence = "high";
+      job.employerKindReason = "Manual override";
+      job.employerKindSource = "user";
+      return job;
+    }
+    const c = classifyEmployerKind(job);
+    job.employerKind = c.employerKind;
+    job.employerKindConfidence = c.employerKindConfidence;
+    job.employerKindReason = c.employerKindReason;
+    job.employerKindSource = "auto";
+    job.employerKindOverride = null;
+    return job;
+  }
+
+  function employerKindLabel(kind) {
+    const key = String(kind || "").trim();
+    if (EMPLOYER_KIND_LABELS[key]) return EMPLOYER_KIND_LABELS[key];
+    return EMPLOYER_KIND_LABELS.unknown;
+  }
+
+  /** Prefer real company name; never surface extractor placeholders. */
+  function resolveCompanyName(job) {
+    if (!job) return "";
+    const company = String(job.company || "").trim();
+    const detailName =
+      job.companyDetails && job.companyDetails.name
+        ? String(job.companyDetails.name).trim()
+        : "";
+    if (company && !isPlaceholderField("company", company)) return company;
+    if (detailName && !isPlaceholderField("company", detailName))
+      return detailName;
+    return "";
+  }
+
+  /**
+   * LinkedIn company page when known; otherwise company search.
+   * Local only — no scrape.
+   */
+  function resolveCompanyUrl(job) {
+    const name = resolveCompanyName(job);
+    const raw =
+      job && job.companyDetails && job.companyDetails.linkedinUrl
+        ? String(job.companyDetails.linkedinUrl).trim()
+        : "";
+    if (raw && /linkedin\.com\/company\//i.test(raw)) {
+      try {
+        const u = new URL(raw, "https://www.linkedin.com");
+        if (/linkedin\.com$/i.test(u.hostname) || /\.linkedin\.com$/i.test(u.hostname)) {
+          return u.origin + u.pathname.replace(/\/$/, "");
+        }
+      } catch (e) {}
+    }
+    if (!name) return "";
+    return (
+      "https://www.linkedin.com/search/results/companies/?keywords=" +
+      encodeURIComponent(name)
+    );
+  }
+
+  function outreachTipForKind(kind) {
+    switch (String(kind || "")) {
+      case "agency":
+        return "This looks like a recruiting or staffing listing. Follow up with the recruiter on the posting — company People pages usually point at the agency, not the client.";
+      case "job_board":
+        return "This looks like a job board or marketplace poster. Resolve the real employer from the job description before any warm outreach.";
+      case "direct":
+        return "Listed company looks like the hiring employer. Update tracker status as you apply. Contact enrichment is deferred (Phase 5B).";
+      default:
+        return "Employer type is unclear. Tag Agency, Job board, or Direct if you know — that keeps outreach aimed at the right org.";
+    }
+  }
+
   function normalizeJob(partial, existing) {
     const id = String(partial.id || (existing && existing.id) || "").trim();
     if (!id) return null;
@@ -183,6 +428,17 @@
       searchName: null,
       alumni: [],
       contacts: [],
+      employerKind: "unknown",
+      employerKindConfidence: "low",
+      employerKindReason: "",
+      employerKindOverride: null,
+      employerKindSource: "auto",
+      feedPostUrl: null,
+      feedAuthor: null,
+      feedSnippet: null,
+      feedDetectedAt: null,
+      feedMatchKeywords: [],
+      parentFeedKey: null,
     };
 
     const next = Object.assign({}, base);
@@ -223,8 +479,41 @@
         next.location = existing && existing.location ? existing.location : "";
       }
     }
-    if (partial.url) next.url = String(partial.url);
-    else if (!next.url) next.url = jobUrl(id);
+    if (partial.feedPostUrl != null) {
+      const fp = String(partial.feedPostUrl).trim();
+      next.feedPostUrl = fp && !isUnusableTrackerUrl(fp) ? fp : null;
+    }
+    if (partial.feedAuthor != null) {
+      next.feedAuthor = String(partial.feedAuthor).trim() || null;
+    }
+    if (partial.feedSnippet != null) {
+      next.feedSnippet = String(partial.feedSnippet).trim().slice(0, 280) || null;
+    }
+    if (partial.feedDetectedAt != null) {
+      next.feedDetectedAt = Number(partial.feedDetectedAt) || null;
+    }
+    if (Array.isArray(partial.feedMatchKeywords)) {
+      next.feedMatchKeywords = partial.feedMatchKeywords
+        .map(function (k) {
+          return String(k || "").trim().toLowerCase();
+        })
+        .filter(Boolean)
+        .slice(0, 20);
+    }
+    if (partial.parentFeedKey != null) {
+      next.parentFeedKey = String(partial.parentFeedKey).trim() || null;
+    }
+
+    if (partial.url && !isUnusableTrackerUrl(partial.url)) {
+      next.url = String(partial.url).trim();
+    } else if (next.feedPostUrl && !isUnusableTrackerUrl(next.feedPostUrl)) {
+      next.url = next.feedPostUrl;
+    } else if (isUnusableTrackerUrl(next.url)) {
+      // Repair bad feed defaults (jobs/view/feed:… or company/…/posts/)
+      next.url = jobUrl(id) || "";
+    } else if (!next.url) {
+      next.url = jobUrl(id);
+    }
 
     if (partial.atsScore != null && partial.atsScore !== "") {
       next.atsScore = Number(partial.atsScore);
@@ -260,11 +549,15 @@
     if (typeof partial.starred === "boolean") next.starred = partial.starred;
     if (partial.starRating != null) next.starRating = clampRating(partial.starRating);
     if (partial.source && SOURCES.includes(partial.source)) {
-      // Prefer more specific sources; don't downgrade ats/alert to viewed on plain upserts
+      // Prefer more specific sources; don't downgrade ats/alert to viewed/feed on plain upserts
       if (
         !existing ||
         partial.source === "ats" ||
         (partial.source === "alert" && existing.source !== "ats") ||
+        (partial.source === "feed" &&
+          (!existing.source ||
+            existing.source === "viewed" ||
+            existing.source === "feed")) ||
         !existing.source
       ) {
         next.source = partial.source;
@@ -276,12 +569,73 @@
         next.companyDetails || {},
         partial.companyDetails
       );
-      if (!next.company && next.companyDetails.name) {
+      // Never keep placeholder companyDetails.name when we have a real company
+      if (
+        next.companyDetails.name &&
+        isPlaceholderField("company", next.companyDetails.name)
+      ) {
+        if (next.company && !isPlaceholderField("company", next.company)) {
+          next.companyDetails.name = next.company;
+        } else {
+          next.companyDetails.name = "";
+        }
+      }
+      if (
+        !next.company &&
+        next.companyDetails.name &&
+        !isPlaceholderField("company", next.companyDetails.name)
+      ) {
         next.company = String(next.companyDetails.name);
       }
+      // Heal: real company on row but stale/missing details name
+      if (
+        next.company &&
+        !isPlaceholderField("company", next.company) &&
+        (!next.companyDetails.name ||
+          isPlaceholderField("company", next.companyDetails.name))
+      ) {
+        next.companyDetails.name = next.company;
+      }
+      if (
+        partial.companyDetails.linkedinUrl &&
+        String(partial.companyDetails.linkedinUrl).trim()
+      ) {
+        next.companyDetails.linkedinUrl = String(
+          partial.companyDetails.linkedinUrl
+        ).trim();
+      }
+    } else if (
+      next.company &&
+      !isPlaceholderField("company", next.company) &&
+      next.companyDetails &&
+      isPlaceholderField("company", next.companyDetails.name)
+    ) {
+      next.companyDetails = Object.assign({}, next.companyDetails, {
+        name: next.company,
+      });
     }
     if (partial.searchName != null) {
       next.searchName = String(partial.searchName);
+    }
+
+    // Manual employer-kind override (or clear back to auto)
+    if (partial.clearEmployerKindOverride) {
+      next.employerKindOverride = null;
+    } else if (
+      Object.prototype.hasOwnProperty.call(partial, "employerKindOverride")
+    ) {
+      const ov = partial.employerKindOverride;
+      if (ov == null || ov === "" || ov === "auto") {
+        next.employerKindOverride = null;
+      } else if (EMPLOYER_KINDS.indexOf(String(ov)) >= 0) {
+        next.employerKindOverride = String(ov);
+      }
+    } else if (
+      partial.employerKind != null &&
+      partial.employerKindSource === "user" &&
+      EMPLOYER_KINDS.indexOf(String(partial.employerKind)) >= 0
+    ) {
+      next.employerKindOverride = String(partial.employerKind);
     }
 
     // Never overwrite user-set status with auto upserts
@@ -309,6 +663,7 @@
     if (!next.source) next.source = "viewed";
     if (!Array.isArray(next.alumni)) next.alumni = [];
     if (!Array.isArray(next.contacts)) next.contacts = [];
+    applyEmployerKindFields(next);
     return next;
   }
 
@@ -583,6 +938,46 @@
     return companyFromTitleMigratePromise;
   }
 
+  let employerKindMigratePromise = null;
+
+  /** One-time: backfill employerKind on existing tracker rows. */
+  async function migrateEmployerKind() {
+    if (employerKindMigratePromise) return employerKindMigratePromise;
+    employerKindMigratePromise = (async function () {
+      try {
+        const result = await chrome.storage.local.get([
+          EMPLOYER_KIND_MIGRATE_KEY,
+          STORAGE_KEY,
+        ]);
+        if (result[EMPLOYER_KIND_MIGRATE_KEY]) {
+          return { migrated: 0, skipped: true };
+        }
+        const map =
+          result[STORAGE_KEY] && typeof result[STORAGE_KEY] === "object"
+            ? result[STORAGE_KEY]
+            : {};
+        let migrated = 0;
+        Object.keys(map).forEach(function (id) {
+          const row = map[id];
+          if (!row) return;
+          applyEmployerKindFields(row);
+          if (!Array.isArray(row.alumni)) row.alumni = [];
+          if (!Array.isArray(row.contacts)) row.contacts = [];
+          migrated++;
+        });
+        const patch = {};
+        patch[EMPLOYER_KIND_MIGRATE_KEY] = true;
+        if (migrated) patch[STORAGE_KEY] = map;
+        await chrome.storage.local.set(patch);
+        return { migrated: migrated, skipped: false };
+      } catch (e) {
+        console.warn("JobTrackerStore: employer-kind migration failed", e);
+        return { migrated: 0, skipped: true, error: e };
+      }
+    })();
+    return employerKindMigratePromise;
+  }
+
   async function upsertJob(partial) {
     if (!partial || !partial.id) return null;
     const map = await readMap();
@@ -645,6 +1040,27 @@
     });
   }
 
+  /**
+   * Set or clear employer-kind override.
+   * Pass null / "" / "auto" to clear and reclassify.
+   */
+  async function setEmployerKind(jobId, kind) {
+    if (!jobId) return null;
+    const k = kind == null ? "" : String(kind).trim();
+    if (!k || k === "auto") {
+      return upsertJob({
+        id: String(jobId),
+        clearEmployerKindOverride: true,
+      });
+    }
+    if (EMPLOYER_KINDS.indexOf(k) < 0) return null;
+    return upsertJob({
+      id: String(jobId),
+      employerKindOverride: k,
+      employerKindSource: "user",
+    });
+  }
+
   async function deleteJob(jobId) {
     if (!jobId) return false;
     const map = await readMap();
@@ -670,13 +1086,101 @@
     return removed;
   }
 
+  async function migrateRepairBadFeedUrls() {
+    try {
+      const map = await readMap();
+      let changed = 0;
+      Object.keys(map).forEach(function (k) {
+        const row = map[k];
+        if (!row) return;
+        let dirty = false;
+        if (row.feedPostUrl && isUnusableTrackerUrl(row.feedPostUrl)) {
+          row.feedPostUrl = null;
+          dirty = true;
+        }
+        if (isUnusableTrackerUrl(row.url)) {
+          var nextUrl = "";
+          if (row.feedPostUrl && !isUnusableTrackerUrl(row.feedPostUrl)) {
+            nextUrl = row.feedPostUrl;
+          } else {
+            // Clear invented /jobs/view/feed:… — keep the tracker row
+            nextUrl = jobUrl(row.id) || "";
+          }
+          // Only dirty when the value actually changes — empty→empty must NOT
+          // rewrite storage (that remounts Job Tracker and kills the search box).
+          if (String(row.url || "") !== String(nextUrl || "")) {
+            row.url = nextUrl;
+            dirty = true;
+          }
+        }
+        // Remove orphan organic feed rows that never got a real post permalink
+        // (legacy hash ids like feed:gpyc8a — Get link can never recover these)
+        if (
+          row.source === "feed" &&
+          /^feed:[a-z0-9]{4,12}$/i.test(String(row.id || "")) &&
+          isUnusableTrackerUrl(row.url) &&
+          isUnusableTrackerUrl(row.feedPostUrl)
+        ) {
+          delete map[k];
+          changed++;
+          return;
+        }
+        // Clear company/author fields polluted with the LinkedIn viewer's profile
+        if (
+          row.source === "feed" &&
+          /wpbakery|product marketing specialist|wordpress plugin growth/i.test(
+            String(row.company || "") + " " + String(row.feedAuthor || "")
+          )
+        ) {
+          if (row.company || row.feedAuthor || row.companyDetails) {
+            row.company = "";
+            row.feedAuthor = null;
+            if (row.companyDetails) row.companyDetails = null;
+            dirty = true;
+          }
+        }
+        if (dirty) {
+          row.updatedAt = now();
+          map[k] = row;
+          changed++;
+        }
+      });
+      if (changed) await writeMap(map);
+      return changed;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   async function listJobs(filters) {
     await migrateAlertViewedToNew();
     await migrateApplicantsFromLocation();
     await migrateFixPlaceholderTitles();
     await migrateCompanyFromTitle();
+    await migrateEmployerKind();
+    await migrateRepairBadFeedUrls();
     const map = await readMap();
-    let rows = Object.values(map);
+    let rows = Object.values(map).map(function (r) {
+      // Recompute soft classification on view (respects override; no write)
+      const copy = Object.assign({}, r);
+      if (r.companyDetails && typeof r.companyDetails === "object") {
+        copy.companyDetails = Object.assign({}, r.companyDetails);
+      }
+      applyEmployerKindFields(copy);
+      const resolved = resolveCompanyName(copy);
+      if (resolved) {
+        if (!copy.company || isPlaceholderField("company", copy.company)) {
+          copy.company = resolved;
+        }
+        if (
+          copy.companyDetails &&
+          isPlaceholderField("company", copy.companyDetails.name)
+        ) {
+          copy.companyDetails.name = resolved;
+        }
+      }
+      return copy;
+    });
     const f = filters || {};
     const status = f.status;
     const q = f.q ? String(f.q).trim().toLowerCase() : "";
@@ -715,6 +1219,18 @@
             .toLowerCase()
             .includes(q) ||
           String(r.searchName || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(r.feedAuthor || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(r.feedSnippet || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(r.url || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(r.feedPostUrl || "")
             .toLowerCase()
             .includes(q)
         );
@@ -787,6 +1303,20 @@
     if (starredOnly) {
       rows = rows.filter(function (r) {
         return !!r.starred || (r.starRating && r.starRating > 0);
+      });
+    }
+    if (f.source && f.source !== "all" && SOURCES.indexOf(f.source) >= 0) {
+      rows = rows.filter(function (r) {
+        return String(r.source || "viewed") === f.source;
+      });
+    }
+    if (
+      f.employerKind &&
+      f.employerKind !== "all" &&
+      EMPLOYER_KINDS.indexOf(f.employerKind) >= 0
+    ) {
+      rows = rows.filter(function (r) {
+        return String(r.employerKind || "unknown") === f.employerKind;
       });
     }
 
@@ -1131,15 +1661,30 @@
     STATUSES: STATUSES,
     STATUS_LABELS: STATUS_LABELS,
     SOURCES: SOURCES,
+    EMPLOYER_KINDS: EMPLOYER_KINDS,
+    EMPLOYER_KIND_LABELS: EMPLOYER_KIND_LABELS,
+    EMPLOYER_KIND_CONFIDENCES: EMPLOYER_KIND_CONFIDENCES,
     DEFAULT_REFRESH_SETTINGS: DEFAULT_REFRESH_SETTINGS,
     RECENT_MS: RECENT_MS,
     statusLabel: statusLabel,
+    employerKindLabel: employerKindLabel,
+    resolveCompanyName: resolveCompanyName,
+    resolveCompanyUrl: resolveCompanyUrl,
+    resolveJobOpenUrl: resolveJobOpenUrl,
+    isUnusableTrackerUrl: isUnusableTrackerUrl,
+    jobUrl: jobUrl,
+    repairBadFeedUrls: migrateRepairBadFeedUrls,
+    outreachTipForKind: outreachTipForKind,
+    classifyEmployerKind: classifyEmployerKind,
+    applyEmployerKindFields: applyEmployerKindFields,
+    isPlaceholderField: isPlaceholderField,
     countByStatus: countByStatus,
     upsertJob: upsertJob,
     updateAts: updateAts,
     setStatus: setStatus,
     setStarred: setStarred,
     setStarRating: setStarRating,
+    setEmployerKind: setEmployerKind,
     deleteJob: deleteJob,
     deleteJobs: deleteJobs,
     listJobs: listJobs,
@@ -1151,6 +1696,7 @@
     migrateApplicantsFromLocation: migrateApplicantsFromLocation,
     migrateFixPlaceholderTitles: migrateFixPlaceholderTitles,
     migrateCompanyFromTitle: migrateCompanyFromTitle,
+    migrateEmployerKind: migrateEmployerKind,
     parseApplicantCountFromText: parseApplicantCountFromText,
     cleanLocationText: cleanLocationText,
     rowsToCsv: rowsToCsv,

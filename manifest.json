@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CareerCraft AI - LinkedIn Career Assistant",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "description": "AI-powered LinkedIn toolkit: Format posts, analyze jobs with ATS scoring, and craft your dream career",
   "permissions": [
     "activeTab",
@@ -31,10 +31,11 @@
         "lib/saved-search-utils.js",
         "content/feature-flags.js",
         "content/linkedin-dom.js",
+        "content/job-tracker-store.js",
+        "content/feed-job-discover.js",
         "content/aside-widgets.js",
         "content/saved-searches-manager.js",
         "content/cache-manager.js",
-        "content/job-tracker-store.js",
         "content/ai-service.js",
         "content/profile-extractor.js",
         "content/job-extractor.js",

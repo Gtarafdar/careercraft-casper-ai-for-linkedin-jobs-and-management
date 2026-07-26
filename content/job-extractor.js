@@ -93,6 +93,7 @@ class JobExtractor {
     const jobData = {
       title: title,
       company: company,
+      companyUrl: this.extractCompanyUrl(),
       location: location,
       jobType: this.extractJobType(),
       experience: this.extractExperienceLevel(),
@@ -295,6 +296,33 @@ class JobExtractor {
       if (fromOg.company) return fromOg.company;
     }
     return "Company Not Found";
+  }
+
+  /**
+   * LinkedIn /company/ URL from the job top card when present.
+   */
+  extractCompanyUrl() {
+    const selectors = [
+      ".job-details-jobs-unified-top-card__company-name a",
+      "a.job-details-jobs-unified-top-card__company-name",
+      ".jobs-unified-top-card__company-name a",
+      ".jobs-details-top-card__company-name a",
+      ".job-details-jobs-unified-top-card__primary-description-container a[href*='/company/']",
+      "a[href*='/company/']",
+    ];
+    for (let i = 0; i < selectors.length; i++) {
+      const el = document.querySelector(selectors[i]);
+      if (!el || !el.href) continue;
+      const href = String(el.href);
+      if (!/linkedin\.com\/company\//i.test(href)) continue;
+      try {
+        const u = new URL(href);
+        return u.origin + u.pathname.replace(/\/$/, "");
+      } catch (e) {
+        return href.split("?")[0].replace(/\/$/, "");
+      }
+    }
+    return null;
   }
 
   /**

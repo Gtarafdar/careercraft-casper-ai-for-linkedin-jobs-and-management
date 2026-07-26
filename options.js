@@ -1987,8 +1987,17 @@ async function saveSearchForm() {
     return;
   }
 
+  if (/linkedin\.com\/feed\/?/i.test(url) || /\/feed\/?$/i.test(url)) {
+    showError(
+      "Home feed URLs are not job searches. Use Feed Widgets → Timeline job discovery (and Timeline keywords in the popup) instead. This form only accepts linkedin.com/jobs/search/... URLs."
+    );
+    return;
+  }
+
   if (!url || !url.includes("linkedin.com/jobs/search")) {
-    showError("Please enter a valid LinkedIn job search URL");
+    showError(
+      "Please enter a valid LinkedIn job search URL (linkedin.com/jobs/search/...). For timeline/feed posts, open Feed Widgets → Timeline job discovery."
+    );
     return;
   }
 
