@@ -1556,7 +1556,114 @@ body.nav-open .backdrop {
   color: var(--blue);
 }
 
-/* Lightbox */
+/* Scroll progress → top */
+.scroll-top {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  z-index: 48;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(12, 30, 48, 0.92);
+  box-shadow: var(--shadow-soft), 0 0 24px rgba(61, 154, 239, 0.18);
+  cursor: pointer;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.92);
+  transition:
+    opacity 0.28s var(--ease),
+    transform 0.28s var(--ease),
+    visibility 0.28s,
+    box-shadow 0.22s var(--ease),
+    background 0.18s;
+}
+
+.scroll-top.is-on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+.scroll-top:hover,
+.scroll-top:focus-visible {
+  background: rgba(18, 42, 64, 0.98);
+  box-shadow: var(--shadow), 0 0 28px rgba(61, 154, 239, 0.28);
+}
+
+.scroll-top:focus-visible {
+  outline: 2px solid var(--blue-bright);
+  outline-offset: 3px;
+}
+
+.scroll-top-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.scroll-top-track {
+  stroke: rgba(180, 210, 240, 0.18);
+  stroke-width: 3;
+}
+
+.scroll-top-prog {
+  stroke: var(--blue-bright);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 150.8;
+  stroke-dashoffset: 150.8;
+  transition: stroke-dashoffset 0.12s linear;
+}
+
+.scroll-top-face {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.scroll-top-pct,
+.scroll-top-arrow {
+  grid-area: 1 / 1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+}
+
+.scroll-top-arrow {
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(4px);
+  color: var(--blue-bright);
+}
+
+.scroll-top:hover .scroll-top-pct,
+.scroll-top:focus-visible .scroll-top-pct {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.scroll-top:hover .scroll-top-arrow,
+.scroll-top:focus-visible .scroll-top-arrow {
+  opacity: 1;
+  transform: none;
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
@@ -1710,5 +1817,12 @@ body.nav-open .backdrop {
 
   .btn::after {
     display: none;
+  }
+
+  .scroll-top,
+  .scroll-top-pct,
+  .scroll-top-arrow,
+  .scroll-top-prog {
+    transition: none;
   }
 }

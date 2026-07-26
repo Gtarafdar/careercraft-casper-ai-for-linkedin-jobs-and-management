@@ -187,9 +187,53 @@
     });
   }
 
+  function setupScrollTop() {
+    var btn = document.getElementById("scrollTop");
+    var pctEl = document.getElementById("scrollTopPct");
+    var prog = document.getElementById("scrollTopProg");
+    if (!btn || !pctEl || !prog) return;
+
+    var RADIUS = 24;
+    var CIRC = 2 * Math.PI * RADIUS;
+    prog.style.strokeDasharray = String(CIRC);
+    prog.style.strokeDashoffset = String(CIRC);
+
+    var ticking = false;
+
+    function update() {
+      ticking = false;
+      var doc = document.documentElement;
+      var scrollTop = window.pageYOffset || doc.scrollTop || 0;
+      var max = Math.max(1, doc.scrollHeight - window.innerHeight);
+      var p = Math.min(100, Math.max(0, Math.round((scrollTop / max) * 100)));
+      pctEl.textContent = p + "%";
+      prog.style.strokeDashoffset = String(CIRC * (1 - p / 100));
+      btn.classList.toggle("is-on", scrollTop > 220);
+      btn.setAttribute("aria-label", "Back to top, " + p + "% scrolled");
+    }
+
+    function onScrollOrResize() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }
+
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+    btn.addEventListener("click", function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+    update();
+  }
+
   function boot() {
     setupCarousel();
     setupReveal();
+    setupScrollTop();
   }
 
   if (document.readyState === "loading") {
