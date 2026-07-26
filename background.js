@@ -779,71 +779,75 @@ async function softFetchAuthorPosts(request) {
   const storeResult = await chrome.storage.local.get(["casper_author_posts"]);
   const cache = storeResult.casper_author_posts || {};
   let fetched = 0;
+  const details = [];
 
   for (let i = 0; i < Math.min(authors.length, 5); i++) {
     const author = authors[i];
     if (!author || !author.id) continue;
     const last = (meta.lastByAuthor && meta.lastByAuthor[author.id]) || 0;
     if (!force && last && now - last < 10 * 60 * 1000 && (cache[author.id] || []).length) {
+      details.push({ id: author.id, status: "skip_recent" });
       continue;
     }
 
     let tabId = null;
     try {
-      const pathSuffix =
-        filter === "original"
-          ? "/recent-activity/posts/"
-          : "/recent-activity/all/";
-      let activityUrl =
+      // LinkedIn redirects /recent-activity/posts/ → /articles/ (often empty).
+      // /recent-activity/all/ is the reliable source (confirmed in debug logs).
+      const activityUrl =
         "https://www.linkedin.com/in/" +
         encodeURIComponent(author.id) +
-        pathSuffix;
+        "/recent-activity/all/";
       const tab = await chrome.tabs.create({ url: activityUrl, active: false });
       tabId = tab.id;
       await waitForTabLoad(tabId);
-      await new Promise(function (r) {
-        setTimeout(r, 2500);
-      });
 
-      async function askExtract() {
+      async function askExtract(useFilter) {
         return chrome.tabs.sendMessage(tabId, {
           action: "extractAuthorPostsFromPage",
           maxPosts: fetchCount,
           author: author,
-          filter: filter,
+          filter: useFilter,
         });
       }
 
-      let response = null;
-      let msgErr = null;
-      try {
-        response = await askExtract();
-      } catch (e) {
-        msgErr = String(e && e.message ? e.message : e);
-        await new Promise(function (r) {
-          setTimeout(r, 1500);
-        });
-        response = await askExtract();
-      }
-
-      let posts = (response && response.posts) || [];
-      // Fallback: posts tab empty → all activity with original filter
-      if (!posts.length && filter === "original") {
-        try {
-          await chrome.tabs.update(tabId, {
-            url:
-              "https://www.linkedin.com/in/" +
-              encodeURIComponent(author.id) +
-              "/recent-activity/all/",
-          });
-          await waitForTabLoad(tabId);
+      async function extractWithRetries(useFilter) {
+        let lastErr = null;
+        let best = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
           await new Promise(function (r) {
-            setTimeout(r, 2500);
+            setTimeout(r, attempt === 0 ? 2800 : 1600);
           });
-          response = await askExtract();
-          posts = (response && response.posts) || [];
-        } catch (e) {}
+          try {
+            const response = await askExtract(useFilter);
+            const posts = (response && response.posts) || [];
+            if (posts.length > best.length) best = posts;
+            if (posts.length > 0) return { posts: posts, err: null };
+          } catch (e) {
+            lastErr = String(e && e.message ? e.message : e);
+            // Content script may not be ready yet — retry
+          }
+        }
+        return { posts: best, err: lastErr };
       }
+
+      let result = await extractWithRetries(filter);
+      let posts = result.posts || [];
+      let msgErr = result.err;
+
+      // Original-only found DOM but filtered everything → include activity once
+      if (!posts.length && filter === "original") {
+        const fallback = await extractWithRetries("all");
+        posts = fallback.posts || [];
+        if (fallback.err) msgErr = fallback.err;
+      }
+
+      details.push({
+        id: author.id,
+        status: posts.length ? "ok" : "empty",
+        postCount: posts.length,
+        msgErr: msgErr ? String(msgErr).slice(0, 80) : null,
+      });
 
       if (posts.length) {
         cache[author.id] = posts;
@@ -874,6 +878,11 @@ async function softFetchAuthorPosts(request) {
       if (!meta.lastByAuthor) meta.lastByAuthor = {};
       meta.lastByAuthor[author.id] = now;
     } catch (e) {
+      details.push({
+        id: author && author.id,
+        status: "error",
+        err: String(e && e.message ? e.message : e).slice(0, 80),
+      });
       console.warn("[Aside] author fetch failed for", author.id, e);
     } finally {
       if (tabId) {
@@ -889,7 +898,7 @@ async function softFetchAuthorPosts(request) {
     casper_author_posts: cache,
     [RATE_KEY]: meta,
   });
-  return { fetched: fetched };
+  return { fetched: fetched, details: details };
 }
 
 /**
@@ -1350,16 +1359,16 @@ async function setupAuthorPostsAlarm() {
       {
         authors: [],
         postsPerAuthor: 2,
-        authorRefreshMinutes: 60,
+        authorRefreshMinutes: 15,
       },
       result.aside_widget_settings || {}
     );
     const minutes = Number(settings.authorRefreshMinutes);
     if (!(minutes > 0)) return;
     if (!Array.isArray(settings.authors) || !settings.authors.length) return;
-    const period = Math.max(30, minutes);
+    const period = Math.max(15, minutes);
     await chrome.alarms.create("asideAuthorPostsRefresh", {
-      delayInMinutes: Math.min(period, 60),
+      delayInMinutes: Math.min(period, 30),
       periodInMinutes: period,
     });
   } catch (e) {
@@ -1376,7 +1385,7 @@ async function runAuthorPostsAlarm() {
     const flags = result.feature_flags || {};
     if (flags.authorWidget !== true) return;
     const settings = Object.assign(
-      { authors: [], postsPerAuthor: 2, authorRefreshMinutes: 60 },
+      { authors: [], postsPerAuthor: 2, authorRefreshMinutes: 15 },
       result.aside_widget_settings || {}
     );
     if (!(Number(settings.authorRefreshMinutes) > 0)) return;

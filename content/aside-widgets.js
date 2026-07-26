@@ -14,7 +14,7 @@
   const DEFAULT_SETTINGS = {
     authors: [],
     postsPerAuthor: 2,
-    authorRefreshMinutes: 60,
+    authorRefreshMinutes: 15,
     authorPostsFilter: "original",
     jobAlertsLimit: 5,
     jobAlertsTtlDays: 7,
@@ -1046,9 +1046,11 @@
       dismissed = r[DISMISSED_KEY] || {};
     } catch (e) {}
 
-    const items = [];
+    // Per-author buckets so every saved profile gets a fair slot (round-robin)
+    const buckets = [];
     let hiddenByDismiss = 0;
     let cacheTotal = 0;
+    let authorsWithoutPosts = 0;
     authors.forEach(function (a) {
       if (!a || !a.id) return;
       const all = cache[a.id] || [];
@@ -1062,7 +1064,30 @@
         }
         visible.push(p);
       });
-      visible.slice(0, per).forEach(function (p) {
+      // Newest first when timestamps exist
+      visible.sort(function (x, y) {
+        return (Number(y.createdAt) || 0) - (Number(x.createdAt) || 0);
+      });
+      if (!visible.length) authorsWithoutPosts++;
+      buckets.push({
+        author: a,
+        posts: visible,
+        idx: 0,
+      });
+    });
+
+    const items = [];
+    const maxItems = Math.max(0, authors.length * per);
+    let progressed = true;
+    while (items.length < maxItems && progressed) {
+      progressed = false;
+      for (let b = 0; b < buckets.length && items.length < maxItems; b++) {
+        const bucket = buckets[b];
+        const taken = bucket.idx;
+        if (taken >= per) continue;
+        if (bucket.idx >= bucket.posts.length) continue;
+        const p = bucket.posts[bucket.idx++];
+        const a = bucket.author;
         items.push({
           id: p.id || "",
           authorId: a.id,
@@ -1074,14 +1099,17 @@
           createdAt: p.createdAt || 0,
           relativeLabel: p.relativeLabel || "",
         });
-      });
-    });
+        progressed = true;
+      }
+    }
+
     return {
       authors: authors,
       items: items,
       per: per,
       hiddenByDismiss: hiddenByDismiss,
       cacheTotal: cacheTotal,
+      authorsWithoutPosts: authorsWithoutPosts,
       caughtUp: authors.length > 0 && items.length === 0 && cacheTotal > 0,
     };
   }
@@ -1123,8 +1151,8 @@
     } else if (!data.items.length) {
       body =
         '<div class="cc-li-rail-empty-block">' +
-        '<p class="cc-li-rail-empty-title">Finding recent posts</p>' +
-        '<p class="cc-li-rail-empty">We&rsquo;ll load miniature posts from your authors. You can also open their recent activity or tap Refresh.</p>' +
+        '<p class="cc-li-rail-empty-title">No posts found yet</p>' +
+        '<p class="cc-li-rail-empty">We couldn&rsquo;t load miniature posts for your saved authors. Open their activity, or tap Refresh — we&rsquo;ll try again quietly in the background.</p>' +
         "</div>";
       data.authors.forEach(function (a) {
         const activity =
@@ -1176,6 +1204,14 @@
           '<button type="button" class="cc-li-post-mini-dismiss" data-cc-dismiss-post title="Remove from list" aria-label="Remove from list">×</button>' +
           "</div>";
       });
+      if (data.authorsWithoutPosts > 0) {
+        body +=
+          '<p class="cc-li-rail-empty" style="margin:8px 0 4px">No recent posts found for ' +
+          escapeHtml(String(data.authorsWithoutPosts)) +
+          " saved author" +
+          (data.authorsWithoutPosts === 1 ? "" : "s") +
+          ". Refresh again or open their activity.</p>";
+      }
       body +=
         '<button type="button" class="cc-li-rail-btn" data-cc-refresh-authors>Refresh posts</button>';
     }
@@ -1458,7 +1494,7 @@
         let text = (textEl && textEl.textContent ? textEl.textContent : "")
           .replace(/\s+/g, " ")
           .trim();
-        if (!text || text.length < 12) continue;
+        if (!text || text.length < 8) continue;
         if (/^(reposted|shared a)/i.test(text)) {
           skippedRepost++;
           continue;
@@ -1613,10 +1649,28 @@
               s.authorPostsFilter
             );
           })
-          .then(function () {
+          .then(function (result) {
+            lastRenderFp = "";
             scheduleRemount();
+            try {
+              const fetched = result && Number(result.fetched);
+              if (fetched > 0) {
+                btn.textContent = "Updated · " + fetched + " author" + (fetched === 1 ? "" : "s");
+              } else {
+                btn.textContent = "No new posts found";
+              }
+              btn.disabled = false;
+              setTimeout(function () {
+                try {
+                  if (btn && btn.isConnected) btn.textContent = "Refresh posts";
+                } catch (e) {}
+              }, 3200);
+            } catch (e) {
+              btn.disabled = false;
+              btn.textContent = "Refresh posts";
+            }
           })
-          .catch(function () {
+          .catch(function (err) {
             btn.disabled = false;
             btn.textContent = "Refresh posts";
           });
@@ -1876,12 +1930,14 @@
 
   let softRefreshBusy = false;
   async function requestSoftAuthorRefresh(authors, postsPerAuthor, force, filter) {
-    if (softRefreshBusy) return;
+    if (softRefreshBusy) {
+      return { skipped: "busy" };
+    }
     const list = Array.isArray(authors) ? authors.slice(0, 5) : [];
-    if (!list.length) return;
+    if (!list.length) return { skipped: "no_authors" };
     softRefreshBusy = true;
     try {
-      await new Promise(function (resolve) {
+      const result = await new Promise(function (resolve) {
         chrome.runtime.sendMessage(
           {
             action: "softFetchAuthorPosts",
@@ -1890,13 +1946,19 @@
             force: !!force,
             filter: filter === "all" ? "all" : "original",
           },
-          function () {
-            resolve();
+          function (response) {
+            const err = chrome.runtime.lastError;
+            resolve({
+              response: response || null,
+              lastError: err ? String(err.message || err) : null,
+            });
           }
         );
       });
+      return (result.response && result.response.result) || result.response || result;
     } catch (e) {
       dbg("soft refresh failed", e);
+      return { error: String(e) };
     } finally {
       softRefreshBusy = false;
     }

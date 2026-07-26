@@ -1376,7 +1376,7 @@
       (typeof AsideWidgets !== "undefined" && AsideWidgets.DEFAULT_SETTINGS) || {
         authors: [],
         postsPerAuthor: 2,
-        authorRefreshMinutes: 60,
+        authorRefreshMinutes: 15,
         authorPostsFilter: "original",
         jobAlertsLimit: 5,
         jobAlertsTtlDays: 7,
@@ -1590,15 +1590,16 @@
       '<label>Auto-refresh <select id="fwAuthorRefresh">' +
       [
         { v: 0, t: "Manual only" },
+        { v: 15, t: "Every 15 minutes (recommended)" },
         { v: 30, t: "Every 30 minutes" },
-        { v: 60, t: "Every 1 hour (recommended)" },
+        { v: 60, t: "Every 1 hour" },
         { v: 180, t: "Every 3 hours" },
         { v: 360, t: "Every 6 hours" },
       ]
         .map(function (o) {
           const cur =
             settings.authorRefreshMinutes == null
-              ? 60
+              ? 15
               : Number(settings.authorRefreshMinutes);
           return (
             '<option value="' +

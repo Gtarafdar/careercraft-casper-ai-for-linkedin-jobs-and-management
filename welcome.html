@@ -121,15 +121,6 @@
         </button>
       </div>
     </div>
-    <script>
-      (async function () {
-        try {
-          await chrome.storage.local.set({ onboarding_completed: true });
-        } catch (e) {}
-        document.getElementById("skipWelcome").addEventListener("click", () => {
-          window.close();
-        });
-      })();
-    </script>
+    <script src="welcome.js"></script>
   </body>
 </html>
