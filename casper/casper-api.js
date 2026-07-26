@@ -94,6 +94,10 @@ class CasperAPI {
         response = await this.aiService.callOpenAIText(fullPrompt);
       } else if (this.aiService.activeProvider === "openrouter") {
         response = await this.aiService.callOpenRouterText(fullPrompt);
+      } else if (this.aiService.activeProvider === "deepseek") {
+        response = await this.aiService.callDeepSeekText(fullPrompt);
+      } else if (this.aiService.activeProvider === "qwen") {
+        response = await this.aiService.callQwenText(fullPrompt);
       } else {
         throw new Error("invalidProvider");
       }

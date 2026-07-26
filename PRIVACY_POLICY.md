@@ -23,6 +23,7 @@ CareerCraft AI stores all data **locally on your device** using Chrome's storage
   - Job descriptions (cached for up to 24 hours to reduce API calls)
   - ATS compatibility analysis results
   - Saved job searches and notification settings
+  - **Job Tracker** rows (viewed jobs, ATS scores, application status, favorites) — local only; CSV/spreadsheet export is user-initiated; optional background applicant/expiry refresh is off by default and user-controlled
 - **Chat History**: Casper AI conversation history (stored locally, never transmitted to us)
 - **UI Preferences**: Toolbar state, notification settings, theme preferences
 

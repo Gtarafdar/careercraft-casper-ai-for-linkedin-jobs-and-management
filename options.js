@@ -11,13 +11,26 @@ if (typeof pdfjsLib !== "undefined") {
   );
 }
 
-
 // Store actual API keys in memory (not masked)
 const actualKeys = {
   gemini: null,
   openai: null,
   openrouter: null,
+  deepseek: null,
+  qwen: null,
 };
+
+const PROVIDER_LABELS = {
+  gemini: "Gemini",
+  openai: "OpenAI",
+  openrouter: "OpenRouter",
+  deepseek: "DeepSeek",
+  qwen: "Qwen",
+};
+
+function providerLabel(provider) {
+  return PROVIDER_LABELS[provider] || provider;
+}
 
 /**
  * Load saved API keys and active provider
@@ -28,10 +41,14 @@ async function loadSavedSettings() {
       "gemini_api_key",
       "openai_api_key",
       "openrouter_api_key",
+      "deepseek_api_key",
+      "qwen_api_key",
       "active_provider",
       "gemini_model",
       "openai_model",
       "openrouter_model",
+      "deepseek_model",
+      "qwen_model",
     ]);
 
     // Update Gemini status
@@ -97,12 +114,44 @@ async function loadSavedSettings() {
         result.openrouter_model;
     }
 
+    // DeepSeek
+    if (result.deepseek_api_key) {
+      actualKeys.deepseek = result.deepseek_api_key;
+      updateStatus("deepseek", true);
+      const input = document.getElementById("input-deepseek");
+      if (input) {
+        input.value = maskApiKey(result.deepseek_api_key);
+        input.dataset.hasSavedKey = "true";
+      }
+    }
+    if (result.deepseek_model) {
+      const sel = document.getElementById("deepseek-model-select");
+      if (sel) sel.value = result.deepseek_model;
+    }
+
+    // Qwen
+    if (result.qwen_api_key) {
+      actualKeys.qwen = result.qwen_api_key;
+      updateStatus("qwen", true);
+      const input = document.getElementById("input-qwen");
+      if (input) {
+        input.value = maskApiKey(result.qwen_api_key);
+        input.dataset.hasSavedKey = "true";
+      }
+    }
+    if (result.qwen_model) {
+      const sel = document.getElementById("qwen-model-select");
+      if (sel) sel.value = result.qwen_model;
+    }
+
     // Set active provider
     if (result.active_provider) {
-      document.getElementById(`radio-${result.active_provider}`).checked = true;
-      document
-        .querySelector(`[data-provider="${result.active_provider}"]`)
-        .classList.add("active");
+      const radio = document.getElementById(`radio-${result.active_provider}`);
+      const option = document.querySelector(
+        `[data-provider="${result.active_provider}"]`
+      );
+      if (radio) radio.checked = true;
+      if (option) option.classList.add("active");
     }
   } catch (error) {
     console.error("Error loading settings:", error);
@@ -161,6 +210,8 @@ function setupEventListeners() {
         clearApiKey(provider);
       } else if (action === "clear-usage") {
         clearUsageStats(provider);
+      } else if (action === "test-compat") {
+        testCompatibleConnection(provider);
       }
     });
   });
@@ -231,13 +282,7 @@ async function saveModelSelection(provider, model) {
   try {
     const storageKey = `${provider}_model`;
     await chrome.storage.local.set({ [storageKey]: model });
-    const providerName =
-      provider === "gemini"
-        ? "Gemini"
-        : provider === "openai"
-        ? "OpenAI"
-        : "OpenRouter";
-    showSuccess(`${providerName} model updated to ${model}`);
+    showSuccess(`${providerLabel(provider)} model updated to ${model}`);
     console.log(`Model selection saved: ${provider} -> ${model}`);
   } catch (error) {
     console.error("Error saving model selection:", error);
@@ -266,25 +311,13 @@ async function saveApiKey(provider) {
 
   // Don't validate if it's a masked key (user didn't change it)
   if (apiKey.includes("•")) {
-    const providerName =
-      provider === "gemini"
-        ? "Gemini"
-        : provider === "openai"
-        ? "OpenAI"
-        : "OpenRouter";
-    showSuccess(`${providerName} API key already saved!`);
+    showSuccess(`${providerLabel(provider)} API key already saved!`);
     return;
   }
 
   // Validate API key format
   if (!validateApiKey(provider, apiKey)) {
-    const providerName =
-      provider === "gemini"
-        ? "Gemini"
-        : provider === "openai"
-        ? "OpenAI"
-        : "OpenRouter";
-    showError(`Invalid ${providerName} API key format`);
+    showError(`Invalid ${providerLabel(provider)} API key format`);
     input.classList.add("error");
     return;
   }
@@ -313,13 +346,7 @@ async function saveApiKey(provider) {
     input.value = maskApiKey(apiKey);
     input.dataset.hasSavedKey = "true";
 
-    const providerName =
-      provider === "gemini"
-        ? "Gemini"
-        : provider === "openai"
-        ? "OpenAI"
-        : "OpenRouter";
-    showSuccess(`${providerName} API key saved successfully!`);
+    showSuccess(`${providerLabel(provider)} API key saved successfully!`);
   } catch (error) {
     console.error("Error saving API key:", error);
     showError("Failed to save API key");
@@ -330,14 +357,10 @@ async function saveApiKey(provider) {
  * Clear API key for a provider
  */
 async function clearApiKey(provider) {
-  const providerName =
-    provider === "gemini"
-      ? "Gemini"
-      : provider === "openai"
-      ? "OpenAI"
-      : "OpenRouter";
   if (
-    !confirm(`Are you sure you want to remove your ${providerName} API key?`)
+    !confirm(
+      `Are you sure you want to remove your ${providerLabel(provider)} API key?`
+    )
   ) {
     return;
   }
@@ -367,13 +390,7 @@ async function clearApiKey(provider) {
         .classList.remove("active");
     }
 
-    const providerName =
-      provider === "gemini"
-        ? "Gemini"
-        : provider === "openai"
-        ? "OpenAI"
-        : "OpenRouter";
-    showSuccess(`${providerName} API key removed`);
+    showSuccess(`${providerLabel(provider)} API key removed`);
   } catch (error) {
     console.error("Error clearing API key:", error);
     showError("Failed to clear API key");
@@ -405,6 +422,12 @@ function validateApiKey(provider, key) {
   } else if (provider === "openrouter") {
     // OpenRouter keys start with "sk-or-v1-"
     return key.startsWith("sk-or-v1-") && key.length > 40;
+  } else if (provider === "deepseek") {
+    // DeepSeek keys typically start with sk-
+    return key.startsWith("sk-") && key.length > 20;
+  } else if (provider === "qwen") {
+    // DashScope keys typically start with sk-
+    return key.startsWith("sk-") && key.length > 20;
   }
   return false;
 }
@@ -422,6 +445,7 @@ function maskApiKey(key) {
  */
 function updateStatus(provider, isConfigured) {
   const statusEl = document.getElementById(`status-${provider}`);
+  if (!statusEl) return;
   if (isConfigured) {
     statusEl.textContent = "Configured";
     statusEl.classList.remove("not-configured");
@@ -572,6 +596,99 @@ async function testOpenRouterConnection() {
     btn.disabled = false;
     btn.textContent = originalText;
     btn.style.opacity = "1";
+  }
+}
+
+/**
+ * Test DeepSeek / Qwen OpenAI-compatible connection
+ */
+async function testCompatibleConnection(provider) {
+  const endpoints = {
+    deepseek: {
+      url: "https://api.deepseek.com/chat/completions",
+      keyField: "deepseek_api_key",
+      modelField: "deepseek_model",
+      defaultModel: "deepseek-chat",
+      btnId: "testDeepSeekBtn",
+    },
+    qwen: {
+      url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+      keyField: "qwen_api_key",
+      modelField: "qwen_model",
+      defaultModel: "qwen-plus",
+      btnId: "testQwenBtn",
+    },
+  };
+
+  const cfg = endpoints[provider];
+  if (!cfg) {
+    showError("Unknown provider for connection test");
+    return;
+  }
+
+  const btn = document.getElementById(cfg.btnId);
+  const originalText = btn ? btn.textContent : "";
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Testing...";
+      btn.style.opacity = "0.6";
+    }
+
+    const result = await chrome.storage.local.get([
+      cfg.keyField,
+      cfg.modelField,
+    ]);
+    const apiKey = result[cfg.keyField];
+    if (!apiKey) {
+      showError(`Please save your ${providerLabel(provider)} API key first`);
+      return;
+    }
+
+    const model = result[cfg.modelField] || cfg.defaultModel;
+    const response = await fetch(cfg.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: "user",
+            content: 'Respond with: {"status": "working"}',
+          },
+        ],
+        max_tokens: 50,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || `API returned ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      showSuccess(
+        `${providerLabel(provider)} API connection successful! Model: ${model}`
+      );
+    } else {
+      throw new Error("Unexpected response format");
+    }
+  } catch (error) {
+    console.error(`${provider} test failed:`, error);
+    showError(`Connection failed: ${error.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.style.opacity = "1";
+    }
   }
 }
 
@@ -1131,6 +1248,10 @@ async function parseProfileDataWithAI(text) {
     "openai_model",
     "openrouter_api_key",
     "openrouter_model",
+    "deepseek_api_key",
+    "deepseek_model",
+    "qwen_api_key",
+    "qwen_model",
   ]);
 
   const provider = result.active_provider || "gemini";
@@ -1296,6 +1417,48 @@ Remember:
     }
 
     responseText = data.choices[0].message.content;
+  } else if (provider === "deepseek" || provider === "qwen") {
+    const isDeepseek = provider === "deepseek";
+    const apiKey = isDeepseek ? result.deepseek_api_key : result.qwen_api_key;
+    if (!apiKey) {
+      throw new Error(`${providerLabel(provider)} API key not configured`);
+    }
+    const model = isDeepseek
+      ? result.deepseek_model || "deepseek-chat"
+      : result.qwen_model || "qwen-plus";
+    const url = isDeepseek
+      ? "https://api.deepseek.com/chat/completions"
+      : "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions";
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 2048,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`${providerLabel(provider)} API Error:`, errorData);
+      throw new Error(
+        `API error: ${response.status} - ${
+          errorData.error?.message || response.statusText
+        }`
+      );
+    }
+
+    const data = await response.json();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error(`Invalid response from ${providerLabel(provider)} API`);
+    }
+    responseText = data.choices[0].message.content;
   } else {
     throw new Error(`Unknown provider: ${provider}`);
   }
@@ -1402,6 +1565,8 @@ async function loadUsageStats() {
       "api_usage_gemini",
       "api_usage_openai",
       "api_usage_openrouter",
+      "api_usage_deepseek",
+      "api_usage_qwen",
     ]);
 
     // Always display usage stats (even if 0)
@@ -1417,6 +1582,14 @@ async function loadUsageStats() {
       "openrouter",
       result.api_usage_openrouter || { requests: 0, tokens: 0 }
     );
+    updateUsageDisplay(
+      "deepseek",
+      result.api_usage_deepseek || { requests: 0, tokens: 0 }
+    );
+    updateUsageDisplay(
+      "qwen",
+      result.api_usage_qwen || { requests: 0, tokens: 0 }
+    );
   } catch (error) {
     console.error("Error loading usage stats:", error);
   }
@@ -1429,6 +1602,8 @@ function updateUsageDisplay(provider, usage) {
   const usageDiv = document.getElementById(`usage-${provider}`);
   const requestsSpan = document.getElementById(`usage-${provider}-requests`);
   const tokensSpan = document.getElementById(`usage-${provider}-tokens`);
+
+  if (!usageDiv || !requestsSpan || !tokensSpan) return;
 
   // Always show usage stats section
   usageDiv.style.display = "block";
@@ -1448,9 +1623,7 @@ function updateUsageDisplay(provider, usage) {
 async function clearUsageStats(provider) {
   if (
     !confirm(
-      `Clear all usage statistics for ${
-        provider === "gemini" ? "Gemini" : "OpenAI"
-      }?`
+      `Clear all usage statistics for ${providerLabel(provider)}?`
     )
   ) {
     return;
@@ -1463,9 +1636,7 @@ async function clearUsageStats(provider) {
     // Update display
     updateUsageDisplay(provider, { requests: 0, tokens: 0 });
 
-    showSuccess(
-      `${provider === "gemini" ? "Gemini" : "OpenAI"} usage statistics cleared!`
-    );
+    showSuccess(`${providerLabel(provider)} usage statistics cleared!`);
   } catch (error) {
     console.error("Error clearing usage stats:", error);
     showError("Failed to clear usage statistics");
@@ -2014,8 +2185,108 @@ async function loadNotificationSettings() {
 
     // Toggle visibility of settings
     toggleNotificationSettings(settings.enabled);
+
+    // Live health: alarm + saved searches + permission
+    await refreshAlertHealth();
   } catch (error) {
     console.error("Error loading notification settings:", error);
+  }
+}
+
+/**
+ * Refresh alert health line (alarm schedule, searches, permission).
+ * Falls back to storage if the service worker message fails.
+ */
+async function refreshAlertHealth() {
+  const statusEl = document.getElementById("alertHealthStatus");
+  const searchEl = document.getElementById("alertSavedSearchCount");
+  const nextEl = document.getElementById("nextCheckAt");
+  let health = null;
+  try {
+    health = await chrome.runtime.sendMessage({
+      action: "getNotificationHealth",
+    });
+  } catch (e) {
+    health = null;
+  }
+
+  // Storage fallback when SW is asleep / message fails
+  if (!health || !health.success) {
+    try {
+      const result = await chrome.storage.local.get([
+        "notification_settings",
+        "saved_job_searches",
+      ]);
+      const settings = result.notification_settings || {};
+      const searches = result.saved_job_searches || [];
+      health = {
+        success: true,
+        enabled: !!settings.enabled,
+        checkInterval: settings.checkInterval || null,
+        lastChecked: settings.lastChecked || null,
+        notificationsSent: settings.notificationsSent || 0,
+        savedSearchCount: searches.length,
+        permission: "unknown",
+        alarmScheduled: null,
+        nextCheckAt: null,
+        fromStorageFallback: true,
+      };
+    } catch (e2) {
+      health = null;
+    }
+  }
+
+  if (!health || !health.success) {
+    if (statusEl) statusEl.textContent = "Unable to read status";
+    if (searchEl) searchEl.textContent = "—";
+    if (nextEl) nextEl.textContent = "—";
+    return;
+  }
+
+  // If alerts are ON but alarm missing, force re-schedule
+  if (health.enabled && health.alarmScheduled === false) {
+    try {
+      const result = await chrome.storage.local.get(["notification_settings"]);
+      await chrome.runtime.sendMessage({
+        action: "updateNotificationAlarm",
+        settings: result.notification_settings || { enabled: true },
+      });
+      const again = await chrome.runtime.sendMessage({
+        action: "getNotificationHealth",
+      });
+      if (again && again.success) health = again;
+    } catch (e3) {}
+  }
+
+  if (searchEl) searchEl.textContent = String(health.savedSearchCount || 0);
+  if (nextEl) {
+    nextEl.textContent = health.nextCheckAt
+      ? new Date(health.nextCheckAt).toLocaleString()
+      : health.enabled
+      ? health.alarmScheduled === false
+        ? "Not scheduled — click Check for Jobs Now"
+        : health.fromStorageFallback
+        ? "Open this page after reload to refresh"
+        : "—"
+      : "—";
+  }
+  if (statusEl) {
+    if (!health.enabled) {
+      statusEl.textContent = "Off";
+    } else if (health.permission === "denied") {
+      statusEl.textContent = "Permission needed";
+    } else if (!health.savedSearchCount) {
+      statusEl.textContent = "On — add a saved search first";
+    } else if (health.alarmScheduled === false) {
+      statusEl.textContent = "On — alarm missing (re-saving…)";
+    } else if (health.fromStorageFallback) {
+      statusEl.textContent =
+        "On — " +
+        (health.savedSearchCount || 0) +
+        " search(es); verify with Check for Jobs Now";
+    } else {
+      statusEl.textContent = "Working (alarm scheduled)";
+    }
   }
 }
 
@@ -2064,6 +2335,7 @@ async function saveNotificationSettings() {
 
     toggleNotificationSettings(enabled);
     showSuccess("Notification settings saved!");
+    await refreshAlertHealth();
   } catch (error) {
     console.error("Error saving notification settings:", error);
     showError("Failed to save notification settings");
@@ -2103,11 +2375,24 @@ async function sendTestNotification() {
         action: "sendTestNotification",
       },
       (response) => {
-        if (response && response.success) {
-          showSuccess("Test notification sent!");
-        } else {
-          showError("Failed to send test notification");
+        if (chrome.runtime.lastError) {
+          showError(
+            "Test failed: " + chrome.runtime.lastError.message
+          );
+          loadNotificationLogs();
+          return;
         }
+        if (response && response.success) {
+          showSuccess(
+            "Test notification sent — check top-right banner or Notification Centre"
+          );
+        } else {
+          showError(
+            "Test notification failed" +
+              (response && response.error ? ": " + response.error : "")
+          );
+        }
+        setTimeout(() => loadNotificationLogs(), 500);
       }
     );
   } catch (error) {
@@ -2158,6 +2443,7 @@ function setupNotificationListeners() {
         // Refresh logs after check
         setTimeout(() => {
           loadNotificationLogs();
+          loadNotificationSettings();
           checkJobsButton.disabled = false;
           checkJobsButton.textContent = "🔍 Check for Jobs Now";
         }, 3000);
@@ -2192,19 +2478,30 @@ function setupNotificationListeners() {
  */
 async function loadNotificationLogs() {
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: "getNotificationLogs",
-    });
+    let logs = [];
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: "getNotificationLogs",
+      });
+      if (response && Array.isArray(response.logs)) {
+        logs = response.logs;
+      }
+    } catch (e) {}
 
-    const logs = response.logs || [];
+    // Direct storage fallback (if SW message fails)
+    if (!logs.length) {
+      const result = await chrome.storage.local.get(["notification_logs"]);
+      logs = result.notification_logs || [];
+    }
+
     const container = document.getElementById("notificationLogs");
-
     if (!container) return;
 
     if (logs.length === 0) {
       container.innerHTML = `
         <div style="color: #9ca3af; text-align: center; padding: 20px;">
-          No logs yet. Logs will appear here when notifications are checked or sent.
+          No logs yet. Click <strong>Check for Jobs Now</strong> to run a check,
+          or wait for the scheduled alarm. Make sure you have at least one saved search.
         </div>
       `;
       return;
@@ -2213,6 +2510,11 @@ async function loadNotificationLogs() {
     container.innerHTML = logs.map((log) => formatLogEntry(log)).join("");
   } catch (error) {
     console.error("Error loading notification logs:", error);
+    const container = document.getElementById("notificationLogs");
+    if (container) {
+      container.innerHTML =
+        '<div style="color:#b91c1c;text-align:center;padding:20px;">Could not load logs. Reload the extension and try again.</div>';
+    }
   }
 }
 

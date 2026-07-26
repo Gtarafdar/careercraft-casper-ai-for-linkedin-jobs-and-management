@@ -128,7 +128,6 @@ class LinkedInFormatter {
         await window.casperInstance.init();
         console.log("LinkedIn Formatter: Casper initialized successfully");
 
-
         // Apply post buttons visibility setting
         this.applyCasperPostButtonsVisibility();
       }
@@ -633,7 +632,6 @@ class LinkedInFormatter {
         const found = discoverEditors();
         const live = new Set(found.map((f) => f.el));
 
-
         for (const [editor, meta] of [...this.editorToolbars.entries()]) {
           if (
             !live.has(editor) ||
@@ -992,7 +990,6 @@ class LinkedInFormatter {
     this.toolbar = prevToolbar;
     this.editor = prevEditor;
 
-
     return host;
   }
 
@@ -1027,7 +1024,6 @@ class LinkedInFormatter {
     // Insert toolbar before editor container (or above the editable itself)
     const insertParent = editorContainer.parentNode;
     insertParent.insertBefore(this.toolbar, editorContainer);
-
 
     // Attach event listeners
     this.attachToolbarListeners();
@@ -1579,7 +1575,6 @@ class LinkedInFormatter {
     const plain = this.decodeFancyCharacters(normalized);
     const maps = this.getTypographyMaps();
     const formattedText = this.convertWithMap(plain, maps[style] || {});
-
 
     this.replaceSelection(formattedText);
   }
@@ -3991,11 +3986,23 @@ class LinkedInFormatter {
       );
     }
     const url = window.location.href;
-    // Must have job identifier in URL AND have the detail view container
+    const path = window.location.pathname || "";
+    const standaloneView = /\/jobs\/view\/\d+/.test(path);
+
+    // Standalone /jobs/view/{id} — prefer showing ATS when job chrome is present
+    if (standaloneView) {
+      const hasChrome = !!(
+        document.querySelector(
+          ".jobs-details__main-content, .job-view-layout, .jobs-details, .scaffold-layout__detail, main.scaffold-layout__main, #job-details, .jobs-unified-top-card, .jobs-description__content, h1.job-details-jobs-unified-top-card__job-title, h1.t-24"
+        ) || document.querySelector("main")
+      );
+      if (hasChrome) return true;
+    }
+
     const hasJobUrl =
       url.includes("/jobs/view/") || url.includes("currentJobId=");
     const hasDetailContainer = document.querySelector(
-      ".jobs-details__main-content, .jobs-unified-top-card, .scaffold-layout__detail"
+      ".jobs-details__main-content, .jobs-unified-top-card, .scaffold-layout__detail, .job-view-layout, .jobs-details, main.scaffold-layout__main, #job-details, [class*='jobs-details']"
     );
 
     // Also check we're not in the mobile/compact view or listing view
@@ -4145,7 +4152,65 @@ class LinkedInFormatter {
     `;
   }
 
+  /**
+   * Resolve a live (connected) job detail container for ATS box mounting.
+   * LinkedIn often replaces DOM nodes during SPA updates; stale refs hide results.
+   */
+  resolveJobDetailContainer() {
+    const containerSelectors = [
+      ".jobs-details__main-content",
+      ".job-view-layout .jobs-details",
+      ".jobs-details",
+      ".jobs-search__job-details",
+      ".scaffold-layout__detail",
+      ".job-details-jobs-unified-top-card__container",
+      "main.scaffold-layout__main",
+      ".jobs-details-top-card",
+      "#job-details",
+      'div[class*="jobs-details"]',
+      ".jobs-unified-top-card",
+    ];
+
+    let jobContainer =
+      (typeof LinkedInDOM !== "undefined" &&
+        LinkedInDOM.getJobDetailContainer &&
+        LinkedInDOM.getJobDetailContainer()) ||
+      null;
+    if (jobContainer && jobContainer.isConnected) return jobContainer;
+
+    for (let i = 0; i < containerSelectors.length; i++) {
+      const el = document.querySelector(containerSelectors[i]);
+      if (el && el.isConnected) return el;
+    }
+
+    if (/\/jobs\/view\/\d+/.test(window.location.pathname || "")) {
+      const main = document.querySelector("main");
+      if (main && main.isConnected) return main;
+    }
+    return null;
+  }
+
+  /**
+   * Mount ATS box onto a live container (re-resolves if the prior node was replaced).
+   */
+  mountJobStatsBox(statsBox, preferredContainer) {
+    const old = document.querySelector(".lf-job-stats-box");
+    if (old && old !== statsBox) old.remove();
+
+    let jobContainer =
+      preferredContainer && preferredContainer.isConnected
+        ? preferredContainer
+        : null;
+    if (!jobContainer) jobContainer = this.resolveJobDetailContainer();
+    if (!jobContainer) {
+      return false;
+    }
+    this.insertStatsBox(statsBox, jobContainer);
+    return !!statsBox.isConnected;
+  }
+
   async displayJobStats(retryCount = 0) {
+
     if (
       typeof FeatureFlags !== "undefined" &&
       !(await FeatureFlags.isEnabled("ats"))
@@ -4172,11 +4237,19 @@ class LinkedInFormatter {
     }
     this.isDisplayingStats = true;
 
-    // Also check if we're in the job list card (not detail view)
+    // Also check if we're in the job list card (not detail view).
+    // Never treat standalone /jobs/view/{id} as a list card.
+    const standaloneView = /\/jobs\/view\/\d+/.test(
+      window.location.pathname || ""
+    );
     const jobCard = document.querySelector(
       ".jobs-search-results-list .job-card-container"
     );
-    if (jobCard && jobCard.querySelector(".jobs-unified-top-card")) {
+    if (
+      !standaloneView &&
+      jobCard &&
+      jobCard.querySelector(".jobs-unified-top-card")
+    ) {
       console.log(
         "LinkedIn Formatter: Detected job list card, not detail view"
       );
@@ -4184,30 +4257,9 @@ class LinkedInFormatter {
       return;
     }
 
-    // Find the right-side job details container with multiple fallbacks
-    const containerSelectors = [
-      ".jobs-details__main-content",
-      ".jobs-details",
-      ".job-view-layout",
-      ".jobs-search__job-details",
-      ".jobs-details-top-card",
-      'div[class*="jobs-details"]',
-    ];
-
-    let jobContainer =
-      (typeof LinkedInDOM !== "undefined" &&
-        LinkedInDOM.getJobDetailContainer()) ||
-      null;
+    let jobContainer = this.resolveJobDetailContainer();
     if (jobContainer) {
-      console.log("LinkedIn Formatter: Found container via LinkedInDOM");
-    } else {
-      for (const selector of containerSelectors) {
-        jobContainer = document.querySelector(selector);
-        if (jobContainer) {
-          console.log("LinkedIn Formatter: Found container:", selector);
-          break;
-        }
-      }
+      console.log("LinkedIn Formatter: Found live job container");
     }
 
     if (!jobContainer) {
@@ -4230,9 +4282,132 @@ class LinkedInFormatter {
       console.log("LinkedIn Formatter: Extracting job data...");
       const jobData = await jobExtractor.extractJobData();
 
+      // Job id early — Job Tracker upsert (soft, never blocks ATS)
+      const urlEarly = window.location.href;
+      const urlParamsEarly = new URLSearchParams(urlEarly.split("?")[1] || "");
+      const jobIdEarly =
+        urlParamsEarly.get("currentJobId") ||
+        urlEarly.match(/\/jobs\/view\/(\d+)/)?.[1];
+      if (jobIdEarly && typeof JobTrackerStore !== "undefined") {
+        var applicantCount = null;
+        try {
+          if (this.apiData) {
+            if (this.apiData.appliedCount != null)
+              applicantCount = Number(this.apiData.appliedCount);
+            else if (this.apiData.numApplicants != null)
+              applicantCount = Number(this.apiData.numApplicants);
+            else if (this.apiData.applicantCount != null)
+              applicantCount = Number(this.apiData.applicantCount);
+          }
+        } catch (e) {}
+        var domApplicantCount = null;
+        try {
+          if (
+            typeof LinkedInDOM !== "undefined" &&
+            LinkedInDOM.parseApplicantCountFromPage
+          ) {
+            domApplicantCount = LinkedInDOM.parseApplicantCountFromPage();
+          }
+        } catch (e2) {}
+        if (
+          (applicantCount == null || Number.isNaN(applicantCount)) &&
+          domApplicantCount != null
+        ) {
+          applicantCount = domApplicantCount;
+        }
+        if (
+          (applicantCount == null || Number.isNaN(applicantCount)) &&
+          jobData &&
+          jobData.location
+        ) {
+          try {
+            var fromLoc =
+              typeof LinkedInDOM !== "undefined" &&
+              LinkedInDOM.parseApplicantCountFromText
+                ? LinkedInDOM.parseApplicantCountFromText(jobData.location)
+                : null;
+            if (fromLoc != null) applicantCount = fromLoc;
+          } catch (e3) {}
+        }
+        if (
+          (applicantCount == null || Number.isNaN(applicantCount)) &&
+          jobData &&
+          jobData.description
+        ) {
+          try {
+            var fromDesc =
+              typeof LinkedInDOM !== "undefined" &&
+              LinkedInDOM.parseApplicantCountFromText
+                ? LinkedInDOM.parseApplicantCountFromText(
+                    String(jobData.description).slice(0, 2500)
+                  )
+                : null;
+            if (fromDesc != null) applicantCount = fromDesc;
+          } catch (e4) {}
+        }
+        var cleanedLocation =
+          jobData && jobData.location
+            ? typeof LinkedInDOM !== "undefined" && LinkedInDOM.cleanLocationText
+              ? LinkedInDOM.cleanLocationText(jobData.location)
+              : jobData.location
+            : jobData && jobData.location;
+        // Last-chance company from "Role | Company" if extractor left placeholder
+        var __upsertTitle = jobData && jobData.title ? jobData.title : "";
+        var __upsertCompany = jobData && jobData.company ? jobData.company : "";
+        if (
+          (!__upsertCompany ||
+            String(__upsertCompany).toLowerCase() === "company not found") &&
+          __upsertTitle &&
+          String(__upsertTitle).indexOf("|") >= 0 &&
+          jobExtractor &&
+          typeof jobExtractor.splitRoleAndCompany === "function"
+        ) {
+          try {
+            var __split = jobExtractor.splitRoleAndCompany(__upsertTitle);
+            if (__split && __split.company) {
+              __upsertCompany = __split.company;
+              if (__split.title) __upsertTitle = __split.title;
+            }
+          } catch (e5) {}
+        }
+        var __safeTitle =
+          __upsertTitle &&
+          String(__upsertTitle).toLowerCase() !== "job title not found"
+            ? __upsertTitle
+            : undefined;
+        var __safeCompany =
+          __upsertCompany &&
+          String(__upsertCompany).toLowerCase() !== "company not found"
+            ? __upsertCompany
+            : undefined;
+        var __safeLocation =
+          cleanedLocation &&
+          String(cleanedLocation).toLowerCase() !== "location not specified"
+            ? cleanedLocation
+            : undefined;
+        JobTrackerStore.safeUpsert({
+          id: jobIdEarly,
+          title: __safeTitle,
+          company: __safeCompany,
+          location: __safeLocation,
+          url:
+            "https://www.linkedin.com/jobs/view/" +
+            encodeURIComponent(jobIdEarly),
+          touchViewed: true,
+          status: "viewed",
+          statusSource: "auto",
+          source: "viewed",
+          applicantCount: Number.isNaN(applicantCount) ? null : applicantCount,
+          companyDetails:
+            __safeCompany
+              ? { name: __safeCompany, linkedinUrl: null, raw: null }
+              : null,
+        }).catch(function () {});
+      }
+
       // Create loading box first
       const loadingBox = this.createLoadingBox();
-      this.insertStatsBox(loadingBox, jobContainer);
+      this.mountJobStatsBox(loadingBox, jobContainer);
 
       // Check if AI is configured
       const aiInitialized = await aiService.initialize();
@@ -4241,9 +4416,8 @@ class LinkedInFormatter {
         console.log(
           "LinkedIn Formatter: AI not configured, showing basic stats"
         );
-        loadingBox.remove();
         const basicStatsBox = this.createBasicStatsBox(jobData);
-        this.insertStatsBox(basicStatsBox, jobContainer);
+        this.mountJobStatsBox(basicStatsBox, jobContainer);
         return;
       }
 
@@ -4258,7 +4432,9 @@ class LinkedInFormatter {
       const url = window.location.href;
       const urlParams = new URLSearchParams(url.split("?")[1] || "");
       const jobId =
-        urlParams.get("currentJobId") || url.match(/\/jobs\/view\/(\d+)/)?.[1];
+        jobIdEarly ||
+        urlParams.get("currentJobId") ||
+        url.match(/\/jobs\/view\/(\d+)/)?.[1];
 
       // Check cache first
       let atsAnalysis = null;
@@ -4272,15 +4448,37 @@ class LinkedInFormatter {
           console.log("LinkedIn Formatter: ✅ Cache HIT - using cached result");
           isCached = true;
 
-          // Still extract requirements for display (quick, doesn't need cache)
-          try {
-            const requirements = await aiService.extractJobRequirements(
-              jobData.description
+          // Requirements need a real JD — skip stub descriptions (avoids skill1/duty1 UI)
+          const descOk =
+            jobData.description &&
+            String(jobData.description).length > 80 &&
+            !/^description not available$/i.test(
+              String(jobData.description).trim()
             );
-            jobData.requirements = requirements;
-          } catch (error) {
-            console.error("Failed to extract requirements:", error);
+          if (descOk) {
+            try {
+              const requirements = await aiService.extractJobRequirements(
+                jobData.description
+              );
+              jobData.requirements = requirements;
+            } catch (error) {
+              console.error("Failed to extract requirements:", error);
+              jobData.requirements = null;
+            }
+          } else {
             jobData.requirements = null;
+            console.warn(
+              "LinkedIn Formatter: Skipping requirements — job description missing/stub"
+            );
+          }
+
+          if (typeof JobTrackerStore !== "undefined") {
+            JobTrackerStore.safeUpdateAts(
+              jobId,
+              atsAnalysis.overallScore,
+              atsAnalysis.summary || atsAnalysis.recommendation || null,
+              atsAnalysis
+            ).catch(function () {});
           }
         } else {
           console.log(
@@ -4291,23 +4489,36 @@ class LinkedInFormatter {
 
       // If not cached, run full AI analysis
       if (!atsAnalysis) {
+        const descOk =
+          jobData.description &&
+          String(jobData.description).length > 80 &&
+          !/^description not available$/i.test(
+            String(jobData.description).trim()
+          );
         // Extract job requirements using AI
         console.log("LinkedIn Formatter: Extracting job requirements...");
-        try {
-          const requirements = await aiService.extractJobRequirements(
-            jobData.description
-          );
-          jobData.requirements = requirements;
-          console.log(
-            "LinkedIn Formatter: Job requirements extracted:",
-            requirements
-          );
-        } catch (error) {
-          console.error(
-            "LinkedIn Formatter: Failed to extract requirements:",
-            error
-          );
+        if (descOk) {
+          try {
+            const requirements = await aiService.extractJobRequirements(
+              jobData.description
+            );
+            jobData.requirements = requirements;
+            console.log(
+              "LinkedIn Formatter: Job requirements extracted:",
+              requirements
+            );
+          } catch (error) {
+            console.error(
+              "LinkedIn Formatter: Failed to extract requirements:",
+              error
+            );
+            jobData.requirements = null;
+          }
+        } else {
           jobData.requirements = null;
+          console.warn(
+            "LinkedIn Formatter: Skipping requirements — job description missing/stub"
+          );
         }
 
         // Run AI analysis
@@ -4326,33 +4537,42 @@ class LinkedInFormatter {
             jobData
           );
           console.log("LinkedIn Formatter: Result saved to cache");
+          if (typeof JobTrackerStore !== "undefined") {
+            JobTrackerStore.safeUpdateAts(
+              jobId,
+              atsAnalysis.overallScore,
+              atsAnalysis.summary || atsAnalysis.recommendation || null,
+              atsAnalysis
+            ).catch(function () {});
+          }
         }
       }
 
-      // Remove loading box and show results
-      loadingBox.remove();
+      // Re-resolve container — LinkedIn may have replaced the original node
+      jobContainer = this.resolveJobDetailContainer() || jobContainer;
 
       if (atsAnalysis && atsAnalysis.overallScore !== undefined) {
         console.log("LinkedIn Formatter: AI analysis complete:", atsAnalysis);
         const statsBox = this.createAIStatsBox(jobData, atsAnalysis, isCached);
-        this.insertStatsBox(statsBox, jobContainer);
+        const mounted = this.mountJobStatsBox(statsBox, jobContainer);
       } else {
         console.log(
           "LinkedIn Formatter: AI analysis failed, showing basic stats"
         );
         const basicStatsBox = this.createBasicStatsBox(jobData);
-        this.insertStatsBox(basicStatsBox, jobContainer);
+        this.mountJobStatsBox(basicStatsBox, jobContainer);
       }
     } catch (error) {
       console.error("LinkedIn Formatter: Error in stats display:", error);
       // Remove loading box if it exists
-      const loadingBox = document.querySelector(".lf-job-stats-box");
-      if (loadingBox) loadingBox.remove();
+      const existingBox = document.querySelector(".lf-job-stats-box");
+      if (existingBox) existingBox.remove();
 
-      // Show error message
+      // Show error message on a live container
+      jobContainer = this.resolveJobDetailContainer() || jobContainer;
       const errorBox = this.createErrorBox(error.message, jobContainer);
       if (errorBox && jobContainer) {
-        this.insertStatsBox(errorBox, jobContainer);
+        this.mountJobStatsBox(errorBox, jobContainer);
       }
     } finally {
       // Always clear the processing flag
@@ -4368,14 +4588,22 @@ class LinkedInFormatter {
     const insertionPoints = [
       ".jobs-details__main-content > .mt5",
       ".jobs-unified-top-card",
+      ".job-details-jobs-unified-top-card__container",
       ".jobs-details-top-card__content",
       ".jobs-box--generic-attributes",
+      ".job-view-layout .jobs-details",
+      "h1.job-details-jobs-unified-top-card__job-title",
+      "h1.t-24",
     ];
 
     let inserted = false;
     for (const selector of insertionPoints) {
-      const targetElement = jobContainer.querySelector(selector);
-      if (targetElement) {
+      const targetElement =
+        jobContainer.querySelector(selector) ||
+        (jobContainer.matches && jobContainer.matches(selector)
+          ? jobContainer
+          : null);
+      if (targetElement && targetElement.parentNode) {
         // Insert after the target element
         targetElement.parentNode.insertBefore(
           statsBox,
@@ -4389,11 +4617,12 @@ class LinkedInFormatter {
 
     if (!inserted) {
       // Fallback: insert at the very top but with proper spacing
-      const firstChild = jobContainer.querySelector(
-        ".scaffold-layout__detail > *"
-      );
-      if (firstChild) {
-        firstChild.parentNode.insertBefore(statsBox, firstChild);
+      const firstChild =
+        jobContainer.querySelector(".scaffold-layout__detail > *") ||
+        jobContainer.querySelector("main > *") ||
+        jobContainer.firstElementChild;
+      if (firstChild && firstChild.parentNode) {
+        firstChild.parentNode.insertBefore(statsBox, firstChild.nextSibling);
       } else {
         jobContainer.insertBefore(statsBox, jobContainer.firstChild);
       }
@@ -4531,6 +4760,8 @@ class LinkedInFormatter {
         const patterns = [
           /(\d+\+?)\s+applicants?/i,
           /(\d+\+?)\s+applications?/i,
+          /(\d+\+?)\s+people\s+clicked\s+apply/i,
+          /(\d+\+?)\s+people\s+applied/i,
           /applicants?:\s*(\d+\+?)/i,
         ];
 
@@ -5704,108 +5935,291 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
     return true;
   }
+
+  if (request.action === "extractSearchJobCards") {
+    (async () => {
+      try {
+        let cards = [];
+        if (
+          typeof LinkedInDOM !== "undefined" &&
+          LinkedInDOM.extractSearchJobCards
+        ) {
+          cards = LinkedInDOM.extractSearchJobCards(request.maxCards || 5) || [];
+        }
+        sendResponse({ cards: cards });
+      } catch (error) {
+        console.warn("extractSearchJobCards failed (soft):", error);
+        sendResponse({ cards: [] });
+      }
+    })();
+    return true;
+  }
+
+  if (request.action === "refreshJobTrackerMeta") {
+    (async () => {
+      try {
+        const jobId =
+          request.jobId ||
+          new URLSearchParams(location.search).get("currentJobId") ||
+          (location.href.match(/\/jobs\/view\/(\d+)/) || [])[1];
+        let applicantCount = null;
+        if (
+          typeof LinkedInDOM !== "undefined" &&
+          LinkedInDOM.parseApplicantCountFromPage
+        ) {
+          applicantCount = LinkedInDOM.parseApplicantCountFromPage();
+        }
+        const closed =
+          typeof LinkedInDOM !== "undefined" && LinkedInDOM.detectClosedJob
+            ? LinkedInDOM.detectClosedJob()
+            : false;
+
+        if (jobId && typeof JobTrackerStore !== "undefined") {
+          const patch = {
+            id: String(jobId),
+            touchViewed: false,
+          };
+          if (applicantCount != null) {
+            patch.applicantCount = applicantCount;
+            patch.applicantUpdatedAt = Date.now();
+          }
+          // Soft enrich missing company/location while page is open
+          try {
+            if (typeof JobExtractor !== "undefined") {
+              const extractor = new JobExtractor();
+              const title = extractor.extractTitle();
+              const company = extractor.extractCompany();
+              const location = extractor.extractLocation();
+              if (
+                company &&
+                String(company).toLowerCase() !== "company not found"
+              ) {
+                patch.company = company;
+              } else if (title && String(title).indexOf("|") >= 0) {
+                const split = extractor.splitRoleAndCompany(title);
+                if (split.company) {
+                  patch.company = split.company;
+                  if (split.title) patch.title = split.title;
+                }
+              }
+              if (
+                location &&
+                String(location).toLowerCase() !== "location not specified"
+              ) {
+                patch.location = location;
+              }
+            }
+          } catch (enrichErr) {}
+          if (closed) {
+            patch.status = "expired";
+            patch.statusSource = "auto";
+            patch.expiredDetectedAt = Date.now();
+          }
+          await JobTrackerStore.safeUpsert(patch);
+        }
+        sendResponse({
+          success: true,
+          jobId: jobId || null,
+          applicantCount: applicantCount,
+          closed: closed,
+        });
+      } catch (error) {
+        console.warn("refreshJobTrackerMeta failed (soft):", error);
+        sendResponse({ success: false, error: String(error) });
+      }
+    })();
+    return true;
+  }
 });
 
 /**
- * Extract job count from LinkedIn job search page
- * Returns object with count and metadata for better tracking
+ * Extract job count from LinkedIn job search page.
+ * LinkedIn often splits "1,234" and "results" into separate nodes, or uses hashed classes.
  */
 function extractJobCountFromPage() {
   try {
     console.log("[Job Count] Starting extraction from page...");
 
-    // Method 1: Try the results header (MOST RELIABLE - shows total count)
-    const resultsSelectors = [
-      ".jobs-search-results-list__subtitle",
-      ".search-results-container__subtitle",
-      ".jobs-search-results-list__text",
-      "[class*='results-context-header__job-count']",
-    ];
-
-    for (const selector of resultsSelectors) {
-      const resultsText = document.querySelector(selector);
-      if (resultsText) {
-        const text = resultsText.textContent;
-        const match = text.match(/([\d,]+)\s+results?/i);
-        if (match) {
-          const count = parseInt(match[1].replace(/,/g, ""));
-          console.log(
-            `[Job Count] ✅ Method 1 SUCCESS: ${count} total results`
-          );
-          return count;
-        }
-      }
+    function parseCount(raw) {
+      if (raw == null) return null;
+      const n = parseInt(String(raw).replace(/[^\d]/g, ""), 10);
+      if (Number.isNaN(n) || n <= 0) return null;
+      // Guard against absurd / year-like false positives
+      if (n > 5000000) return null;
+      return n;
     }
 
-    // Method 2: Try aria-label on results list
-    const resultsList = document.querySelector(
-      '[aria-label*="Search results"], [aria-label*="search results"]'
-    );
-    if (resultsList) {
-      const label = resultsList.getAttribute("aria-label");
-      const match = label.match(/([\d,]+)\s+search results?/i);
-      if (match) {
-        const count = parseInt(match[1].replace(/,/g, ""));
-        console.log(
-          `[Job Count] ✅ Method 2 SUCCESS: ${count} from aria-label`
-        );
-        return count;
-      }
-    }
-
-    // Method 3: Try JSON-LD structured data
-    const scripts = document.querySelectorAll(
-      'script[type="application/ld+json"]'
-    );
-    for (const script of scripts) {
-      try {
-        const data = JSON.parse(script.textContent);
-        if (data.numberOfItems || data.totalResults) {
-          const count = data.numberOfItems || data.totalResults;
-          console.log(`[Job Count] ✅ Method 3 SUCCESS: ${count} from JSON-LD`);
-          return count;
-        }
-      } catch (e) {
-        // Skip invalid JSON
-      }
-    }
-
-    // Method 4: Try to find pagination or "Showing X of Y" text
-    const paginationText = document.body.innerText;
-    const showingMatch = paginationText.match(
-      /Showing\s+[\d,]+\s+of\s+([\d,]+)/i
-    );
-    if (showingMatch) {
-      const count = parseInt(showingMatch[1].replace(/,/g, ""));
-      console.log(`[Job Count] ✅ Method 4 SUCCESS: ${count} from pagination`);
+    function logSuccess(method, count, sample) {
+      console.log(
+        "[Job Count] Method " + method + " SUCCESS: " + count,
+        sample ? String(sample).slice(0, 60) : ""
+      );
       return count;
     }
 
-    // Method 5: Count visible job cards (FALLBACK ONLY - not reliable for total)
-    // This should ONLY be used if we absolutely can't find the total count
-    const jobCards = document.querySelectorAll(
-      ".job-card-container, .jobs-search-results__list-item, [data-job-id]"
+    // Method 1: Classic + partial-class result headers (count may be digits-only)
+    const resultsSelectors = [
+      "[class*='results-context-header__job-count']",
+      ".results-context-header__job-count",
+      "[class*='job-count']",
+      ".jobs-search-results-list__subtitle",
+      ".search-results-container__subtitle",
+      ".jobs-search-results-list__text",
+      "[class*='results-context-header']",
+      "[class*='jobs-search-results-list__subtitle']",
+      "div.t-12.t-black--light",
+      "small.display-flex",
+    ];
+
+    for (let i = 0; i < resultsSelectors.length; i++) {
+      const nodes = document.querySelectorAll(resultsSelectors[i]);
+      for (let j = 0; j < nodes.length; j++) {
+        const el = nodes[j];
+        if (!el) continue;
+        const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+        if (!text || text.length > 80) continue;
+        // Digits-only count node (common LinkedIn pattern)
+        if (/^[\d,]+$/.test(text) || /^[\d,]+\+$/.test(text)) {
+          // Prefer nodes whose class suggests job count
+          const cls = String(el.className || "");
+          if (
+            /job-count|results-context|subtitle|results-list/i.test(cls) ||
+            /results?/i.test(
+              (el.parentElement && el.parentElement.textContent) || ""
+            )
+          ) {
+            const c = parseCount(text);
+            if (c != null) return logSuccess("1-digits", c, text);
+          }
+        }
+        const withWord = text.match(/([\d,]+)\+?\s+results?/i);
+        if (withWord) {
+          const c = parseCount(withWord[1]);
+          if (c != null) return logSuccess("1-text", c, text);
+        }
+        const about = text.match(/about\s+([\d,]+)\+?\s+results?/i);
+        if (about) {
+          const c = parseCount(about[1]);
+          if (c != null) return logSuccess("1-about", c, text);
+        }
+      }
+    }
+
+    // Method 2: aria-label on results list / region
+    const ariaNodes = document.querySelectorAll(
+      "[aria-label*='result' i], [aria-label*='Result'], [aria-label*='search result' i]"
     );
-    if (jobCards.length > 0) {
-      console.warn(
-        `[Job Count] ⚠️ Method 5 FALLBACK: Only ${jobCards.length} visible cards found (not total count)`
+    for (let i = 0; i < ariaNodes.length; i++) {
+      const label = ariaNodes[i].getAttribute("aria-label") || "";
+      const match = label.match(/([\d,]+)\+?\s+(?:search\s+)?results?/i);
+      if (match) {
+        const c = parseCount(match[1]);
+        if (c != null) return logSuccess("2-aria", c, label);
+      }
+    }
+
+    // Method 3: JSON-LD / embedded state
+    const scripts = document.querySelectorAll(
+      'script[type="application/ld+json"]'
+    );
+    for (let i = 0; i < scripts.length; i++) {
+      try {
+        const data = JSON.parse(scripts[i].textContent);
+        const raw = data.numberOfItems || data.totalResults;
+        const c = parseCount(raw);
+        if (c != null) return logSuccess("3-jsonld", c, String(raw));
+      } catch (e) {}
+    }
+
+    // Method 3b: scan script/text for paging total (LinkedIn code/state blobs)
+    try {
+      const htmlSlice = document.documentElement.innerHTML.slice(0, 400000);
+      const statePatterns = [
+        /"totalResultCount"\s*:\s*(\d+)/i,
+        /"totalJobCount"\s*:\s*(\d+)/i,
+        /"resultCount"\s*:\s*(\d+)/i,
+        /"paging"\s*:\s*\{[^}]{0,200}?"total"\s*:\s*(\d+)/i,
+      ];
+      for (let i = 0; i < statePatterns.length; i++) {
+        const m = htmlSlice.match(statePatterns[i]);
+        if (m) {
+          const c = parseCount(m[1]);
+          if (c != null) return logSuccess("3-state", c, m[0]);
+        }
+      }
+    } catch (e2) {}
+
+    // Method 4: body / header text patterns (first chunk — avoid false matches deep in JD)
+    const headerText = (
+      (document.body && document.body.innerText) ||
+      ""
+    ).slice(0, 4500);
+    const bodyPatterns = [
+      /Showing\s+[\d,]+\s*[–-]\s*[\d,]+\s+of\s+([\d,]+)\+?\s+results?/i,
+      /Showing\s+[\d,]+\s+of\s+([\d,]+)/i,
+      /\bAbout\s+([\d,]+)\+?\s+results?\b/i,
+      /\b([\d,]+)\+\s+results?\b/i,
+      /\b([\d,]+)\s+results?\b/i,
+    ];
+    for (let i = 0; i < bodyPatterns.length; i++) {
+      const m = headerText.match(bodyPatterns[i]);
+      if (m) {
+        const c = parseCount(m[1]);
+        // Prefer larger counts from header; still accept small (Past hour filters)
+        if (c != null) return logSuccess("4-body", c, m[0]);
+      }
+    }
+
+    // Method 5: small leaf nodes that look like "N results"
+    const leaves = document.querySelectorAll("span, small, p, div, h1, h2");
+    for (let i = 0; i < leaves.length && i < 400; i++) {
+      const t = (leaves[i].textContent || "").replace(/\s+/g, " ").trim();
+      if (!t || t.length > 40) continue;
+      const m = t.match(/^([\d,]+)\+?\s+results?$/i);
+      if (m) {
+        const c = parseCount(m[1]);
+        if (c != null) return logSuccess("5-leaf", c, t);
+      }
+    }
+
+    // Method 6: visible cards — only for tight time filters or when header matches
+    const jobCards = document.querySelectorAll(
+      ".job-card-container, .jobs-search-results__list-item, li[data-occludable-job-id], [data-job-id], .scaffold-layout__list-item"
+    );
+    const cardCount = jobCards.length;
+    if (cardCount > 0) {
+      const sameAsCards = headerText.match(
+        new RegExp("\\b" + cardCount + "\\s+results?\\b", "i")
       );
-      console.warn(
-        "[Job Count] ⚠️ This is unreliable - LinkedIn may not have loaded the total count yet"
+      const isTightTimeFilter = /[?&]f_TPR=r(900|1800|3600|7200)(?:&|$)/i.test(
+        location.search || ""
       );
-      // Return 0 instead of visible count to avoid false baselines
-      return 0;
+      const hasNextPage =
+        !!document.querySelector(
+          "button.jobs-search-pagination__button--next, button[aria-label*='Next' i], .artdeco-pagination__button--next"
+        ) || /\bNext\b/i.test(headerText.slice(0, 2000));
+
+      if (sameAsCards || (isTightTimeFilter && !hasNextPage && cardCount <= 40)) {
+        console.warn(
+          "[Job Count] Method 6 using visible card count as total:",
+          cardCount,
+          sameAsCards ? "(matches header text)" : "(tight filter, single page)"
+        );
+        return logSuccess("6-cards", cardCount, "visible cards");
+      }
+      console.warn(
+        "[Job Count] Cards visible (" +
+          cardCount +
+          ") but total count unknown — not using card count as baseline"
+      );
     }
 
     console.error(
-      "[Job Count] ❌ FAILED: Could not extract job count from page using any method"
-    );
-    console.log(
-      "[Job Count] Page may not be fully loaded or LinkedIn changed their structure"
+      "[Job Count] FAILED: Could not extract job count from page using any method"
     );
     return 0;
   } catch (error) {
-    console.error("[Job Count] ❌ Error in extractJobCountFromPage:", error);
+    console.error("[Job Count] Error in extractJobCountFromPage:", error);
     return 0;
   }
 }

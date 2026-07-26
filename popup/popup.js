@@ -34,12 +34,16 @@ async function loadPopupAiStatus() {
       "gemini_api_key",
       "openai_api_key",
       "openrouter_api_key",
+      "deepseek_api_key",
+      "qwen_api_key",
     ]);
     const provider = data.active_provider || null;
     const ready =
       (provider === "gemini" && data.gemini_api_key) ||
       (provider === "openai" && data.openai_api_key) ||
-      (provider === "openrouter" && data.openrouter_api_key);
+      (provider === "openrouter" && data.openrouter_api_key) ||
+      (provider === "deepseek" && data.deepseek_api_key) ||
+      (provider === "qwen" && data.qwen_api_key);
     el.textContent = ready
       ? `AI: ${provider} · ready`
       : "AI: not configured — open AI Keys";

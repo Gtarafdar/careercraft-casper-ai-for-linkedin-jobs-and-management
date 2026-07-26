@@ -194,6 +194,36 @@ OpenRouter acts as a proxy to multiple AI providers, allowing users to access di
 
 ---
 
+## Host Permission: `https://api.deepseek.com/*`
+
+**Why do you need access to this domain?**
+
+```
+DeepSeek API endpoint (OpenAI-compatible). Users who choose DeepSeek as their AI provider use this domain for:
+
+1. ATS job analysis using DeepSeek models (deepseek-chat, deepseek-reasoner)
+2. Casper AI assistant conversations
+
+Important: Users provide their own DeepSeek API keys. The extension makes direct API calls from the user's browser to DeepSeek. We do not intercept, log, or store these API calls or responses.
+```
+
+---
+
+## Host Permission: `https://dashscope-intl.aliyuncs.com/*`
+
+**Why do you need access to this domain?**
+
+```
+Alibaba Cloud DashScope international OpenAI-compatible endpoint for Qwen models. Users who choose Qwen as their AI provider use this domain for:
+
+1. ATS job analysis using Qwen models (qwen-plus, qwen-turbo, qwen-max)
+2. Casper AI assistant conversations
+
+Important: Users provide their own DashScope API keys. The extension makes direct API calls from the user's browser to DashScope. We do not intercept, log, or store these API calls or responses. The international endpoint is used so users outside mainland China can reach the API reliably.
+```
+
+---
+
 ## Data Collection Disclosure
 
 **What data does your extension collect?**

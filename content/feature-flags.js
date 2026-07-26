@@ -14,7 +14,10 @@
     notifications: true,
     authorWidget: false,
     jobBoardWidget: false,
-    jobTracker: false,
+    jobTracker: true,
+    trackerAlertIngest: true,
+    trackerApplicantRefresh: false,
+    trackerExpiryRefresh: false,
     companyPeople: false,
   };
 

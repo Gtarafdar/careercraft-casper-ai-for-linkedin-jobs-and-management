@@ -10,6 +10,8 @@ class AIService {
     this.geminiModel = "gemini-2.5-flash"; // Default model (current stable)
     this.openaiModel = "gpt-3.5-turbo"; // Default model
     this.openrouterModel = "google/gemini-2.5-flash"; // Default model
+    this.deepseekModel = "deepseek-chat";
+    this.qwenModel = "qwen-plus";
   }
 
   /**
@@ -22,9 +24,13 @@ class AIService {
         "gemini_api_key",
         "openai_api_key",
         "openrouter_api_key",
+        "deepseek_api_key",
+        "qwen_api_key",
         "gemini_model",
         "openai_model",
         "openrouter_model",
+        "deepseek_model",
+        "qwen_model",
       ]);
 
       this.activeProvider = result.active_provider;
@@ -34,6 +40,8 @@ class AIService {
       this.openaiModel = result.openai_model || "gpt-3.5-turbo";
       this.openrouterModel =
         result.openrouter_model || "google/gemini-2.5-flash";
+      this.deepseekModel = result.deepseek_model || "deepseek-chat";
+      this.qwenModel = result.qwen_model || "qwen-plus";
 
       if (this.activeProvider === "gemini" && result.gemini_api_key) {
         this.apiKey = result.gemini_api_key;
@@ -57,6 +65,23 @@ class AIService {
         console.log(
           "AI Service: Initialized with OpenRouter, model:",
           this.openrouterModel
+        );
+        return true;
+      } else if (
+        this.activeProvider === "deepseek" &&
+        result.deepseek_api_key
+      ) {
+        this.apiKey = result.deepseek_api_key;
+        console.log(
+          "AI Service: Initialized with DeepSeek, model:",
+          this.deepseekModel
+        );
+        return true;
+      } else if (this.activeProvider === "qwen" && result.qwen_api_key) {
+        this.apiKey = result.qwen_api_key;
+        console.log(
+          "AI Service: Initialized with Qwen, model:",
+          this.qwenModel
         );
         return true;
       }
@@ -87,6 +112,10 @@ class AIService {
       return await this.callOpenAI(prompt);
     } else if (this.activeProvider === "openrouter") {
       return await this.callOpenRouter(prompt);
+    } else if (this.activeProvider === "deepseek") {
+      return await this.callDeepSeek(prompt);
+    } else if (this.activeProvider === "qwen") {
+      return await this.callQwen(prompt);
     }
   }
 
@@ -98,64 +127,93 @@ class AIService {
       throw new Error("AI service not configured");
     }
 
+    const desc = String(jobDescription || "").trim();
+    // Stub / missing JD — do not call the model (it echoes the prompt examples)
+    if (
+      !desc ||
+      desc.length < 80 ||
+      /^description not available$/i.test(desc)
+    ) {
+      return null;
+    }
+
     try {
       // Truncate very long job descriptions to avoid API limits
       const maxLength = 2000; // Optimized to reduce token usage
       const truncatedDesc =
-        jobDescription.length > maxLength
-          ? jobDescription.substring(0, maxLength) + "..."
-          : jobDescription;
+        desc.length > maxLength ? desc.substring(0, maxLength) + "..." : desc;
 
       const prompt = `Extract key requirements from this job. Return ONLY valid JSON, NO trailing commas.
+Use REAL values from the job description. Do NOT copy placeholder example words.
 
 Job Description:
 ${truncatedDesc}
 
-Return ONLY this JSON structure:
+Return ONLY this JSON structure (replace every field with real content from the JD):
 {
   "mustHave": {
-    "skills": ["skill1", "skill2"],
-    "experience": "X years",
-    "education": "degree",
-    "other": ["req1"]
+    "skills": ["real skill from JD"],
+    "experience": "experience required from JD",
+    "education": "education from JD or Not specified",
+    "other": []
   },
   "niceToHave": {
-    "skills": ["skill1"],
-    "experience": "bonus exp",
-    "other": ["pref1"]
+    "skills": [],
+    "experience": "",
+    "other": []
   },
-  "responsibilities": ["duty1", "duty2"],
-  "summary": "1 sentence summary"
+  "responsibilities": ["real responsibility from JD"],
+  "summary": "one sentence summary of the role"
 }`;
 
+      let result = null;
       if (this.activeProvider === "gemini") {
-        return await this.callGemini(prompt);
+        result = await this.callGemini(prompt);
       } else if (this.activeProvider === "openai") {
-        return await this.callOpenAI(prompt);
+        result = await this.callOpenAI(prompt);
       } else if (this.activeProvider === "openrouter") {
-        return await this.callOpenRouter(prompt);
+        result = await this.callOpenRouter(prompt);
+      } else if (this.activeProvider === "deepseek") {
+        result = await this.callDeepSeek(prompt);
+      } else if (this.activeProvider === "qwen") {
+        result = await this.callQwen(prompt);
       }
+
+      if (this.isPlaceholderRequirements(result)) {
+        console.warn(
+          "AI Service: Requirements looked like prompt placeholders — discarding"
+        );
+        return null;
+      }
+      return result;
     } catch (error) {
       // Don't break the entire analysis if requirements extraction fails
-      // Suppress error - gracefully handled with fallback structure
-      // Return a minimal valid structure
-      return {
-        mustHave: {
-          skills: [],
-          experience: "Not specified",
-          education: "Not specified",
-          other: [],
-        },
-        niceToHave: {
-          skills: [],
-          experience: "",
-          other: [],
-        },
-        responsibilities: [],
-        summary:
-          "Unable to extract detailed requirements. Please try again or view the full job description.",
-      };
+      return null;
     }
+  }
+
+  /**
+   * Detect when the model echoed the prompt template (skill1 / duty1 / X years).
+   */
+  isPlaceholderRequirements(req) {
+    if (!req || typeof req !== "object") return true;
+    const blob = JSON.stringify(req).toLowerCase();
+    const markers = [
+      '"skill1"',
+      "skill1",
+      "duty1",
+      "duty2",
+      "x years",
+      "1 sentence summary",
+      "bonus exp",
+      '"req1"',
+      "pref1",
+    ];
+    let hits = 0;
+    for (let i = 0; i < markers.length; i++) {
+      if (blob.includes(markers[i])) hits++;
+    }
+    return hits >= 2;
   }
 
   /**
@@ -754,6 +812,106 @@ Be specific, honest, and constructive. Focus on actual matches and gaps.`;
   }
 
   /**
+   * Call DeepSeek OpenAI-compatible API (JSON)
+   */
+  async callDeepSeek(prompt) {
+    try {
+      console.log(`AI Service: Using DeepSeek model: ${this.deepseekModel}`);
+      const response = await fetch(
+        "https://api.deepseek.com/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.deepseekModel,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert ATS analyzer. Always respond with valid JSON only. NO trailing commas.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.5,
+            max_tokens: 2000,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          `DeepSeek API error: ${error.error?.message || response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      const text = data.choices[0].message.content;
+      await this.trackUsage("deepseek", prompt, text);
+      return this.parseAIJson(text);
+    } catch (error) {
+      console.error("DeepSeek API Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Call Qwen (DashScope intl) OpenAI-compatible API (JSON)
+   */
+  async callQwen(prompt) {
+    try {
+      console.log(`AI Service: Using Qwen model: ${this.qwenModel}`);
+      const response = await fetch(
+        "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.qwenModel,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert ATS analyzer. Always respond with valid JSON only. NO trailing commas.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.5,
+            max_tokens: 2000,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          `Qwen API error: ${error.error?.message || response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      const text = data.choices[0].message.content;
+      await this.trackUsage("qwen", prompt, text);
+      return this.parseAIJson(text);
+    } catch (error) {
+      console.error("Qwen API Error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Analyze LinkedIn profile for compatibility and insights
    */
   async analyzeProfile(prompt) {
@@ -770,6 +928,10 @@ Be specific, honest, and constructive. Focus on actual matches and gaps.`;
         return await this.callOpenAIText(prompt);
       } else if (this.activeProvider === "openrouter") {
         return await this.callOpenRouterText(prompt);
+      } else if (this.activeProvider === "deepseek") {
+        return await this.callDeepSeekText(prompt);
+      } else if (this.activeProvider === "qwen") {
+        return await this.callQwenText(prompt);
       }
     } catch (error) {
       console.error("AI Profile Analysis Error:", error);
@@ -1016,6 +1178,106 @@ Be specific, honest, and constructive. Focus on actual matches and gaps.`;
   }
 
   /**
+   * Call DeepSeek for text response (not JSON)
+   */
+  async callDeepSeekText(prompt) {
+    try {
+      console.log(`AI Service: Using DeepSeek model: ${this.deepseekModel}`);
+      const response = await fetch(
+        "https://api.deepseek.com/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.deepseekModel,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert at analyzing LinkedIn profiles and providing professional insights about compatibility and connection potential.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          `DeepSeek API error: ${error.error?.message || response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      const text = data.choices[0].message.content;
+      await this.trackUsage("deepseek", prompt, text);
+      return text;
+    } catch (error) {
+      console.error("DeepSeek API Error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Call Qwen for text response (not JSON)
+   */
+  async callQwenText(prompt) {
+    try {
+      console.log(`AI Service: Using Qwen model: ${this.qwenModel}`);
+      const response = await fetch(
+        "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.qwenModel,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert at analyzing LinkedIn profiles and providing professional insights about compatibility and connection potential.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          `Qwen API error: ${error.error?.message || response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      const text = data.choices[0].message.content;
+      await this.trackUsage("qwen", prompt, text);
+      return text;
+    } catch (error) {
+      console.error("Qwen API Error:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Test API connection
    */
   async testConnection() {
@@ -1032,6 +1294,10 @@ Be specific, honest, and constructive. Focus on actual matches and gaps.`;
         await this.callOpenAI(testPrompt);
       } else if (this.activeProvider === "openrouter") {
         await this.callOpenRouter(testPrompt);
+      } else if (this.activeProvider === "deepseek") {
+        await this.callDeepSeek(testPrompt);
+      } else if (this.activeProvider === "qwen") {
+        await this.callQwen(testPrompt);
       }
 
       return { success: true, message: "API connection successful" };

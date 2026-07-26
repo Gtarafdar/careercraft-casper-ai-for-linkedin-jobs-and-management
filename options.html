@@ -16,14 +16,15 @@
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Oxygen, Ubuntu, sans-serif;
-        background: linear-gradient(
-          135deg,
-          #e8f4fc 0%,
-          #f0f8ff 50%,
-          #ffffff 100%
-        );
+        background: #f3f6f8;
         min-height: 100vh;
-        padding: 40px 20px;
+        padding: 0;
+        margin: 0;
+      }
+
+      body.cc-app {
+        padding: 0 !important;
+        margin: 0 !important;
       }
 
       .container {
@@ -878,6 +879,15 @@
                 <option value="meta-llama/llama-3.1-8b-instruct">
                   Llama 3.1 8B (FREE - No cost)
                 </option>
+                <option value="deepseek/deepseek-chat">
+                  DeepSeek Chat (via OpenRouter)
+                </option>
+                <option value="deepseek/deepseek-r1">
+                  DeepSeek R1 (via OpenRouter)
+                </option>
+                <option value="qwen/qwen-2.5-72b-instruct">
+                  Qwen 2.5 72B Instruct (via OpenRouter)
+                </option>
                 <option value="openai/gpt-4o-mini">
                   GPT-4o Mini ($0.15/1M tokens)
                 </option>
@@ -890,7 +900,8 @@
               </select>
               <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
                 💡 <strong>Recommended:</strong> Gemini 2.5 Flash for best
-                balance. Use Llama 3.1 for free tier.
+                balance. Use Llama 3.1 for free tier. Many Chinese models
+                (DeepSeek, Qwen) are also available here with one OpenRouter key.
               </p>
             </div>
 
@@ -1165,6 +1176,207 @@
                 </ul>
               </div>
             </details>
+          </div>
+
+          <!-- DeepSeek -->
+          <div class="api-option" data-provider="deepseek">
+            <div class="api-header">
+              <input
+                type="radio"
+                name="ai-provider"
+                value="deepseek"
+                class="api-radio"
+                id="radio-deepseek"
+              />
+              <label for="radio-deepseek" class="api-name">DeepSeek</label>
+              <span class="api-status not-configured" id="status-deepseek"
+                >Not Configured</span
+              >
+            </div>
+
+            <div class="api-model-info">
+              <label
+                for="deepseek-model-select"
+                style="display: block; margin-bottom: 6px"
+              >
+                <strong>Select Model:</strong>
+              </label>
+              <select
+                id="deepseek-model-select"
+                class="model-select"
+                data-provider="deepseek"
+              >
+                <option value="deepseek-chat">
+                  deepseek-chat (Recommended, fast)
+                </option>
+                <option value="deepseek-reasoner">
+                  deepseek-reasoner (Stronger reasoning)
+                </option>
+              </select>
+              <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
+                Direct DeepSeek API (OpenAI-compatible). Prefer OpenRouter
+                presets if you already have an OpenRouter key.
+              </p>
+            </div>
+
+            <div class="api-usage-stats" id="usage-deepseek">
+              <div class="usage-label">Current Usage Tracking</div>
+              <div class="usage-value">
+                Requests: <span id="usage-deepseek-requests">0</span> | Est.
+                Tokens: <span id="usage-deepseek-tokens">0</span>
+              </div>
+              <button
+                class="clear-usage-btn"
+                data-provider="deepseek"
+                data-action="clear-usage"
+              >
+                Reset Usage Counter
+              </button>
+            </div>
+
+            <div class="api-input-group">
+              <input
+                type="password"
+                class="api-input"
+                id="input-deepseek"
+                placeholder="Enter your DeepSeek API key (e.g., sk-...)"
+                autocomplete="off"
+              />
+              <button
+                class="btn btn-save"
+                data-provider="deepseek"
+                data-action="save"
+              >
+                Save
+              </button>
+              <button
+                class="btn btn-clear"
+                data-provider="deepseek"
+                data-action="clear"
+              >
+                Clear
+              </button>
+            </div>
+            <div class="api-help">
+              Get your API key from
+              <a href="https://platform.deepseek.com/api_keys" target="_blank"
+                >DeepSeek Platform</a
+              >
+            </div>
+            <div style="margin-top: 16px">
+              <button
+                id="testDeepSeekBtn"
+                class="btn"
+                style="width: 100%; background: #10b981"
+                data-provider="deepseek"
+                data-action="test-compat"
+              >
+                Test API Connection
+              </button>
+            </div>
+          </div>
+
+          <!-- Qwen (DashScope) -->
+          <div class="api-option" data-provider="qwen">
+            <div class="api-header">
+              <input
+                type="radio"
+                name="ai-provider"
+                value="qwen"
+                class="api-radio"
+                id="radio-qwen"
+              />
+              <label for="radio-qwen" class="api-name"
+                >Qwen (DashScope)</label
+              >
+              <span class="api-status not-configured" id="status-qwen"
+                >Not Configured</span
+              >
+            </div>
+
+            <div class="api-model-info">
+              <label
+                for="qwen-model-select"
+                style="display: block; margin-bottom: 6px"
+              >
+                <strong>Select Model:</strong>
+              </label>
+              <select
+                id="qwen-model-select"
+                class="model-select"
+                data-provider="qwen"
+              >
+                <option value="qwen-plus">
+                  qwen-plus (Recommended balance)
+                </option>
+                <option value="qwen-turbo">qwen-turbo (Faster, cheaper)</option>
+                <option value="qwen-max">qwen-max (Highest quality)</option>
+              </select>
+              <p style="margin-top: 6px; font-size: 12px; color: #6b7280">
+                Uses Alibaba Cloud DashScope
+                <strong>international</strong> OpenAI-compatible endpoint
+                (dashscope-intl). China-region keys may need a mainland
+                endpoint — prefer OpenRouter Qwen presets if unsure.
+              </p>
+            </div>
+
+            <div class="api-usage-stats" id="usage-qwen">
+              <div class="usage-label">Current Usage Tracking</div>
+              <div class="usage-value">
+                Requests: <span id="usage-qwen-requests">0</span> | Est. Tokens:
+                <span id="usage-qwen-tokens">0</span>
+              </div>
+              <button
+                class="clear-usage-btn"
+                data-provider="qwen"
+                data-action="clear-usage"
+              >
+                Reset Usage Counter
+              </button>
+            </div>
+
+            <div class="api-input-group">
+              <input
+                type="password"
+                class="api-input"
+                id="input-qwen"
+                placeholder="Enter your DashScope API key (e.g., sk-...)"
+                autocomplete="off"
+              />
+              <button
+                class="btn btn-save"
+                data-provider="qwen"
+                data-action="save"
+              >
+                Save
+              </button>
+              <button
+                class="btn btn-clear"
+                data-provider="qwen"
+                data-action="clear"
+              >
+                Clear
+              </button>
+            </div>
+            <div class="api-help">
+              Get your API key from
+              <a
+                href="https://www.alibabacloud.com/help/en/model-studio/get-api-key"
+                target="_blank"
+                >Alibaba Cloud Model Studio</a
+              >
+            </div>
+            <div style="margin-top: 16px">
+              <button
+                id="testQwenBtn"
+                class="btn"
+                style="width: 100%; background: #10b981"
+                data-provider="qwen"
+                data-action="test-compat"
+              >
+                Test API Connection
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1780,8 +1992,22 @@
               </div>
               <div style="color: #1e3a8a; font-size: 13px">
                 <div>
+                  Alert status:
+                  <span id="alertHealthStatus" style="font-weight: 600">—</span>
+                </div>
+                <div style="margin-top: 4px">
+                  Saved searches:
+                  <span id="alertSavedSearchCount" style="font-weight: 600"
+                    >—</span
+                  >
+                </div>
+                <div style="margin-top: 4px">
                   Last checked:
                   <span id="lastChecked" style="font-weight: 600">Never</span>
+                </div>
+                <div style="margin-top: 4px">
+                  Next check:
+                  <span id="nextCheckAt" style="font-weight: 600">—</span>
                 </div>
                 <div style="margin-top: 4px">
                   Notifications sent:
@@ -1827,7 +2053,7 @@
                 "
               >
                 <div style="font-weight: 600; color: #374151; font-size: 14px">
-                  📋 Activity Logs (Last 10)
+                  📋 Activity Logs (Last 40)
                 </div>
                 <button
                   id="clearNotificationLogs"
@@ -2630,6 +2856,8 @@
     <!-- PDF.js library for client-side PDF text extraction (local copy) -->
     <script src="lib/pdf.min.js"></script>
     <script src="lib/saved-search-utils.js"></script>
+    <script src="content/feature-flags.js"></script>
+    <script src="content/job-tracker-store.js"></script>
     <script src="casper/casper-avatar.js"></script>
     <script src="styles/options-shell.js"></script>
     <script src="options.js"></script>

@@ -4,7 +4,7 @@
  */
 
 // Constants
-const MAX_LOGS = 10;
+const MAX_LOGS = 40;
 const LOG_STORAGE_KEY = "notification_logs";
 
 /**
@@ -45,15 +45,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.runtime.openOptionsPage();
     sendResponse({ success: true });
   } else if (request.action === "updateNotificationAlarm") {
-    // Update notification check alarm
-    setupNotificationAlarm(request.settings).then(() => {
+    // Update notification check alarm (user changed settings — force recreate)
+    setupNotificationAlarm(request.settings, { force: true }).then(() => {
       sendResponse({ success: true });
     });
     return true; // Keep channel open for async
+  } else if (request.action === "getNotificationHealth") {
+    (async () => {
+      try {
+        const result = await chrome.storage.local.get([
+          "notification_settings",
+          "saved_job_searches",
+        ]);
+        const settings = result.notification_settings || {};
+        const searches = result.saved_job_searches || [];
+        const alarm = await chrome.alarms.get("checkJobNotifications");
+        const permission = await chrome.notifications.getPermissionLevel();
+        sendResponse({
+          success: true,
+          enabled: !!settings.enabled,
+          checkInterval: settings.checkInterval || null,
+          lastChecked: settings.lastChecked || null,
+          notificationsSent: settings.notificationsSent || 0,
+          savedSearchCount: searches.length,
+          permission: permission,
+          alarmScheduled: !!alarm,
+          nextCheckAt: alarm && alarm.scheduledTime ? alarm.scheduledTime : null,
+          periodInMinutes: alarm ? alarm.periodInMinutes : null,
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: String(e) });
+      }
+    })();
+    return true;
   } else if (request.action === "sendTestNotification") {
     // Send test notification
-    sendTestNotification().then((success) => {
-      sendResponse({ success });
+    sendTestNotification().then((result) => {
+      if (result && typeof result === "object") {
+        sendResponse(result);
+      } else {
+        sendResponse({ success: !!result });
+      }
     });
     return true; // Keep channel open for async
   } else if (request.action === "checkJobsNow") {
@@ -78,6 +110,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Extract job count from LinkedIn page (called from background via tab)
     // This will be handled by content script
     return false;
+  } else if (request.action === "updateTrackerRefreshAlarms") {
+    setupTrackerRefreshAlarms(request.settings)
+      .then(() => sendResponse({ success: true }))
+      .catch((e) => {
+        console.warn("updateTrackerRefreshAlarms failed", e);
+        sendResponse({ success: false });
+      });
+    return true;
   }
 
   return true; // Keep the message channel open for async response
@@ -113,6 +153,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (result.notification_settings) {
     await setupNotificationAlarm(result.notification_settings);
   }
+  await setupTrackerRefreshAlarms();
 });
 
 // Run cache cleanup on extension startup
@@ -125,6 +166,7 @@ chrome.runtime.onStartup.addListener(async () => {
   if (result.notification_settings) {
     await setupNotificationAlarm(result.notification_settings);
   }
+  await setupTrackerRefreshAlarms();
 });
 
 /**
@@ -195,45 +237,78 @@ async function runCacheCleanup() {
 
 /**
  * Setup notification alarm
+ * Avoid clearing/recreating on every extension reload — that resets the timer
+ * and floods Activity Logs with "alarm activated" instead of real check cycles.
  */
-async function setupNotificationAlarm(settings) {
+async function setupNotificationAlarm(settings, options) {
+  const opts = options || {};
   try {
-    // Clear existing alarm
+    const enabled = !!(settings && settings.enabled);
+    const period = Math.max(
+      15,
+      Math.min(120, Number(settings && settings.checkInterval) || 30)
+    );
+
+    if (!enabled) {
+      await chrome.alarms.clear("checkJobNotifications");
+      if (opts.force || opts.logDisable !== false) {
+        await addNotificationLog("info", "Notification alarm disabled by user", {
+          enabled: false,
+        });
+      }
+      console.log("Notification alarm disabled");
+      return;
+    }
+
+    // Check notification permission
+    const permission = await chrome.notifications.getPermissionLevel();
+    if (permission !== "granted") {
+      await addNotificationLog(
+        "error",
+        "Notification permission not granted",
+        { permission }
+      );
+      return;
+    }
+
+    const existing = await chrome.alarms.get("checkJobNotifications");
+    const samePeriod =
+      existing &&
+      Number(existing.periodInMinutes) === period;
+
+    // Keep existing healthy alarm unless forced / interval changed
+    if (samePeriod && !opts.force) {
+      console.log(
+        `Notification alarm already set (every ${period} min) — skipping reset`
+      );
+      return;
+    }
+
     await chrome.alarms.clear("checkJobNotifications");
 
-    if (settings && settings.enabled) {
-      // Check notification permission
-      const permission = await chrome.notifications.getPermissionLevel();
-      if (permission !== "granted") {
-        await addNotificationLog(
-          "error",
-          "Notification permission not granted",
-          { permission }
-        );
-        return;
-      }
-
-      // Create alarm with specified interval
-      await chrome.alarms.create("checkJobNotifications", {
-        delayInMinutes: settings.checkInterval,
-        periodInMinutes: settings.checkInterval,
-      });
-
-      await addNotificationLog(
-        "success",
-        `Notification alarm activated: checking every ${settings.checkInterval} minutes`,
-        { checkInterval: settings.checkInterval }
-      );
-
-      console.log(
-        `Notification alarm set: every ${settings.checkInterval} minutes`
-      );
-    } else {
-      await addNotificationLog("info", "Notification alarm disabled by user", {
-        enabled: false,
-      });
-      console.log("Notification alarm disabled");
+    // If last check is stale, run sooner; otherwise wait full period
+    let delay = period;
+    const lastChecked = Number(settings && settings.lastChecked) || 0;
+    const staleMs = period * 60 * 1000;
+    if (!lastChecked || Date.now() - lastChecked >= staleMs) {
+      delay = 1; // Chrome alarms: minimum practical delay ~1 minute
     }
+    if (opts.immediate) delay = 1;
+
+    await chrome.alarms.create("checkJobNotifications", {
+      delayInMinutes: delay,
+      periodInMinutes: period,
+    });
+
+    await addNotificationLog(
+      "info",
+      `Notification alarm set: every ${period} min (next in ~${delay} min)`,
+      { checkInterval: period, delayMinutes: delay, reset: true }
+    );
+
+    console.log(
+      `Notification alarm set: every ${period} minutes (first in ${delay})`
+    );
   } catch (error) {
     await addNotificationLog(
       "error",
@@ -399,11 +474,27 @@ async function checkNewJobCounts(savedSearches) {
       );
 
       try {
-        // Fetch job count from LinkedIn using content script
-        const jobCount = await fetchJobCountViaContentScript(search.url);
+        // Fetch job count + soft-ingest cards from LinkedIn
+        const fetchResult = await fetchJobCountViaContentScript(
+          search.url,
+          search.name
+        );
+        const jobCount =
+          fetchResult && typeof fetchResult === "object"
+            ? Number(fetchResult.count) || 0
+            : Number(fetchResult) || 0;
+        const newlyAdded =
+          fetchResult && typeof fetchResult === "object"
+            ? Number(fetchResult.newlyAdded) || 0
+            : 0;
+        const sampleTitle =
+          fetchResult && typeof fetchResult === "object"
+            ? fetchResult.sampleTitle
+            : null;
         const storedCount = storedCounts[search.id] || 0;
+        let notifiedForSearch = false;
 
-        if (jobCount === 0) {
+        if (jobCount === 0 && newlyAdded === 0) {
           const errorMsg = `Failed to extract job count for "${search.name}"`;
           errors.push({
             search: search.name,
@@ -419,19 +510,19 @@ async function checkNewJobCounts(savedSearches) {
         }
 
         // First time seeing this search - establish baseline
-        if (storedCount === 0) {
+        if (jobCount > 0 && storedCount === 0) {
           storedCounts[search.id] = jobCount;
           console.log(
             `[Job Check] Baseline set for "${search.name}": ${jobCount} jobs`
           );
           await addNotificationLog(
             "info",
-            `Baseline established for "${search.name}": ${jobCount} jobs`,
+            `Baseline established for "${search.name}": ${jobCount} jobs (alerts also fire when new job cards appear)`,
             { searchName: search.name, baseline: jobCount }
           );
         }
-        // Only notify if we have baseline and count increased
-        else if (jobCount > storedCount) {
+        // Notify if LinkedIn total count increased
+        else if (jobCount > 0 && jobCount > storedCount) {
           const newJobsCount = jobCount - storedCount;
           newJobNotifications.push({
             searchId: search.id,
@@ -440,13 +531,14 @@ async function checkNewJobCounts(savedSearches) {
             totalJobs: jobCount,
             url: search.url,
           });
+          notifiedForSearch = true;
           console.log(
             `[Job Check] Found ${newJobsCount} new jobs for "${search.name}" (${storedCount} → ${jobCount})`
           );
           storedCounts[search.id] = jobCount;
         }
         // Count decreased - update baseline
-        else if (jobCount < storedCount) {
+        else if (jobCount > 0 && jobCount < storedCount) {
           console.log(
             `[Job Check] Job count decreased for "${search.name}": ${storedCount} → ${jobCount} (baseline updated)`
           );
@@ -460,12 +552,37 @@ async function checkNewJobCounts(savedSearches) {
             }
           );
           storedCounts[search.id] = jobCount;
-        }
-        // No change
-        else {
-          console.log(
-            `[Job Check] No change for "${search.name}": ${jobCount} jobs`
+        } else if (jobCount > 0) {
+          await addNotificationLog(
+            "info",
+            `"${search.name}": LinkedIn total unchanged (${jobCount} jobs)`,
+            { searchName: search.name, jobCount: jobCount }
           );
+        }
+
+        // Past-hour / rotating results: total can stay flat while NEW job IDs appear
+        if (newlyAdded > 0) {
+          await addNotificationLog(
+            "success",
+            `Added ${newlyAdded} new job${
+              newlyAdded > 1 ? "s" : ""
+            } to Job Tracker from "${search.name}"` +
+              (sampleTitle ? ` (e.g. ${String(sampleTitle).slice(0, 40)})` : ""),
+            {
+              searchName: search.name,
+              newlyAdded: newlyAdded,
+              sampleTitle: sampleTitle,
+            }
+          );
+          if (!notifiedForSearch) {
+            newJobNotifications.push({
+              searchId: search.id,
+              searchName: search.name,
+              newJobsCount: newlyAdded,
+              totalJobs: jobCount || newlyAdded,
+              url: search.url,
+            });
+          }
         }
 
         // Rate limiting between requests
@@ -493,9 +610,11 @@ async function checkNewJobCounts(savedSearches) {
 /**
  * Fetch job count via content script
  * Opens a hidden tab, extracts job count, then closes it
+ * Returns { count, newlyAdded, sampleTitle }
  */
-async function fetchJobCountViaContentScript(searchUrl) {
+async function fetchJobCountViaContentScript(searchUrl, searchName) {
   let tabId = null;
+  const empty = { count: 0, newlyAdded: 0, sampleTitle: null };
 
   try {
     console.log(`[Job Fetch] Opening hidden tab for: ${searchUrl}`);
@@ -555,13 +674,25 @@ async function fetchJobCountViaContentScript(searchUrl) {
       }
     }
 
+    // Soft: ingest top job cards into Job Tracker
+    let ingest = { newlyAdded: 0, sampleTitle: null };
+    try {
+      ingest = (await softIngestAlertJobCards(tabId, searchName)) || ingest;
+    } catch (ingestErr) {
+      console.warn("[Job Fetch] Alert card ingest skipped (soft):", ingestErr);
+    }
+
     // Close the tab
     if (tabId) {
       await chrome.tabs.remove(tabId);
       console.log("[Job Fetch] Hidden tab closed");
     }
 
-    return jobCount;
+    return {
+      count: jobCount,
+      newlyAdded: ingest.newlyAdded || 0,
+      sampleTitle: ingest.sampleTitle || null,
+    };
   } catch (error) {
     console.error(
       "[Job Fetch] ❌ Error fetching job count via content script:",
@@ -577,7 +708,107 @@ async function fetchJobCountViaContentScript(searchUrl) {
       }
     }
 
-    return 0;
+    return empty;
+  }
+}
+
+/**
+ * Soft-ingest up to 5 job cards from an already-open search tab into Job Tracker.
+ * Returns { newlyAdded, sampleTitle, cardsSeen } for alert notifications.
+ */
+async function softIngestAlertJobCards(tabId, searchName) {
+  try {
+    const flagsResult = await chrome.storage.local.get(["feature_flags"]);
+    const flags = Object.assign(
+      { trackerAlertIngest: true },
+      flagsResult.feature_flags || {}
+    );
+    if (flags.trackerAlertIngest === false) {
+      return { newlyAdded: 0, sampleTitle: null, cardsSeen: 0 };
+    }
+
+    const response = await chrome.tabs.sendMessage(tabId, {
+      action: "extractSearchJobCards",
+      maxCards: 5,
+    });
+    const cards = (response && response.cards) || [];
+    if (!cards.length) {
+      return { newlyAdded: 0, sampleTitle: null, cardsSeen: 0 };
+    }
+
+    const storeResult = await chrome.storage.local.get(["casper_job_tracker"]);
+    const map =
+      storeResult.casper_job_tracker &&
+      typeof storeResult.casper_job_tracker === "object"
+        ? storeResult.casper_job_tracker
+        : {};
+    const nowTs = Date.now();
+    let newlyAdded = 0;
+    let sampleTitle = null;
+
+    cards.forEach(function (card) {
+      if (!card || !card.id) return;
+      const id = String(card.id);
+      const existing = map[id];
+
+      if (existing) {
+        // Existing row: fill gaps only — do not recount as new
+        if (!existing.title && card.title) existing.title = card.title;
+        if (!existing.company && card.company) existing.company = card.company;
+        if (!existing.searchName && searchName) existing.searchName = searchName;
+        if (!existing.url && card.url) existing.url = card.url;
+        existing.updatedAt = nowTs;
+        map[id] = existing;
+        return;
+      }
+
+      map[id] = {
+        id: id,
+        title: card.title || "Untitled job",
+        company: card.company || "",
+        location: "",
+        url:
+          card.url ||
+          "https://www.linkedin.com/jobs/view/" + encodeURIComponent(id),
+        viewedAt: nowTs,
+        updatedAt: nowTs,
+        atsScore: null,
+        atsSummary: null,
+        atsDetails: null,
+        status: "new",
+        statusSource: "auto",
+        applicantCount: null,
+        applicantUpdatedAt: null,
+        expiredDetectedAt: null,
+        notes: "",
+        starred: false,
+        starRating: 0,
+        source: "alert",
+        companyDetails: card.company
+          ? { name: card.company, linkedinUrl: null, raw: null }
+          : null,
+        searchName: searchName || null,
+        alumni: [],
+        contacts: [],
+      };
+      newlyAdded++;
+      if (!sampleTitle && card.title) sampleTitle = card.title;
+    });
+
+    await chrome.storage.local.set({ casper_job_tracker: map });
+    console.log(
+      `[Job Fetch] Soft-ingested ${newlyAdded} NEW alert card(s) (${cards.length} seen) for "${
+        searchName || "search"
+      }"`
+    );
+    return {
+      newlyAdded: newlyAdded,
+      sampleTitle: sampleTitle,
+      cardsSeen: cards.length,
+    };
+  } catch (e) {
+    console.warn("[Job Fetch] softIngestAlertJobCards failed:", e);
+    return { newlyAdded: 0, sampleTitle: null, cardsSeen: 0 };
   }
 }
 
@@ -603,6 +834,82 @@ function waitForTabLoad(tabId) {
 }
 
 /**
+ * Shared notification creator — macOS Chrome is picky about icons/buttons.
+ * Prefers data-URI icon (avoids SW image decode issues), retries without buttons.
+ */
+async function resolveNotificationIconDataUrl() {
+  try {
+    const res = await fetch(chrome.runtime.getURL("icons/icon128.png"));
+    if (!res.ok) throw new Error("icon fetch " + res.status);
+    const buf = await res.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(
+        null,
+        bytes.subarray(i, Math.min(i + chunk, bytes.length))
+      );
+    }
+    return "data:image/png;base64," + btoa(binary);
+  } catch (e) {
+    console.warn("[Notification] icon data-URL fallback to getURL:", e);
+    return chrome.runtime.getURL("icons/icon128.png");
+  }
+}
+
+async function createVisibleNotification(partialOptions) {
+  const permission = await chrome.notifications.getPermissionLevel();
+  if (permission !== "granted") {
+    const err = new Error("Notification permission is " + permission);
+    err.permission = permission;
+    throw err;
+  }
+
+  const iconUrl = await resolveNotificationIconDataUrl();
+  const idBase = "cc-job-" + Date.now();
+  const base = Object.assign(
+    {
+      type: "basic",
+      iconUrl: iconUrl,
+      title: "CareerCraft AI",
+      message: "Notification",
+      priority: 2,
+      requireInteraction: true,
+    },
+    partialOptions || {}
+  );
+  base.iconUrl = iconUrl;
+
+  async function tryCreate(id, opts) {
+    const nid = await chrome.notifications.create(id, opts);
+    if (chrome.runtime.lastError) {
+      throw new Error(
+        chrome.runtime.lastError.message || "notifications.create failed"
+      );
+    }
+    return nid || id;
+  }
+
+  try {
+    return await tryCreate(idBase, base);
+  } catch (e1) {
+    console.warn("[Notification] create attempt 1 failed:", e1);
+  }
+
+  const noButtons = Object.assign({}, base);
+  delete noButtons.buttons;
+  try {
+    return await tryCreate(idBase + "-nb", noButtons);
+  } catch (e2) {
+    console.warn("[Notification] create attempt 2 (no buttons) failed:", e2);
+  }
+
+  noButtons.iconUrl = chrome.runtime.getURL("icons/icon48.png");
+  return await tryCreate(idBase + "-fb", noButtons);
+}
+
+/**
  * Send job notification
  */
 async function sendJobNotification(jobInfo) {
@@ -611,55 +918,26 @@ async function sendJobNotification(jobInfo) {
       `[Notification] Attempting to send notification for: ${jobInfo.searchName}`
     );
 
-    // Check notification permission before sending
-    const permission = await chrome.notifications.getPermissionLevel();
-    console.log(`[Notification] Permission level: ${permission}`);
-
-    if (permission !== "granted") {
-      const errorMsg = `Notification permission denied: ${permission}`;
-      console.error(`[Notification] ❌ ${errorMsg}`);
-      await addNotificationLog("error", errorMsg, {
-        searchName: jobInfo.searchName,
-        permission: permission,
-        action: "Check browser notification settings",
-      });
-      return false;
-    }
-
-    // Format the notification with clear search identification
-    const title = `🔔 ${jobInfo.newJobsCount} New Job${
+    const title = `${jobInfo.newJobsCount} New Job${
       jobInfo.newJobsCount > 1 ? "s" : ""
     } Found`;
-    const message = `Search: "${jobInfo.searchName}"\n${jobInfo.totalJobs} total jobs available now`;
+    const message = `Search: "${jobInfo.searchName}" — ${jobInfo.totalJobs} total jobs available now`;
 
-    console.log(`[Notification] Creating notification with title: ${title}`);
-
-    const notificationId = await chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icons/icon128.png",
+    const notificationId = await createVisibleNotification({
       title: title,
       message: message,
-      contextMessage: "", // Empty to avoid cluttering the notification
-      priority: 2,
-      requireInteraction: true, // Keep notification visible until user dismisses
       buttons: [{ title: "View Jobs" }],
-      isClickable: true, // Make entire notification clickable
+      requireInteraction: true,
     });
 
-    console.log(
-      `[Notification] ✅ Notification created with ID: ${notificationId}`
-    );
-
-    // Store notification ID with URL for click handling
     const urlsResult = await chrome.storage.local.get(["notification_urls"]);
     const urls = urlsResult.notification_urls || {};
     urls[notificationId] = jobInfo.url;
     await chrome.storage.local.set({ notification_urls: urls });
 
-    // Log successful notification send
     await addNotificationLog(
       "success",
-      `📬 Notification displayed for "${jobInfo.searchName}"`,
+      `Notification displayed for "${jobInfo.searchName}"`,
       {
         notificationId: notificationId,
         searchName: jobInfo.searchName,
@@ -668,19 +946,19 @@ async function sendJobNotification(jobInfo) {
     );
 
     console.log(
-      `[Notification] ✅ Success: ${jobInfo.searchName} (ID: ${notificationId})`
+      `[Notification] Success: ${jobInfo.searchName} (ID: ${notificationId})`
     );
     return true;
   } catch (error) {
-    console.error(`[Notification] ❌ Error:`, error);
+    console.error(`[Notification] Error:`, error);
     await addNotificationLog(
       "error",
-      `❌ Failed to send notification for "${jobInfo.searchName}": ${error.message}`,
+      `Failed to send notification for "${jobInfo.searchName}": ${error.message}`,
       {
         error: error.toString(),
-        errorStack: error.stack,
         searchName: jobInfo.searchName,
-        action: "Check if notifications are blocked by browser or OS settings",
+        action:
+          "Check chrome://settings/content/notifications and macOS Focus/Do Not Disturb",
       }
     );
     return false;
@@ -692,20 +970,30 @@ async function sendJobNotification(jobInfo) {
  */
 async function sendTestNotification() {
   try {
-    await chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "🔔 Test Notification",
+    const permission = await chrome.notifications.getPermissionLevel();
+
+    const notificationId = await createVisibleNotification({
+      title: "CareerCraft AI — Test Notification",
       message:
-        "Job notifications are working! You'll be notified when new jobs match your saved searches.",
-      contextMessage: "LinkedIn Job Search Alert",
-      priority: 1,
-      requireInteraction: false,
+        "Browser notices work. Job alerts only appear when a saved search's total job count goes UP (not on every check).",
+      requireInteraction: true,
     });
-    return true;
+
+    await addNotificationLog(
+      "success",
+      "Test notification sent — look for a banner / Notification Centre",
+      { notificationId: notificationId }
+    );
+
+    return { success: true, notificationId: notificationId };
   } catch (error) {
     console.error("Error sending test notification:", error);
-    return false;
+    await addNotificationLog(
+      "error",
+      "Test notification failed: " + (error.message || String(error)),
+      { error: String(error) }
+    );
+    return { success: false, error: error.message || String(error) };
   }
 }
 
@@ -789,6 +1077,141 @@ chrome.notifications.onButtonClicked.addListener(
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "checkJobNotifications") {
     console.log("Alarm triggered: Checking for new jobs...");
-    checkJobsAndNotify();
+    addNotificationLog("info", "Scheduled job check started", {
+      source: "alarm",
+    }).then(function () {
+      return checkJobsAndNotify();
+    });
+  } else if (alarm.name === "trackerApplicantRefresh") {
+    runTrackerMetaRefresh("applicant").catch((e) =>
+      console.warn("trackerApplicantRefresh failed", e)
+    );
+  } else if (alarm.name === "trackerExpiryRefresh") {
+    runTrackerMetaRefresh("expiry").catch((e) =>
+      console.warn("trackerExpiryRefresh failed", e)
+    );
   }
 });
+
+/**
+ * Setup soft-gated Job Tracker refresh alarms (default OFF via settings).
+ */
+async function setupTrackerRefreshAlarms(settingsOverride) {
+  try {
+    await chrome.alarms.clear("trackerApplicantRefresh");
+    await chrome.alarms.clear("trackerExpiryRefresh");
+
+    let settings = settingsOverride;
+    if (!settings) {
+      const result = await chrome.storage.local.get(["tracker_refresh_settings"]);
+      settings = Object.assign(
+        {
+          applicantCheckEnabled: false,
+          applicantCheckMinutes: 360,
+          expiryCheckEnabled: false,
+          expiryCheckMinutes: 720,
+          maxJobsPerTick: 3,
+        },
+        result.tracker_refresh_settings || {}
+      );
+    }
+
+    if (settings.applicantCheckEnabled) {
+      await chrome.alarms.create("trackerApplicantRefresh", {
+        periodInMinutes: Math.max(
+          60,
+          Number(settings.applicantCheckMinutes) || 360
+        ),
+      });
+      console.log("Tracker applicant refresh alarm set");
+    }
+
+    if (settings.expiryCheckEnabled) {
+      await chrome.alarms.create("trackerExpiryRefresh", {
+        periodInMinutes: Math.max(
+          120,
+          Number(settings.expiryCheckMinutes) || 720
+        ),
+      });
+      console.log("Tracker expiry refresh alarm set");
+    }
+  } catch (e) {
+    console.warn("setupTrackerRefreshAlarms failed", e);
+  }
+}
+
+/**
+ * Soft background refresh for applicant counts / expiry on tracked jobs.
+ */
+async function runTrackerMetaRefresh(mode) {
+  try {
+    const result = await chrome.storage.local.get([
+      "tracker_refresh_settings",
+      "casper_job_tracker",
+    ]);
+    const settings = Object.assign(
+      {
+        applicantCheckEnabled: false,
+        expiryCheckEnabled: false,
+        maxJobsPerTick: 3,
+      },
+      result.tracker_refresh_settings || {}
+    );
+
+    if (mode === "applicant" && !settings.applicantCheckEnabled) return;
+    if (mode === "expiry" && !settings.expiryCheckEnabled) return;
+
+    const map =
+      result.casper_job_tracker && typeof result.casper_job_tracker === "object"
+        ? result.casper_job_tracker
+        : {};
+    const limit = Math.max(
+      1,
+      Math.min(10, Number(settings.maxJobsPerTick) || 3)
+    );
+    const candidates = Object.values(map)
+      .filter(function (r) {
+        return (
+          r &&
+          r.url &&
+          (r.status === "viewed" ||
+            r.status === "applied" ||
+            r.starred ||
+            (r.starRating && r.starRating > 0))
+        );
+      })
+      .sort(function (a, b) {
+        return (a.applicantUpdatedAt || 0) - (b.applicantUpdatedAt || 0);
+      })
+      .slice(0, limit);
+
+    for (let i = 0; i < candidates.length; i++) {
+      const job = candidates[i];
+      let tabId = null;
+      try {
+        const tab = await chrome.tabs.create({
+          url: job.url,
+          active: false,
+        });
+        tabId = tab.id;
+        await waitForTabLoad(tabId);
+        await delay(4000);
+        await chrome.tabs.sendMessage(tabId, {
+          action: "refreshJobTrackerMeta",
+          jobId: job.id,
+        });
+      } catch (e) {
+        console.warn("Tracker meta refresh soft fail for", job.id, e);
+      } finally {
+        if (tabId) {
+          try {
+            await chrome.tabs.remove(tabId);
+          } catch (e) {}
+        }
+      }
+      await delay(1500);
+    }
+  } catch (e) {
+    console.warn("runTrackerMetaRefresh failed", e);
+  }
+}
