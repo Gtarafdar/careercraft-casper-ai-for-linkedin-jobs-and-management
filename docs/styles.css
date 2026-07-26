@@ -112,6 +112,11 @@ code {
   width: 34px;
   height: 34px;
   border-radius: 50%;
+  transition: transform 0.35s var(--ease);
+}
+
+.brand:hover img {
+  transform: scale(1.08) rotate(-4deg);
 }
 
 .brand span {
@@ -227,11 +232,41 @@ body.nav-open .backdrop {
   letter-spacing: -0.01em;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.18s var(--ease), background 0.18s, box-shadow 0.18s, border-color 0.18s;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.22s var(--ease),
+    background 0.18s,
+    box-shadow 0.22s var(--ease),
+    border-color 0.18s,
+    color 0.18s;
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.55s var(--ease);
+  pointer-events: none;
 }
 
 .btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.btn:hover::after {
+  transform: translateX(120%);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .btn-primary {
@@ -243,6 +278,7 @@ body.nav-open .backdrop {
 .btn-primary:hover {
   background: var(--blue-bright);
   color: #fff;
+  box-shadow: 0 14px 34px rgba(10, 102, 194, 0.38);
 }
 
 .btn-outline {
@@ -255,6 +291,7 @@ body.nav-open .backdrop {
 .btn-outline:hover {
   border-color: var(--blue);
   color: var(--blue);
+  box-shadow: 0 10px 26px rgba(10, 102, 194, 0.12);
 }
 
 .btn-quiet {
@@ -381,6 +418,37 @@ body.nav-open .backdrop {
   opacity: 0.4;
 }
 
+.sell-points {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-width: 36rem;
+}
+
+.sell-points li {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line-soft);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.sell-points li:hover {
+  border-color: rgba(10, 102, 194, 0.35);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-soft);
+}
+
+.sell-points strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .hero-art {
   margin: 0;
   border-radius: 24px;
@@ -497,6 +565,12 @@ body.nav-open .backdrop {
   background: var(--surface);
   border: 1px solid var(--line-soft);
   box-shadow: var(--shadow-soft);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s;
+}
+
+.pane:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
 }
 
 .pane h3 {
@@ -943,6 +1017,13 @@ body.nav-open .backdrop {
   border-radius: 14px;
   padding: 16px 18px;
   box-shadow: var(--shadow-soft);
+  transition: transform 0.22s var(--ease), border-color 0.22s, box-shadow 0.22s;
+}
+
+.steps li:hover {
+  transform: translateY(-2px);
+  border-color: rgba(10, 102, 194, 0.3);
+  box-shadow: 0 12px 28px rgba(20, 32, 51, 0.08);
 }
 
 .steps li::before {
@@ -1187,6 +1268,11 @@ body.nav-open .backdrop {
   padding: 14px 18px;
   margin-bottom: 8px;
   box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s, transform 0.2s var(--ease);
+}
+
+#faq details:hover {
+  transform: translateY(-1px);
 }
 
 #faq details[open] {
@@ -1230,6 +1316,17 @@ body.nav-open .backdrop {
   border-radius: 50%;
   margin: 0 auto 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: ghostBob 3.2s var(--ease) infinite;
+}
+
+@keyframes ghostBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .cta h2 {
@@ -1398,11 +1495,25 @@ body.nav-open .backdrop {
   }
 
   .btn:hover,
+  .btn:hover::after,
   .frame:hover,
   .feat-grid article:hover,
   .shot.card:hover,
   .trio article:hover,
-  .hunt-grid article:hover {
+  .hunt-grid article:hover,
+  .pane:hover,
+  .steps li:hover,
+  .sell-points li:hover,
+  #faq details:hover,
+  .brand:hover img {
     transform: none;
+  }
+
+  .cta-mark {
+    animation: none;
+  }
+
+  .btn::after {
+    display: none;
   }
 }
