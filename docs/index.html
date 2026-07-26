@@ -86,6 +86,7 @@
       <nav>
         <a class="nav-link" href="#top">Overview</a>
         <a class="nav-link" href="#unique">ATS &amp; profile</a>
+        <a class="nav-link" href="#casper">Casper AI</a>
         <a class="nav-link" href="#gap">The gap</a>
         <a class="nav-link" href="#product">Gallery</a>
         <a class="nav-link" href="#howto">How to use</a>
@@ -124,7 +125,7 @@
             <span class="chip">Job Tracker</span>
             <span class="chip">Saved-search alerts</span>
             <span class="chip">Last 1 hour jobs</span>
-            <span class="chip">Casper post analysis</span>
+            <span class="chip">Casper chat &amp; post analysis</span>
           </div>
         </div>
         <figure class="hero-visual">
@@ -138,18 +139,18 @@
         <p class="prose">Most LinkedIn tools stop at bookmarks. CareerCraft scores each role against <strong>your</strong> CV / profile before you apply — then keeps that score on the Job Tracker row.</p>
         <div class="unique-grid">
           <article class="unique-card">
-            <p class="unique-kicker">ATS analysis</p>
+            <p class="unique-kicker">ATS analysis on the job page</p>
             <h4>Know the fit before you apply</h4>
             <ul>
-              <li>Compatibility % on LinkedIn job pages</li>
-              <li>Breakdown: skills, experience, education, keywords, responsibilities</li>
-              <li>Strengths, gaps, and must-have / nice-to-have requirements</li>
+              <li>Compatibility % injected on LinkedIn job pages</li>
+              <li>Must-have vs nice-to-have requirements</li>
+              <li>Skills, experience, education, keywords, responsibilities</li>
+              <li>Strengths, gaps, and a plain-language summary</li>
               <li>Soft-adds the role to Job Tracker with the score</li>
-              <li>Local ATS cache so you don’t re-spend API credits</li>
             </ul>
-            <button type="button" class="shot shot-inline" data-full="assets/screenshots/07-tools-ats.png">
-              <img src="assets/screenshots/07-tools-ats.png" alt="ATS scoring matrix and cache tools" loading="lazy" />
-              <span>ATS matrix &amp; cache — click to enlarge</span>
+            <button type="button" class="shot shot-inline shot-tall" data-full="assets/screenshots/21-ats-on-job.png">
+              <img src="assets/screenshots/21-ats-on-job.png" alt="AI-Powered ATS Analysis widget on a LinkedIn job page showing 72% compatibility" loading="lazy" />
+              <span>Real ATS panel on a LinkedIn job — click to enlarge</span>
             </button>
           </article>
           <article class="unique-card">
@@ -167,6 +168,38 @@
               <span>Profile &amp; Account — click to enlarge</span>
             </button>
           </article>
+        </div>
+      </section>
+
+      <section class="block" id="casper" aria-labelledby="casper-title">
+        <p class="section-label">Casper AI</p>
+        <h3 id="casper-title">Post analysis, discuss with AI, and a real chat box</h3>
+        <p class="prose">Casper isn’t a buried settings page — it lives on LinkedIn. Analyze any post, open a chat to discuss strategy or replies, and keep the conversation history on your device.</p>
+        <div class="casper-grid">
+          <div class="casper-points">
+            <article>
+              <h4>Post analysis with AI</h4>
+              <p>Ghost icon on feed posts opens Casper with that post’s context — tone, hooks, what’s working, and what to improve.</p>
+            </article>
+            <article>
+              <h4>Discuss with AI</h4>
+              <p>Ask follow-ups in the floating chat: reply angles, connection notes, career strategy, or “rewrite this softer.”</p>
+            </article>
+            <article>
+              <h4>Chat box on LinkedIn</h4>
+              <p>Minimize, expand, new chat, and history. Light/dark theme. Retention limits so storage stays tidy. Opt-in only.</p>
+            </article>
+            <article>
+              <h4>Your key, your provider</h4>
+              <p>Uses the same local AI key as ATS (Gemini, OpenAI, OpenRouter, DeepSeek, or Qwen) — no CareerCraft chat server.</p>
+            </article>
+          </div>
+          <figure class="casper-visual">
+            <button type="button" class="shot shot-inline" data-full="assets/screenshots/13-casper-chat.png">
+              <img src="assets/screenshots/13-casper-chat.png" alt="Casper AI chat box analyzing a LinkedIn post" loading="lazy" />
+              <span>Casper chat on LinkedIn — click to enlarge</span>
+            </button>
+          </figure>
         </div>
       </section>
 
@@ -213,13 +246,13 @@
           <div class="carousel-viewport" id="carouselViewport">
             <div class="carousel-track" id="carouselTrack">
               <button type="button" class="shot" data-full="assets/screenshots/01-dashboard.png"><img src="assets/screenshots/01-dashboard.png" alt="Options Dashboard" loading="lazy" /><span>Dashboard</span></button>
+              <button type="button" class="shot tall" data-full="assets/screenshots/21-ats-on-job.png"><img src="assets/screenshots/21-ats-on-job.png" alt="ATS on job page" loading="lazy" /><span>ATS on job page</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/08-account-profile.png"><img src="assets/screenshots/08-account-profile.png" alt="Profile for ATS" loading="lazy" /><span>Profile check</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/07-tools-ats.png"><img src="assets/screenshots/07-tools-ats.png" alt="ATS tools" loading="lazy" /><span>ATS scoring</span></button>
+              <button type="button" class="shot" data-full="assets/screenshots/13-casper-chat.png"><img src="assets/screenshots/13-casper-chat.png" alt="Casper AI chat" loading="lazy" /><span>Casper chat box</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/02-job-tracker.png"><img src="assets/screenshots/02-job-tracker.png" alt="Job Tracker" loading="lazy" /><span>Job Tracker</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/03-searches-alerts.png"><img src="assets/screenshots/03-searches-alerts.png" alt="Searches and Alerts" loading="lazy" /><span>Searches &amp; alerts</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/14-jobs-last-hour.png"><img src="assets/screenshots/14-jobs-last-hour.png" alt="Last 1 hour jobs" loading="lazy" /><span>Last 1 hour</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/15-notification.png"><img src="assets/screenshots/15-notification.png" alt="Desktop job notification" loading="lazy" /><span>Notifications</span></button>
-              <button type="button" class="shot" data-full="assets/screenshots/13-casper-chat.png"><img src="assets/screenshots/13-casper-chat.png" alt="Casper AI post analysis" loading="lazy" /><span>Casper analysis</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/09-post-formatter.png"><img src="assets/screenshots/09-post-formatter.png" alt="Post formatter" loading="lazy" /><span>Formatter</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/11-clipboard-image.png"><img src="assets/screenshots/11-clipboard-image.png" alt="Clipboard image paste" loading="lazy" /><span>Image paste</span></button>
               <button type="button" class="shot" data-full="assets/screenshots/12-send-to-tracker.png"><img src="assets/screenshots/12-send-to-tracker.png" alt="Send to Job Tracker" loading="lazy" /><span>Send to Tracker</span></button>
@@ -245,7 +278,8 @@
             <div class="step"><div><h4>Load your profile (unique)</h4><p>Account → upload CV, paste LinkedIn text, or Auto extract — this powers ATS match %.</p></div></div>
             <div class="step"><div><h4>Run ATS on a job (unique)</h4><p>Open a LinkedIn job → see compatibility breakdown → role lands in Job Tracker with the score.</p></div></div>
             <div class="step"><div><h4>Save searches &amp; alerts</h4><p>Save up to 5 searches → enable notifications when counts rise → use <strong>Last 1 hour</strong> for freshest roles.</p></div></div>
-            <div class="step"><div><h4>Feed, Casper &amp; write</h4><p>Feed discovery / Jobs to review · Casper on posts · format &amp; paste images · filter Saved items.</p></div></div>
+            <div class="step"><div><h4>Ask Casper on a post</h4><p>Click the ghost → post analysis, discuss replies in the chat box, or start a new chat from history.</p></div></div>
+            <div class="step"><div><h4>Feed &amp; write</h4><p>Feed discovery / Jobs to review · format &amp; paste images · filter Saved items.</p></div></div>
           </div>
           <figure class="illust illust-fit">
             <img src="assets/illustrations/scene-howto.png" alt="Illustration of installing and using CareerCraft on LinkedIn" width="900" height="700" loading="lazy" />
@@ -274,10 +308,10 @@
         <p class="section-label">Capabilities</p>
         <h3 id="features-title">Built for a real LinkedIn hunt</h3>
         <div class="feature-grid">
-          <article class="feature feature-spotlight"><div class="icon">%</div><h4>ATS scoring</h4><p>Compatibility % vs your CV/profile on job pages — skills, experience, education, keywords, responsibilities — with local cache.</p></article>
+          <article class="feature feature-spotlight"><div class="icon">%</div><h4>ATS scoring</h4><p>Live AI-Powered ATS Analysis on LinkedIn job pages — % score, must-haves, strengths, gaps — vs your stored profile.</p></article>
           <article class="feature feature-spotlight"><div class="icon">👤</div><h4>Profile check</h4><p>Upload CV, paste profile, or auto-extract. Completeness meter feeds every ATS score. Stays on your device.</p></article>
-          <article class="feature"><div class="icon">★</div><h4>Job Tracker</h4><p>Status pipeline, favorites, source filters, ATS column, export/copy, bulk delete — one local board for every lead.</p></article>
-          <article class="feature"><div class="icon">👻</div><h4>Casper AI + post analysis</h4><p>Ghost on posts for insights &amp; reply angles. Floating chat for strategy. Opt-in; history with retention controls.</p></article>
+          <article class="feature feature-spotlight"><div class="icon">💬</div><h4>Casper chat box</h4><p>Floating chat on LinkedIn: discuss posts, strategy, and replies. New chat, history, minimize — opt-in.</p></article>
+          <article class="feature feature-spotlight"><div class="icon">👻</div><h4>Post analysis with AI</h4><p>Ghost on posts opens Casper with that post’s context for tone, hooks, and reply angles.</p></article>
           <article class="feature"><div class="icon">🔔</div><h4>Saved searches &amp; alerts</h4><p>Up to 5 LinkedIn searches. Desktop notifications when result counts go up — not on every quiet check.</p></article>
           <article class="feature"><div class="icon">⏱</div><h4>Last 1 hour jobs</h4><p>One-click Past hour on Jobs search (and from the popup) so you hunt freshest roles first.</p></article>
           <article class="feature"><div class="icon">▣</div><h4>Jobs to review rail</h4><p>Right-rail shortlist from alerts, tracker, and feed candidates — Open post or send to Tracker.</p></article>
