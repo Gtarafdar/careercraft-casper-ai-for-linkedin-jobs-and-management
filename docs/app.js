@@ -198,6 +198,50 @@
     setupCarousel();
   }
 
+  /* —— Scroll reveal —— */
+  function setupReveal() {
+    var nodes = document.querySelectorAll(
+      ".block, .showcase, .byok-grid, .gap-with-art, .feature, .benefit, .illust-band, .cta-band"
+    );
+    if (!nodes.length) return;
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      nodes.forEach(function (el) {
+        el.classList.add("in");
+      });
+      return;
+    }
+
+    nodes.forEach(function (el, i) {
+      el.classList.add("reveal");
+      if (i % 4 === 1) el.classList.add("reveal-delay-1");
+      else if (i % 4 === 2) el.classList.add("reveal-delay-2");
+      else if (i % 4 === 3) el.classList.add("reveal-delay-3");
+    });
+
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 }
+    );
+
+    nodes.forEach(function (el) {
+      io.observe(el);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupReveal);
+  } else {
+    setupReveal();
+  }
+
   /* —— Download links —— */
   function setDownload(url) {
     ["dlSide", "dlHero", "dlCta"].forEach(function (id) {
