@@ -446,11 +446,9 @@ body.nav-open .backdrop {
   border-radius: 24px;
   overflow: hidden;
   box-shadow: var(--shadow), var(--glow);
-  background: #f2eee5;
+  background: var(--surface);
   align-self: stretch;
   display: flex;
-  align-items: center;
-  justify-content: center;
   min-height: 100%;
   border: 1px solid var(--line-soft);
 }
@@ -459,9 +457,8 @@ body.nav-open .backdrop {
   width: 100%;
   height: 100%;
   min-height: 520px;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-  display: block;
 }
 
 .hero-brand {
