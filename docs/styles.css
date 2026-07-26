@@ -529,29 +529,32 @@ body.nav-open .backdrop {
   margin-top: 6px;
 }
 
-/* Illustrations */
-.illust {
+/* Illustrations — fill the frame edge-to-edge */
+.illust,
+.illust.illust-fill,
+.illust.compact {
   margin: 28px 0 8px;
   border-radius: 20px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   box-shadow: var(--shadow-soft);
-  display: flex;
-  justify-content: center;
-  padding: clamp(16px, 2.5vw, 28px);
+  display: block;
+  padding: 0;
+  line-height: 0;
 }
 
-.illust img {
-  width: 100%;
-  max-width: 880px;
-  max-height: 340px;
-  object-fit: contain;
-  object-position: center;
-}
-
+.illust img,
+.illust.illust-fill img,
 .illust.compact img {
-  max-height: 260px;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 /* Pillars */
@@ -919,9 +922,9 @@ body.nav-open .backdrop {
   color: var(--ink-soft);
 }
 
-/* Steps */
+/* Steps — How-to */
 .steps {
-  margin: 24px 0 0;
+  margin: 20px 0 0;
   padding: 0;
   list-style: none;
   counter-reset: step;
@@ -932,8 +935,9 @@ body.nav-open .backdrop {
 .steps li {
   counter-increment: step;
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 14px;
+  grid-template-columns: 48px 1fr;
+  gap: 4px 14px;
+  align-items: start;
   background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: 14px;
@@ -945,20 +949,45 @@ body.nav-open .backdrop {
   content: counter(step, decimal-leading-zero);
   font-family: var(--display);
   font-weight: 650;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
   color: var(--blue);
+  letter-spacing: -0.02em;
+  grid-row: 1 / span 2;
 }
 
 .steps strong {
   display: block;
+  grid-column: 2;
   font-size: 15px;
   color: var(--ink);
-  margin-bottom: 2px;
+  margin: 0;
+  letter-spacing: -0.015em;
 }
 
 .steps span {
+  display: block;
+  grid-column: 2;
   color: var(--muted);
   font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.howto-tip {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (min-width: 900px) {
+  #howto .steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #howto .steps li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Features */
