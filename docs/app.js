@@ -159,7 +159,7 @@
 
   function setupReveal() {
     var nodes = document.querySelectorAll(
-      ".band, .pillar, .pair, .split, .byok, .trio, .hunt-grid, .feat-grid, .story, .cta, .steps li"
+      ".band, .pillar, .split, .byok, .trio, .hunt-grid, .feat-grid, .story, .cta, .steps li"
     );
     if (!nodes.length) return;
     if (reduceMotion || !("IntersectionObserver" in window)) {
